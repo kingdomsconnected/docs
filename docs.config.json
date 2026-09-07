@@ -1,0 +1,19 @@
+{
+  "servicesCliVersion": "0.6.4",
+  "schemaVersion": 1,
+  "slug": "kcdmp",
+  "title": "Kingdoms Connected Scripting API",
+  "tagline": "Build multiplayer game modes for Kingdom Come: Deliverance II with the Kingdoms Connected JavaScript runtime.",
+  "accentColor": "#c99a4b",
+  "links": [
+    { "label": "Kingdoms Connected on GitHub", "url": "https://github.com/kingdomsconnected" },
+    { "label": "MafiaHub Framework", "url": "https://github.com/MafiaHub/Framework" }
+  ],
+  "communityContent": {
+    "repository": "https://github.com/kingdomsconnected/docs",
+    "authority": "maintainer",
+    "navigation": "unified",
+    "documents": ["guides/**/*.md"]
+  },
+  "theme": "src/styles/production.css"
+}

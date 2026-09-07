@@ -1,0 +1,69 @@
+/*
+ * Production theme for the Kingdoms Connected documentation site, shared by the
+ * standalone deployment and the local preview.
+ *
+ * The palette itself comes from `accentColor` in docs.config.json: the generator
+ * derives --mh-accent-bright, --mh-accent-soft and --mh-line from it and layers
+ * them over Starlight's own --sl-color-* scale. Nothing here should hardcode a
+ * colour that one of those variables already carries, or the site stops
+ * following its own accent.
+ *
+ * This file is deliberately small. Component styles belong here only once a
+ * guide actually needs them -- an illustrated catalogue of items or map markers
+ * would earn a grid, for instance -- rather than being carried over from
+ * another mod's site and left unused.
+ */
+
+/* Signatures in the generated API reference read as code, not as prose. */
+.tsd-signature-symbol {
+  color: var(--mh-accent-bright);
+}
+
+.mh-brand img {
+  image-rendering: auto;
+}
+
+/*
+ * Wide reference tables -- an event's argument tuple, a soul's stat block --
+ * scroll inside their own box. Without this the page itself scrolls sideways on
+ * a phone, which moves the navigation off screen.
+ */
+.sl-markdown-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.sl-markdown-content table th {
+  color: var(--sl-color-white);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sl-markdown-content table th,
+.sl-markdown-content table td {
+  border-bottom: 1px solid var(--mh-line);
+  padding: 0.55rem 0.9rem 0.55rem 0;
+}
+
+.sl-markdown-content table code {
+  white-space: nowrap;
+}
+
+/*
+ * A note about something that is true of the game rather than of the API --
+ * the kind of thing that explains why a verb is a request instead of a write.
+ * Use it as a blockquote opening with **Note:** or **Authority:**.
+ */
+.sl-markdown-content blockquote {
+  border-left: 2px solid var(--mh-accent-bright);
+  background: linear-gradient(105deg, var(--mh-accent-soft), transparent 55%);
+  border-radius: 0 0.4rem 0.4rem 0;
+  padding: 0.85rem 1.1rem;
+}
+
+.sl-markdown-content blockquote > :last-child {
+  margin-bottom: 0;
+}
