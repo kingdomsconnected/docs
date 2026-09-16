@@ -1,7 +1,7 @@
 {
   "servicesCliVersion": "0.6.4",
   "schemaVersion": 1,
-  "slug": "kcd",
+  "slug": "kcdc",
   "title": "Kingdoms Connected Scripting API",
   "tagline": "Build multiplayer game modes for Kingdom Come: Deliverance II with the Kingdoms Connected JavaScript runtime.",
   "accentColor": "#c99a4b",
