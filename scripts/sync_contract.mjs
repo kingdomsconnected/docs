@@ -11,10 +11,10 @@ const maxFiles = 64;
 const maxSize = 16 * 1024 * 1024;
 
 export const syncContract = async () => {
-  if (process.env.KCDMP_CONTRACT_ROOT) return path.resolve(process.env.KCDMP_CONTRACT_ROOT);
-  const apiRoot = (process.env.KCDMP_SERVICES_API_URL || "https://api.mafiahub.dev").replace(/\/graphql\/?$/, "").replace(/\/$/, "");
-  const channel = process.env.KCDMP_CONTRACT_CHANNEL ?? "testing";
-  const requestedRevision = process.env.KCDMP_CONTRACT_REVISION;
+  if (process.env.KCDC_CONTRACT_ROOT) return path.resolve(process.env.KCDC_CONTRACT_ROOT);
+  const apiRoot = (process.env.KCDC_SERVICES_API_URL || "https://api.mafiahub.dev").replace(/\/graphql\/?$/, "").replace(/\/$/, "");
+  const channel = process.env.KCDC_CONTRACT_CHANNEL ?? "testing";
+  const requestedRevision = process.env.KCDC_CONTRACT_REVISION;
   const manifestUrl = requestedRevision
     ? `${apiRoot}/documentation-contracts/${slug}/releases/${requestedRevision}/manifest.json`
     : `${apiRoot}/documentation-contracts/${slug}/${channel}/manifest.json`;

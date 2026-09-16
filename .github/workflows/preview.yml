@@ -31,6 +31,6 @@ jobs:
 
       - name: Build preview
         env:
-          KCDMP_SERVICES_API_URL: ${{ vars.KCDMP_SERVICES_API_URL }}
-          KCDMP_CONTRACT_CHANNEL: testing
+          KCDC_SERVICES_API_URL: ${{ vars.KCDC_SERVICES_API_URL }}
+          KCDC_CONTRACT_CHANNEL: testing
         run: pnpm build

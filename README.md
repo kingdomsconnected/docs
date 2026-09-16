@@ -50,14 +50,14 @@ To download the contract without starting the preview:
 pnpm docs:sync
 ```
 
-Set `KCDMP_CONTRACT_CHANNEL`, `KCDMP_CONTRACT_REVISION`, or `KCDMP_SERVICES_API_URL` to select another public contract. A manual deployment can pin an exact immutable revision; otherwise it resolves the selected public channel when the docs workflow starts.
+Set `KCDC_CONTRACT_CHANNEL`, `KCDC_CONTRACT_REVISION`, or `KCDC_SERVICES_API_URL` to select another public contract. A manual deployment can pin an exact immutable revision; otherwise it resolves the selected public channel when the docs workflow starts.
 
 ### Building against a local contract
 
 Until a contract has been published, and whenever you want to see an unpublished API change rendered, point the generator at a contract bundle built from a mod checkout:
 
 ```sh
-KCDMP_CONTRACT_ROOT=/path/to/mod/build/scripting-contract pnpm build
+KCDC_CONTRACT_ROOT=/path/to/mod/build/scripting-contract pnpm build
 ```
 
 That bypasses the download and its integrity checks entirely, so use it for previewing only — CI always resolves a published, verified revision.

@@ -64,14 +64,14 @@ const generate = async (output) => {
   await writeFile(path.join(cache, "contract-revision"), `${contractRevision}\n`);
   const { configPath, servicesCliVersion } = await createRenderConfig(contractRoot);
   const contentRevision = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).stdout.trim() || "working-tree";
-  const args = ["docs", "generate", "--config", configPath, "--out", output, "--content-root", root, "--content-revision", contentRevision, "--site-url", process.env.KCDMP_DOCS_SITE_URL ?? "http://127.0.0.1:4321", "--base-path", process.env.KCDMP_DOCS_BASE_PATH ?? "/"];
+  const args = ["docs", "generate", "--config", configPath, "--out", output, "--content-root", root, "--content-revision", contentRevision, "--site-url", process.env.KCDC_DOCS_SITE_URL ?? "http://127.0.0.1:4321", "--base-path", process.env.KCDC_DOCS_BASE_PATH ?? "/"];
   const localCli = process.env.MAFIAHUB_SERVICES_CLI_ENTRYPOINT;
   if (localCli) run(process.execPath, [path.resolve(localCli), ...args]);
   else runPnpm(["dlx", `@mafiahub/services-cli@${servicesCliVersion}`, ...args]);
   const manifestPath = path.join(output, "manifest.json");
   const siteManifest = JSON.parse(await readFile(manifestPath, "utf8"));
   siteManifest.sources.reference.revision = contractRevision;
-  siteManifest.sources.reference.channel = process.env.KCDMP_CONTRACT_CHANNEL ?? "testing";
+  siteManifest.sources.reference.channel = process.env.KCDC_CONTRACT_CHANNEL ?? "testing";
   await writeFile(manifestPath, `${JSON.stringify(siteManifest, null, 2)}\n`);
 };
 
