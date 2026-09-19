@@ -28,6 +28,15 @@ Events.on("playerCommand", (player, command) => {
 because the snapshot carries them together — reading them one at a time would
 suggest they can be read one at a time.
 
+What the body looks like and what it has on are published the same way. The
+**Appearance and items** guide covers both:
+
+```js
+player.appearance;     // { gender, head, hair, beard, body }
+player.equipment;      // worn item classes
+player.rightHandItem;  // what is drawn, or ""
+```
+
 Two flags gate the rest:
 
 - `player.ready` — the body has both a pose and a character. False for the first
@@ -46,17 +55,22 @@ if (!player.teleport({ x: 100, y: 200, z: 30 }, "Kuttenberg")) {
   console.warn("teleport request could not be sent");
 }
 
-// The GUID or the exact name from the game's item tables.
-player.giveItem("Sword", 1);
-player.giveItem("fc0e6251-b314-4398-b83f-3a66a52961ee", 2);
+// The exact name from the game's item tables, or the class GUID.
+player.giveItem("longswordBroad");
+player.giveItem("3858560f-cf48-436f-8815-4426003288fb");
+player.giveItem("apple", 5);
+
+// Four component names from the game's own character tree.
+player.setAppearance({ hair: "m_hair_barber_07" });
 ```
 
 `teleport` takes a `Vector3` or any object with `x`, `y` and `z`, so a plain
 literal works.
 
-> **Authority:** neither call writes anything server-side. The player moves, or
-> the item appears, when their own game acts on the request — and the result
-> comes back with their next update. A `true` return means the request was sent.
+> **Authority:** none of these write anything server-side. The player moves, the
+> item appears, or the body changes when their own game acts on the request — and
+> the result comes back with their next update. A `true` return means the request
+> was sent.
 
 The connection-level verbs are immediate, because they are about the connection
 rather than the body:
