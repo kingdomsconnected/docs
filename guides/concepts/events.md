@@ -31,8 +31,15 @@ A handler may be `async`; the returned promise is awaited.
 | `horseDestroy` | `horse` |
 | `horseMount` | `horse`, `player \| null` |
 | `horseDismount` | `horse`, `player \| null` |
+| `questTrackingChanged` | `quest`, `player`, `tracked` |
 
 Plus `resourceStart` and `resourceStop`, which both environments raise.
+
+`questTrackingChanged` is reported by the player's own client rather than
+decided here: following a quest is a choice made in the game's journal, and the
+server cannot refuse it. The client raises its own `questTrackingChanged` with
+`questKey` and `tracked` first, on the machine it happened on. The **Quests**
+guide covers the whole feature.
 
 ## Handles are valid inside the handler
 
