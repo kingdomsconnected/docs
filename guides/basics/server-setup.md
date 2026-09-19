@@ -16,25 +16,9 @@ more is clamped back down at boot with a warning.
 Settings live in the framework's `server.json` beside the binary, written with
 every key the build understands the first time the server starts. Framework
 keys (`host`, `port`, `apihost`, `apiport`, `maxplayers`, `server-token`) sit at
-the top level, and KCDC's own keys sit under `mod`:
-
-```json
-{
-  "host": "0.0.0.0",
-  "port": 27015,
-  "maxplayers": 10,
-  "mod": {
-    "level": "kutnohorsko"
-  }
-}
-```
-
-`mod.level` is replicated to joining clients, which load it before the session
-opens — it arrives in the session handshake, ahead of the asset phase, because a
-joining client has no other way to know which level to load. It has to be one of
-the level directories the game ships under `Data/Levels`: `kutnohorsko`,
-`trosecko` or `klaster`. Anything else fails at boot rather than at the first
-connect.
+the top level, and KCDC's own — the level clients load and the DLCs they must
+own — sit under `mod`. The **server.json** page lists every key and what it
+accepts.
 
 ## Built-in commands
 
