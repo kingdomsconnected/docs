@@ -19,11 +19,17 @@ off(); // or Events.off("playerChat", handler)
 
 A handler may be `async`; the returned promise is awaited.
 
+The one exception is `playerSpawning`, which is dispatched while the joining
+client waits on the answer: a placement chosen after an `await` arrives too
+late to be that answer. See **Spawning**.
+
 ## Server events
 
 | Event | Arguments |
 | --- | --- |
 | `playerConnect` | `player` |
+| `playerSpawning` | `player` |
+| `playerSpawned` | `player` |
 | `playerDisconnect` | `player` |
 | `playerChat` | `player`, `text` |
 | `playerCommand` | `player`, `command`, `args` |
