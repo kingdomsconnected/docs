@@ -38,6 +38,8 @@ late to be that answer. See **Spawning**.
 | `horseMount` | `horse`, `player \| null` |
 | `horseDismount` | `horse`, `player \| null` |
 | `questTrackingChanged` | `quest`, `player`, `tracked` |
+| `dialogueChoice` | `session`, `player`, `optionId` |
+| `dialogueClosed` | `session`, `player`, `reason` |
 
 Plus `resourceStart` and `resourceStop`, which both environments raise.
 
@@ -46,6 +48,14 @@ decided here: following a quest is a choice made in the game's journal, and the
 server cannot refuse it. The client raises its own `questTrackingChanged` with
 `questKey` and `tracked` first, on the machine it happened on. The **Quests**
 guide covers the whole feature.
+
+The two dialogue events carry a **session id** rather than a handle, because a
+conversation is not an entity. `dialogueChoice` gives you the option's own id,
+never its index, so a handler stays correct when the page is rebuilt with
+different rows. `dialogueClosed` fires however the conversation ended --
+including when the player cancelled it or their connection dropped -- which
+makes it the one place bookkeeping for a conversation can safely live. The
+**Dialogue** guide covers the whole feature.
 
 ## Handles are valid inside the handler
 
