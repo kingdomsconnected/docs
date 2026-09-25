@@ -44,6 +44,10 @@ The sidebar is split by where your code runs:
 | **Tutorials** | Complete features built end to end |
 | **Hosting a server** | Running, configuring and opening a server to players |
 
+Right under this page, [List your server in the server
+browser](../publish-on-masterlist/) covers getting a public server into the
+in-game browser.
+
 ## Find it fast
 
 Most gamemode work happens on the server. If you know what you want to do,
@@ -71,6 +75,7 @@ this is where it lives:
 | React to any game event | [Events and handlers](../core-concepts/events/) (the full list) |
 | Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
 | Bind a key, show a menu or a HUD message | [Key binds](../client-scripting/input/), [HTML pages](../client-scripting/user-interface/web-views/), [HUD messages](../client-scripting/user-interface/hud/) |
+| Get my server listed in the in-game server browser | [List your server in the server browser](../publish-on-masterlist/) |
 | Understand why a verb returns before anything happened | [Server vs client authority](../core-concepts/authority/) |
 
 ## A taste

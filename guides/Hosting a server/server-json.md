@@ -54,6 +54,9 @@ server announces itself there only when it has a token; with the default
 empty value it logs `Server will not be announced to masterlist` and is
 reachable by address only. Players can always join by address, see [How players connect](../players-connecting/).
 
+[List your server in the server browser](../../publish-on-masterlist/) walks
+through getting a token and checking the listing.
+
 Treat the token as a secret. Keep it in the file rather than in a startup
 command that other people can read.
 
