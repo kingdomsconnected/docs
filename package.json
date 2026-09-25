@@ -7,6 +7,11 @@
   "scripts": {
     "docs:sync": "node scripts/sync_contract.mjs",
     "dev": "node scripts/docs.mjs dev",
-    "build": "node scripts/docs.mjs build"
+    "build": "node scripts/docs.mjs build",
+    "check": "node scripts/check_guides.mjs",
+    "check:site": "node scripts/check_guides.mjs --dist"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
   }
 }
