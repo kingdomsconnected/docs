@@ -67,3 +67,27 @@
 .sl-markdown-content blockquote > :last-child {
   margin-bottom: 0;
 }
+
+/*
+ * Collapsible sections in guides: troubleshooting entries and optional
+ * "why" explanations. A quiet card makes them read as something to open.
+ */
+.sl-markdown-content details {
+  border: 1px solid var(--mh-line);
+  border-radius: 0.4rem;
+  padding: 0.6rem 1rem;
+  background: var(--sl-color-gray-7, transparent);
+}
+
+.sl-markdown-content details + details {
+  margin-top: 0.5rem;
+}
+
+.sl-markdown-content details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sl-markdown-content details[open] > summary {
+  margin-bottom: 0.75rem;
+}
