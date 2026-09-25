@@ -1,57 +1,127 @@
 ---
-title: Overview
+title: Introduction
+description: What a Kingdoms Connected resource is, where it runs, and which guide to read first.
 sidebar:
   order: 1
 ---
 
-Kingdoms Connected resources run JavaScript in one of two environments:
+Kingdoms Connected (KCDC) puts other players into Kingdom Come: Deliverance
+II's own world. Everything that makes a server feel like *your* server, from
+where people spawn to what `/help` prints, lives in **resources**: folders of
+JavaScript or TypeScript that the server loads at startup.
 
-- **Server resources** run in Node.js and own the world every player shares — who is connected, which horses exist, who is riding what.
-- **Client resources** run in a sandboxed V8 context on each player's machine and can read what that machine can see.
+A resource can run code in two places:
 
-Use the navigation to browse the globals available in each environment. The same declarations that generate this reference can be loaded by an editor for autocomplete and type checking.
+| | Server half | Client half |
+| --- | --- | --- |
+| Runs on | The dedicated server, in Node.js | Every connected player's game, in a sandboxed V8 |
+| Owns | Everything shared: who is connected, horses, NPCs, props, quests, the clock | Nothing shared. It reads what this machine can see and draws UI |
+| Typical jobs | Spawn points, commands, game rules, economy, persistence | Menus, HUD, key binds, placement previews |
+| Reference | [Server API](../reference/server/index.md) | [Client API](../reference/client/index.md) |
 
-## Who decides what
+The server that ships with KCDC answers no commands on its own. Every `/`
+command you have seen in game (`/horse`, `/give`, `/tp`, `/world`...) comes
+from the **default gamemode**, a resource written against the same public API
+you use. It is the best example code there is, and the guides point into it
+often.
 
-Kingdom Come: Deliverance II keeps a player's whole state — health, stamina, skills, what they are wearing, where they are standing — on their own machine, in tables the server does not have. So the owning client is authoritative for its player's body, and the server is authoritative for everything between players.
+## Where to start
 
-That split runs through the entire API and explains most of its shape:
+:::tip[New to KCDC scripting?]
+Read **Getting started** in order. It takes you from an empty machine to a
+running server with the default gamemode, then to your own resource in plain
+JavaScript, then to a TypeScript setup that can grow.
+:::
 
-- Everything you can **read** about a player is a snapshot their client published. `player.health` is the number their game last reported, not a number the server maintains.
-- Everything you can **do** to a player is a **request sent to their client**. `player.teleport(...)` returns whether the request went out, not whether the player has moved; the new position arrives with their next update.
-- Horses are the other way round. The server creates them and owns them while they stand idle, and hands authority to whoever climbs into the saddle.
+The sidebar is split by where your code runs:
 
-> **Note:** this is why there are no setters for health or stamina. A server-side write would be overwritten by the owner's next capture a frame later, so the API does not offer one rather than offering one that silently does nothing.
+| Section | What is in it |
+| --- | --- |
+| **Getting started** | Tools, running the default gamemode, your first resource, TypeScript, debugging |
+| **Core concepts** | Ideas every page relies on: authority, events, networking, state, positions |
+| **Server scripting** | Everything a gamemode does on the server, grouped by what it acts on |
+| **Client scripting** | Code that runs in each player's game: input, camera, and the user interface |
+| **Tutorials** | Complete features built end to end |
+| **Hosting a server** | Running, configuring and opening a server to players |
 
-## Server example
+## Find it fast
 
-```js
-Events.on("playerConnect", (player) => {
-  Chat.sendToAll(`${player.nickname} joined.`);
+Most gamemode work happens on the server. If you know what you want to do,
+this is where it lives:
+
+| I want to... | Page |
+| --- | --- |
+| Greet players, track who is online | [Player join and leave events](../server-scripting/players/lifecycle/) |
+| Choose where players spawn, respawn after death | [Spawn points and respawning](../server-scripting/players/spawning/) |
+| Read health, stamina, stats or skills | [Player health, stats and skills](../server-scripting/players/reading/) |
+| Teleport, kick, revive or rename a player | [Teleport, kick and other player actions](../server-scripting/players/actions/) |
+| Give or take items, read equipment | [Give and take items](../server-scripting/players/inventory/) |
+| Change a face, hair or body | [Player appearance](../server-scripting/players/appearance/) |
+| Add `/commands` or send chat messages | [Chat messages and /commands](../server-scripting/players/chat/) |
+| Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
+| Change the time or the weather | [Time of day and weather](../server-scripting/world-and-objects/clock-and-weather/) |
+| Place objects in the world | [Spawn props and objects](../server-scripting/world-and-objects/props/) |
+| Mark a spot, detect players entering an area | [Markers and trigger zones](../server-scripting/world-and-objects/markers/) |
+| Lock a door, open a castle gate | [Lock doors, open gates](../server-scripting/world-and-objects/doors-and-gates/) |
+| Spawn horses or dogs | [Horses](../server-scripting/npcs-horses-and-dogs/horses/), [Dogs](../server-scripting/npcs-horses-and-dogs/dogs/) |
+| Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../server-scripting/npcs-horses-and-dogs/npcs/), [Move NPCs](../server-scripting/npcs-horses-and-dogs/npc-orders/) |
+| Add a quest to the journal | [Quests in the journal](../server-scripting/quests-dialogue-and-shops/quests/) |
+| Show dialogue choices | [Dialogue choices](../server-scripting/quests-dialogue-and-shops/dialogue/) |
+| Open a shop | [Shops (vendors)](../server-scripting/quests-dialogue-and-shops/vendors/) |
+| React to any game event | [Events and handlers](../core-concepts/events/) (the full list) |
+| Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
+| Bind a key, show a menu or a HUD message | [Key binds](../client-scripting/input/), [HTML pages](../client-scripting/user-interface/web-views/), [HUD messages](../client-scripting/user-interface/hud/) |
+| Understand why a verb returns before anything happened | [Server vs client authority](../core-concepts/authority/) |
+
+## A taste
+
+Two files are a complete resource. The server half greets people and hands
+out a horse on request:
+
+```js title="server/main.js"
+Events.on("playerSpawned", (player) => {
+  Chat.sendToPlayer(player, `Welcome, ${player.nickname}. Type /horse for a ride.`);
 });
 
 Events.on("playerCommand", (player, command) => {
-  if (command !== "horse") return;
-
-  // In front of the player, on the ground plane.
-  const horse = Horse.spawn(player.position, undefined, undefined, `${player.nickname}'s horse`);
-  Chat.sendToPlayer(player, `Spawned horse ${horse.id}.`);
+  if (command !== "horse" || !player.ready) return;
+  Horse.spawn(player.position, undefined, undefined, `${player.nickname}'s horse`);
 });
 ```
 
-## Client example
+The client half shows the player their own health whenever they press F8:
 
-```js
-Events.on("resourceStart", () => {
+```js title="client/main.js"
+Key.bind("f8", "down", () => {
   const me = LocalPlayer;
-  if (!me) return; // null until this client has a body
-
-  console.log(`I am ${me.nickname}, ${me.health}/${me.maxHealth} health`);
+  if (me) Hud.showInfoText(`${Math.round(me.health)} / ${Math.round(me.maxHealth)} health`);
 });
 ```
 
-`LocalPlayer` is an accessor, not a value. It reads `null` before the session spawns a body and again once the session ends, so read it fresh each time rather than holding onto it.
+[Write your first resource](../getting-started/first-resource/) builds exactly this, step by
+step.
 
-## Where this reference comes from
+## One rule explains most of the API
 
-Every function, property and event on this site is generated from the mod's own binding registrations. When the runtime installs `player.teleport`, it records that name, signature and description in the same call — so the reference cannot drift from the code, and an undocumented binding is a build failure rather than a gap nobody notices.
+Kingdom Come keeps a player's whole state (health, skills, what they wear,
+where they stand) on their own machine. So the owning client is the authority
+for its player's body, and the server is the authority for everything between
+players. Reading `player.health` on the server gives you the last number their
+game reported; calling `player.teleport(...)` sends their game a request.
+
+That is why there is no `player.health = 100`, and why most verbs return
+whether a request *went out* rather than whether it *worked*.
+[Server vs client authority](../core-concepts/authority/) walks through it properly.
+
+## Where the reference comes from
+
+Every function, property and event in the API reference is generated from the
+mod's own binding registrations. When the runtime installs `player.teleport`,
+it records the name, signature and description in the same call, so the
+reference cannot drift from the code. The same declarations power
+autocomplete and type checking in your editor; [Use
+TypeScript](../getting-started/typescript/) shows how to get them.
+
+When a guide and the reference disagree, the reference is right. Please
+[open an issue](https://github.com/kingdomsconnected/docs/issues) so the
+guide gets fixed.

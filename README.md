@@ -6,21 +6,48 @@ The closed-source mod remains authoritative for the generated client and server 
 
 ## Structure
 
-- `guides/` subdirectories become the sidebar's guide groups, and their names become the group labels (capitalized by the theme, so keep them single lowercase words): `basics/` (onboarding), `concepts/` (events and other cross-cutting ideas), `server/` and `client/` (per-environment systems). `overview.md` sits at the top level, above the groups.
-- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains — give a new guide an order between its neighbours.
+- `guides/` holds every page. Its folders become the sidebar's sections, labelled with the folder name exactly as written, so folders are named the way readers should see them ("Server scripting", "Quests, dialogue and shops"). Their URLs are the lowercased, dashed form (`server-scripting/quests-dialogue-and-shops/`).
+  - `overview.md` is the introduction, with a task index, above every section.
+  - `Getting started/` is the beginner path, meant to be read in order: tools, running the default gamemode, a first resource, TypeScript, project layout, debugging.
+  - `Core concepts/` holds the ideas every other page leans on: authority, resources, events, networking, state, positions, virtual worlds, sharing code.
+  - `Server scripting/` is split by what the code acts on: `Players/`, `World and objects/`, `NPCs, horses and dogs/`, `Quests, dialogue and shops/`.
+  - `Client scripting/` covers code in each player's game, with interface APIs under `User interface/`.
+  - `Tutorials/` holds advanced, multi-file builds.
+  - `Hosting a server/` is for server operators.
+  - Page titles lead with the task or keyword a reader scans for ("Give and take items", not "Items").
+- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains. Each section owns a range (Getting started 10s, Core concepts 20s, Players 30s, World and objects 40s, NPCs 50s, Quests 60s, Client scripting 70s, User interface 80s, Tutorials 90s, Hosting 100s), so give a new guide an order inside its area's range.
 - Image directories live beside the Markdown document that references them.
 - `docs.config.json` owns the published site's generator pin, branding, links, navigation inputs, and community-content mapping.
 - `scripts/sync_contract.mjs` downloads and verifies the public scripting contract.
 - `scripts/docs.mjs` is the single local and CI generation entrypoint.
+- `scripts/check_guides.mjs` type-checks every code sample against the contract and lints the prose (`pnpm check`).
 - `src/styles/production.css` is the production theme shared by the standalone site and local preview.
-
-The closed-source mod repository owns only contract generation and publication. It does not render or deploy this website.
 
 ## Contributing
 
 Open a pull request with the guide or asset change. Keep local image references relative to the Markdown file and avoid active HTML such as scripts, forms, iframes, or inline event handlers.
 
 Guides document the API as it is, not as it is planned. Every global, function and property named in a guide should exist in the generated reference; when the two disagree the reference is right, because it comes from the runtime's own binding registrations.
+
+### Writing a guide
+
+- **One page, one topic.** Split a page before it passes about 250 lines.
+- **Frontmatter:** every page has a `title`, a one-sentence `description` and a `sidebar.order`.
+- **Plain punctuation.** No em or en dashes, and no `--` standing in for one. Write the way you would explain it to a colleague.
+- **Links** between guides use the page's route, relative to the page you are writing: from `guides/Getting started/typescript.md` (served at `guides/getting-started/typescript/`) the events page is `[Events](../../core-concepts/events/)`. Lowercase every folder and replace spaces with dashes. (A `.md` link cannot cross a folder whose name has a space in it.) Links into the API reference are relative `.md` links, as if `reference/` sat next to `guides/`: `[Player](../../../reference/server/classes/Player.md#teleport)` from a page two folders deep. Never use absolute `/...` links, because the site can be deployed under a base path. `pnpm check:site` verifies every link and anchor.
+- **Markdown only.** Asides (`:::note`, `:::tip[Title]`, `:::caution`, `:::danger`), titled code blocks (`title="src/server/index.ts"`), line markers (`{2-4}`, `ins={3}`, `del={5}`), `diff lang="ts"` blocks, `<details>` and tables all work. MDX components do not.
+- **The generator rejects a page** containing `<script`, `<style`, `<button`, `<meta`, `<link`, `<input`, `<form`, `<iframe`, `<object`, `<embed`, `<base`, an ` onX=` attribute or a `javascript:` URL anywhere, **code blocks included**. Show web pages without those tags, and put their JavaScript in its own block.
+
+### Code samples are checked
+
+`pnpm check` type-checks every `js` and `ts` block against the contract's own declarations, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
+
+- Blocks on pages under `guides/Client scripting/` use the client declarations; everything else uses the server's. A block whose first line is `// client` or `// server`, or whose title names a `client/` or `server/` path, picks its side explicitly.
+- Blocks titled with a file path are compiled together, so a tutorial's files can import each other (`./command.js`).
+- A few names are pre-declared so short samples need no setup: `player`, `target`, `horse`, `quest`, `npc`, `dog` and `session` on the server, `player` on the client. See `PLACEHOLDERS` in the script.
+- `<!-- check: skip -->` on the line before a fence skips a block that is not meant to compile on its own (a fragment, or browser code). Use it rarely.
+
+`pnpm check:site` additionally checks every link and anchor in the built `dist/`, so run it after `pnpm build`.
 
 ### Local preview
 
@@ -60,7 +87,7 @@ Until a contract has been published, and whenever you want to see an unpublished
 KCDC_CONTRACT_ROOT=/path/to/mod/build/scripting-contract pnpm build
 ```
 
-That bypasses the download and its integrity checks entirely, so use it for previewing only — CI always resolves a published, verified revision.
+That bypasses the download and its integrity checks entirely, so use it for previewing only; CI always resolves a published, verified revision.
 
 ### Known issues with services-cli 0.6.4
 
@@ -81,7 +108,9 @@ absent from the Linux runner CI uses:
 Before opening a pull request, verify the affected pages at desktop and mobile widths and run:
 
 ```sh
+pnpm check
 pnpm build
+pnpm check:site
 git diff --check
 ```
 
