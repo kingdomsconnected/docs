@@ -76,11 +76,11 @@ port, `max_players`, and the replicated `mod` settings such as the level.
 For a server other people join, open or forward both ports.
 [How players connect](../players-connecting/) covers routers and firewalls.
 
-## Ten players
+## Player limit
 
-A session holds at most ten players. That number is compiled into the
+A session holds at most 512 players. That number is compiled into the
 server, not just a default: `maxplayers` in `server.json` can lower it, but a
-larger value is clamped back to ten at boot with a warning.
+larger value is clamped back to 512 at boot with a warning.
 
 ## Command-line arguments
 

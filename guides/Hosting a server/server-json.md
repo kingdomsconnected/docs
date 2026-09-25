@@ -18,7 +18,7 @@ This is the file a fresh server writes:
     "apiport": 27016,
     "host": "0.0.0.0",
     "map": "",
-    "maxplayers": 10,
+    "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
         "required_dlc": []
@@ -38,7 +38,7 @@ Edit it while the server is stopped; it is read once, at boot.
 | `port` | `27015` | Game session port, UDP |
 | `apihost` | `"0.0.0.0"` | Address the HTTP endpoints bind to |
 | `apiport` | `27016` | HTTP port, TCP |
-| `maxplayers` | `10` | Player slots. Lower it if you like; anything above 10 is clamped back to 10 with a warning, because the cap is compiled in |
+| `maxplayers` | `512` | Player slots. Lower it if you like; anything above 512 is clamped back to 512 with a warning, because the cap is compiled in |
 | `server-token` | `""` | Masterlist token, see below |
 | `map` | `""` | A framework key KCDC does not use. The level is `mod.level` |
 

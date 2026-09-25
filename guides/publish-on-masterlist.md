@@ -65,7 +65,7 @@ Leave every other key as it is:
   "port": 27015,
   "apihost": "0.0.0.0",
   "apiport": 27016,
-  "maxplayers": 10,
+  "maxplayers": 512,
   "server-token": "paste-your-push-key-here",
   "mod": {
     "level": "kutnohorsko",
@@ -76,8 +76,8 @@ Leave every other key as it is:
 
 :::caution[Do not paste the dashboard's whole file]
 The dashboard offers a ready-made `server.json`. It is written for every
-MafiaHub mod, so it has `"maxplayers": 64` (KCDC holds 10, and clamps it) and
-no `mod` block. Pasting it over your file resets your level and DLC settings.
+MafiaHub mod, so it has `"maxplayers": 64`, which caps your server well below
+KCDC's 512 slots, and no `mod` block. Pasting it over your file resets your level and DLC settings.
 Copy only the `server-token` line.
 :::
 

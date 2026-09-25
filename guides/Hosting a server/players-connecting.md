@@ -90,7 +90,7 @@ KCDCLauncher.exe "kcdc://play.example.com?nickname=Hana"
    events; [Player join and leave events](../../server-scripting/players/lifecycle/) has the
    order.
 
-A full server, ten players or your lower `maxplayers`, turns the next player
+A full server, 512 players or your lower `maxplayers`, turns the next player
 away.
 
 ## Making the server reachable
