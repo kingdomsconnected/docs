@@ -75,6 +75,7 @@ this is where it lives:
 | React to any game event | [Events and handlers](../core-concepts/events/) (the full list) |
 | Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
 | Bind a key, show a menu or a HUD message | [Key binds](../client-scripting/input/), [HTML pages](../client-scripting/user-interface/web-views/), [HUD messages](../client-scripting/user-interface/hud/) |
+| Show what players are doing in their Discord profile | [Discord Rich Presence](../client-scripting/discord-presence/) |
 | Get my server listed in the in-game server browser | [List your server in the server browser](../publish-on-masterlist/) |
 | Understand why a verb returns before anything happened | [Server vs client authority](../core-concepts/authority/) |
 
