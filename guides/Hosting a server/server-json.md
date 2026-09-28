@@ -1,6 +1,6 @@
 ---
 title: server.json settings
-description: Set the ports, player slots, level and required DLCs in server.json.
+description: Set the ports, player slots, join password, level and required DLCs in server.json.
 sidebar:
   label: server.json
   order: 102
@@ -21,6 +21,7 @@ file is missing, the server writes one with every key and its default:
         "level": "kutnohorsko",
         "required_dlc": []
     },
+    "password": "",
     "port": 27015,
     "server-token": ""
 }
@@ -35,12 +36,56 @@ file is missing, the server writes one with every key and its default:
 | `apihost` | `"0.0.0.0"` | Address the HTTP endpoints bind to |
 | `apiport` | `27016` | HTTP port, TCP |
 | `maxplayers` | `512` | Player slots. Values above 512 are clamped to 512 with a warning |
+| `password` | `""` | Password players must give to join. Empty lets anyone in. See [Password](#password) |
 | `server-token` | `""` | Masterlist push key. Empty means the server is not listed in the server browser |
 | `map` | `""` | Unused by KCDC. The level is `mod.level` |
 
 Get a token and check the listing with [Server browser listing](../server-browser/).
 The matching [command-line arguments](../run-a-server/#command-line-arguments)
 override these keys for one run; nothing overrides `maxplayers` or `mod`.
+
+## Password
+
+Set `password` to make players type it before they can join:
+
+```json title="server.json"
+{
+    "password": "correct horse battery staple"
+}
+```
+
+Only change that line. Leave the rest of the file as the server wrote it.
+Restart the server after changing it. The startup log shows whether a password
+is set:
+
+```text
+Password:	required
+```
+
+`"password": ""`, the default, lets anyone in. The server checks the password
+during the connection handshake, before the player downloads anything. A wrong
+or missing password is refused with:
+
+```text
+The server refused the password.
+```
+
+Players enter it under **Connect directly** in the launcher menu, or pass it
+in a [join link](../players-connecting/#join-with-a-link)
+(`kcdc://host:port?password=...`). The server browser shows a padlock next to
+a server with a password and asks for it before joining. The status document
+at `http://<host>:<apiport>/` shows `"password_required": true`, but never the
+password itself.
+
+- **Keep it to 63 bytes.** The server accepts up to 255 bytes and refuses to
+  start with a longer one. The client only accepts 63, so players cannot enter
+  a longer password. Plain ASCII characters are one byte each.
+- **`--password` overrides it** for one run
+  ([options](../options-and-overrides/#command-line-options)). The key in the
+  file is safer, because a command line shows up in process lists.
+- **It is shared, not per player.** Everyone uses the same password. To stop
+  someone who already knows it, change it and restart.
+- It needs KCDC 1.5.1 or later. Older servers ignore the key.
 
 ## When the file is wrong
 
@@ -130,4 +175,4 @@ game's own names, such as ForgeTycoon or MysteriaEcclesiae.
 
 - [Run a dedicated server](../run-a-server/): ports, arguments and the console.
 - [Server browser listing](../server-browser/): get and use a `server-token`.
-- [Let players connect](../players-connecting/): what players see when a DLC is missing.
+- [Let players connect](../players-connecting/): where players enter the password, and what they see when a DLC is missing.

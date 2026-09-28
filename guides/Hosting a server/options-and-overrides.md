@@ -49,6 +49,7 @@ This is the complete list, as `KCDCServer --help` prints it:
 | `--apihost` | `-H` | `0.0.0.0` | Address the HTTP endpoints bind to |
 | `--config` | `-c` | `server.json` | Configuration file, relative to the working directory |
 | `--server-token` | `-t` | none | Masterlist push token; the server is listed only when it is set |
+| `--password` | | none | Password players must give to join; empty lets anyone in |
 | `--help` | | | Print the list and exit |
 
 There is no option for `maxplayers` or anything under `mod`: set those in
@@ -64,6 +65,7 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `apiport` | `27016` | `--apiport` | |
 | `maxplayers` | `512` | none | Can only lower the cap; above 512 is clamped with a warning |
 | `server-token` | `""` | `--server-token` | [Server browser listing](../server-browser/) |
+| `password` | `""` | `--password` | [Join password](../server-json/#password), 63 bytes at most |
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `map` | `""` | none | Not used by KCDC |
@@ -82,8 +84,9 @@ has the full rules.
 | Hold fewer players | `maxplayers` below 512 |
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
+| Make a private server | `password`, see [Password](../server-json/#password). Share it with your players |
 | Appear in the in-game server browser | `server-token`, see [Server browser listing](../server-browser/) |
-| Keep the token out of process lists | Put it in `server.json`, not on the command line or in an egg variable |
+| Keep the token or password out of process lists | Put it in `server.json`, not on the command line or in an egg variable |
 | Run a different gamemode | Replace `resources/kcdc-gamemode` with your own resource, or add yours beside it |
 | Run with no gamemode at all | Empty `resources/`. Players still connect; no `/` command answers. In a container, see below |
 | Reload scripts without a restart | `ensure <resource>` in the [console](../run-a-server/#console-commands) |

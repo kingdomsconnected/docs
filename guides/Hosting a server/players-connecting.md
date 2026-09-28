@@ -20,8 +20,8 @@ reachable.
 3. **Launch.** Run `client\KCDCLauncher.exe`.
 4. **Connect.** On the KCDC menu, set your nickname, then pick a server:
    - **Server browser**: servers listed on the masterlist.
-   - **Connect directly**: host, port (usually 27015) and password (leave it
-     empty; servers have no password setting yet).
+   - **Connect directly**: host, port (usually 27015) and password. Leave the
+     password empty unless the host gave you one.
    - **Quick connect**: `127.0.0.1:27015`, a server on the same machine.
 
 Use the same KCDC version as the server. Nothing refuses a mismatch; it just
