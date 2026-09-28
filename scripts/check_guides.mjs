@@ -14,7 +14,7 @@
 //   whole page and applies inside code blocks too.
 //
 // A block is checked against the server declarations unless the guide lives
-// under `guides/Client scripting/`, its first line is a `// client` comment, or its title
+// under `guides/Client scripting/` or `guides/User interface/`, its first line is a `// client` comment, or its title
 // names a `client/` path. `// server` does the opposite. A `<!-- check: skip -->`
 // comment on the line before a fence skips that block, which is for fragments
 // that are not statements, like one option inside an object literal; a
@@ -49,7 +49,7 @@ import { syncContract } from "./sync_contract.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const guidesRoot = path.join(root, "guides");
 
-// Mirrors guides/start/typescript.md. The contract leaves these out, and a
+// Mirrors guides/Getting started/typescript.md. The contract leaves these out, and a
 // TypeScript resource needs them to compile.
 const RUNTIME = {
   server: `
@@ -180,6 +180,9 @@ const proseLines = (markdown) => {
   return result;
 };
 
+// Sections whose pages are client code unless a block says otherwise.
+const CLIENT_SECTIONS = new Set(["Client scripting", "User interface"]);
+
 const titleOf = (meta) => meta.match(/title="([^"]+)"/)?.[1];
 
 const environmentOf = (relative, block) => {
@@ -190,7 +193,7 @@ const environmentOf = (relative, block) => {
   const title = titleOf(block.meta) ?? "";
   if (/(^|\/)client\//.test(title)) return "client";
   if (/(^|\/)server\//.test(title)) return "server";
-  return relative.split("/")[1] === "Client scripting" ? "client" : "server";
+  return CLIENT_SECTIONS.has(relative.split("/")[1]) ? "client" : "server";
 };
 
 // Every relative href in a built guide page has to reach a page that exists,

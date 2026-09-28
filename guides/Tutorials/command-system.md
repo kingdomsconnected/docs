@@ -2,35 +2,47 @@
 title: Build a /command system
 description: Turn playerCommand into a registry of one-file commands with usage lines, quoted arguments, async commands and a generated /help.
 sidebar:
+  label: /command system
   order: 90
 ---
 
-The server hands every `/` line to one event, `playerCommand`, and does nothing else with it. A handler with a `switch` in it is fine for three commands. Past that you want each command in its own file, a shared way to answer the caller, and a `/help` that can never fall out of date.
+You will build a command registry where each `/command` lives in its own file. In game, `/give "Hunting Sword"` works with spaces in the name, a bad argument answers with the command's usage, and `/help` always lists exactly the commands the server answers.
 
-You will build the same shape the default gamemode uses (its `src/server/command.ts`), cut down to what you would type in:
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/): this tutorial reuses that `tsconfig.json` and `types/runtime.d.ts`.
+- [Chat and /commands](../../players/chat/) for `playerCommand` and `Chat`.
+- [Items: give, take and drop](../../players/items/) for `giveItem` and `takeItem`.
 
-- `/give <item> [amount]` and `/take <item> [amount]`, with item names in quotes when they contain spaces,
-- `/take` as an async command, because taking items is a round trip to the player's client,
-- `/help` and `/help <command>`, built from the registry itself.
+Difficulty: intermediate. Time: about 30 minutes.
+:::
+
+## What you will learn
+
+- Routing every `/` line from one [`playerCommand`](../../players/chat/) handler to a command object.
+- Rebuilding "quoted arguments", which the server splits on spaces.
+- Writing an async command around [`takeItem`](../../players/items/), and catching what it throws.
+- Generating `/help` from the registry so it never falls out of date.
 
 ```text
 my-commands/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   src/server/
-    index.ts
-    command.ts
-    args.ts
+    index.ts             builds the registry, handles playerCommand
+    command.ts           Command, CommandContext, CommandRegistry
+    args.ts              quoted values and amounts
     commands/
       give.ts
       take.ts
       help.ts
 ```
 
-`tsconfig.json` and `types/runtime.d.ts` are the ones from [Use TypeScript](../../getting-started/typescript/). Everything here is server code, so there is no client program.
+It is all server code, cut down from the default gamemode's `src/server/command.ts`.
 
-## 1. The manifest
+## 1. Write the manifest
+
+The resource has a server program only.
 
 ```json title="package.json"
 {
@@ -48,9 +60,9 @@ my-commands/
 }
 ```
 
-## 2. The vocabulary
+## 2. Define a command and the registry
 
-A command is a plain object: a name, a one-line summary for `/help`, every form of its usage, and a `run` function. `run` gets a context instead of raw arguments, so every command answers the caller the same way.
+A command is a plain object: a name, a one-line summary, its usage forms and a `run` function. `run` gets a context instead of raw arguments, so every command answers the caller the same way.
 
 ```ts title="src/server/command.ts"
 /** One player's chat channel. */
@@ -128,11 +140,11 @@ export class CommandRegistry {
 }
 ```
 
-The `catch` on the promise matters. Without it, an async command that throws after its first `await` becomes an unhandled rejection in the server log, and the player who typed it hears nothing.
+- `running.catch(fail)` matters: without it, an async command that throws after its first `await` becomes an unhandled rejection in the log, and the player hears nothing.
 
-## 3. Reading arguments
+## 3. Read quoted arguments and amounts
 
-The server splits a command line on whitespace and nothing else, so `/give "Hunting Sword"` arrives as two arguments, `"Hunting` and `Sword"`. Rebuilding quoted runs is your job.
+The server splits a command line on whitespace only, so `/give "Hunting Sword"` arrives as `"Hunting` and `Sword"`. These helpers rebuild the quoted run and validate an amount.
 
 ```ts title="src/server/args.ts"
 /** One value at `from`: a bare word, or a "quoted run" rebuilt from the words it was split into. */
@@ -163,9 +175,9 @@ export function readAmount(raw: string | undefined, max = 10000): number | null 
 }
 ```
 
-The 10000 is not arbitrary: it is the most `giveItem` and `takeItem` accept in one call.
+- 10000 is the most `giveItem` and `takeItem` accept in one call.
 
-## 4. The commands
+## 4. Write the commands
 
 One file per command. `/give` is synchronous: [`giveItem`](../../reference/server/classes/Player.md#giveitem) sends an instruction to the player's client and returns straight away.
 
@@ -194,7 +206,7 @@ export const giveCommand: Command = {
 };
 ```
 
-`/take` has to wait. The server keeps no inventory, so [`takeItem`](../../reference/server/classes/Player.md#takeitem) asks the client and resolves when it answers. Making `run` async is all it takes; the registry already catches what it throws.
+`/take` has to wait: the server keeps no inventory, so [`takeItem`](../../reference/server/classes/Player.md#takeitem) asks the client and resolves when it answers. An async `run` is all it takes, because the registry already catches what it throws.
 
 ```ts title="src/server/commands/take.ts"
 import { readAmount, readQuoted } from "../args.js";
@@ -222,10 +234,10 @@ export const takeCommand: Command = {
 ```
 
 :::caution
-Anything can happen during an `await`, including the player disconnecting. Here the only thing left to do is send a chat line, which is harmless. A command that touches game state after an `await` should look the player up again with `Player.getById(id)` and stop if it is gone.
+The player can disconnect during an `await`. Sending a chat line afterwards is harmless, but a command that touches game state after an `await` should look the player up again with `Player.getById(id)` and stop if it is gone.
 :::
 
-`/help` is the one command that needs the registry, so it is a function that builds a command rather than a constant.
+`/help` needs the registry, so it is a function that builds a command rather than a constant.
 
 ```ts title="src/server/commands/help.ts"
 import type { Command, CommandRegistry } from "../command.js";
@@ -252,9 +264,9 @@ export function helpCommand(registry: CommandRegistry): Command {
 }
 ```
 
-## 5. Wiring it up
+## 5. Wire it to playerCommand
 
-The entry point builds the registry and connects it to `playerCommand`. `/help` is added last so it can list everything, itself included.
+The entry point builds the registry and connects it to `playerCommand`. `/help` is added last so it lists everything, itself included.
 
 ```ts title="src/server/index.ts"
 import { CommandRegistry } from "./command.js";
@@ -273,32 +285,26 @@ Events.on("playerCommand", (player, command, args) => {
 });
 ```
 
-:::caution[Two resources, one command line]
-Every resource with a `playerCommand` handler sees every `/` line. If another resource also answers "unknown command", a player typing a command that one of you owns gets a correct answer and a wrong one. The default gamemode does this, and it also owns `/give`, `/take` and `/help`, so stop it while you try this resource. In a real server, pick one resource to own the "unknown" reply and keep the others silent.
-:::
+- A new command is now one new file and one name in `commands.add`.
 
-Adding a command from now on is one new file and one name in `commands.add`.
+:::caution[Two resources, one command line]
+Every resource with a `playerCommand` handler sees every `/` line. If two of them answer "unknown command", players get a right answer and a wrong one. The default gamemode does this and also owns `/give`, `/take` and `/help`, so stop it while you try this resource. On a real server, let one resource own the "unknown" reply.
+:::
 
 ## Try it
 
-Build the resource, then from the server console:
-
-```sh title="Server console"
-stop kcdc-gamemode
-ensure my-commands
-```
-
-In game:
+Build the resource, then run `stop kcdc-gamemode` and `ensure my-commands` in the server console. In game:
 
 1. `/help` lists three commands, and `/help take` shows the usage of one.
 2. `/give bread 3` puts three loaves in your inventory.
-3. `/take bread 5` takes the three you have and tells you it could not find the other two.
-4. `/give bread lots` answers with the amount rule instead of doing anything.
+3. `/take bread 5` takes the three you have and says it could not find the other two.
+4. `/give bread lots` answers with the amount rule and does nothing.
 
 `start kcdc-gamemode` brings the default commands back.
 
-## Where to go next
+## Next steps
 
-- [Chat messages and /commands](../../server-scripting/players/chat/) covers `Chat` and `playerCommand` on their own.
-- [Build an in-game HTML panel](../game-panel/) puts a page on screen that can send these same lines.
-- The default gamemode's `src/server/commands/` has two dozen commands written this way.
+- Add a `/heal` or `/tp` command as one more file, using [Teleport, kick and other player actions](../../players/actions/).
+- Add an `adminOnly` flag to `Command`, check it in `dispatch` against your own list of admins, and leave those commands out of `/help` for everyone else.
+- Send these same lines from a page with [Build an in-game HTML panel](../game-panel/).
+- Read the default gamemode's `src/server/commands/` for two dozen commands written this way.

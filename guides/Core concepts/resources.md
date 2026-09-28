@@ -1,15 +1,14 @@
 ---
 title: Resource manifest and lifecycle
-description: What a resource is, every field of its package.json, the order resources start in, and what happens when one stops or reloads.
+description: Write a resource's package.json, order resources with dependencies, run code on start and stop, choose what happens on errors, and reload while the server runs.
 sidebar:
+  label: Resources
   order: 21
 ---
 
 A resource is a folder under the server's `resources/` directory with a
-`package.json` in it. Everything a server does beyond moving bodies around
-comes from resources, including every `/` command: the default gamemode,
-`kcdc-gamemode`, is one. The server starts every resource it finds at boot, and
-you can stop, start and reload them from the console while it runs.
+`package.json` in it. The server starts every resource it finds at boot; the
+default gamemode, `kcdc-gamemode`, is one.
 
 ```json title="resources/my-mode/package.json"
 {
@@ -23,37 +22,31 @@ you can stop, start and reload them from the console while it runs.
 }
 ```
 
-The resource's name is the manifest's `name`, not the folder's. That is the
-name the console verbs, `resourceStart`, `Exports` and web view URLs use.
+The resource's name is the manifest's `name`, not the folder's. Console
+commands, `resourceStart`, `Exports` and web view URLs all use it.
 
-## The manifest
-
-Standard fields sit at the top level. Everything the framework reads beyond
-them lives in the `mafiahub` object.
+## Manifest fields
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `name` | required | The resource's name. If two folders use the same name, only one is loaded and the log warns about the other. |
+| `name` | required | The resource's name. If two folders share one, only one loads and the log warns. |
 | `version` | `"1.0.0"` | Shown in the logs. |
 | `description`, `author` | empty | Informational. |
 | `mafiahub.serverScripts` | `[]` | Run on the server, in the order written. Never sent to players. |
 | `mafiahub.clientScripts` | `[]` | Run on every client, in the order written. Sent to players. |
 | `mafiahub.sharedScripts` | `[]` | Run on both sides, **before** that side's own scripts. Sent to players. |
-| `mafiahub.files` | `[]` | Sent to clients but not run: web pages, styles, images, fonts. Globs allowed. |
-| `mafiahub.resourceDependencies` | `[]` | Resources that must start before this one. See below. |
-| `mafiahub.exports` | `[]` | Names this resource may register with `Exports.register`. See [Sharing code](../sharing/). |
-| `mafiahub.errorBehavior` | `"stop"` | What happens after an uncaught error on the server: `"stop"`, `"restart"` or `"continue"`. |
-| `mafiahub.priority` | `0` | Accepted, but the current framework does not use it for anything. |
+| `mafiahub.files` | `[]` | Sent to clients but not run: pages, styles, images, fonts. Globs allowed. Empty means the folder of your client scripts. |
+| `mafiahub.resourceDependencies` | `[]` | Resources that must start first. See below. |
+| `mafiahub.exports` | `[]` | Names this resource may `Exports.register`. See [Share code between resources](../sharing/). |
+| `mafiahub.errorBehavior` | `"stop"` | After an uncaught server error: `"stop"`, `"restart"` or `"continue"`. |
+| `mafiahub.priority` | `0` | Accepted but unused. It does not order anything. |
 
-Script paths are relative to the resource folder and do not take globs, so the
-order you write is exactly the order they run. `files` does take globs. If you
-leave `files` empty, the server falls back to sending the folder your client
-scripts live in.
+Script paths are relative to the resource folder and take no globs, so they
+run exactly in the order written.
 
 :::caution
-Anything in `clientScripts`, `sharedScripts` or `files` ends up on every
-player's disk. Keep secrets, admin lists and database credentials in server
-scripts only.
+Everything in `clientScripts`, `sharedScripts` and `files` ends up on every
+player's disk. Keep secrets, admin lists and credentials in server scripts.
 :::
 
 <details>
@@ -69,44 +62,34 @@ lists.
 
 ## Start order and dependencies
 
-The server starts resources in dependency order: everything in a resource's
-`resourceDependencies` is started first. Between resources that do not depend
-on each other, the order is not something to rely on.
+Resources start in dependency order. Between resources that do not depend on
+each other, the order is not something to rely on.
 
 ```json title="resources/my-shop/package.json"
 {
   "name": "my-shop",
   "mafiahub": {
     "serverScripts": ["server.js"],
-    "resourceDependencies": [
-      "my-economy",
-      { "name": "my-discord-log", "optional": true }
-    ]
+    "resourceDependencies": ["my-economy", { "name": "my-discord-log", "optional": true }]
   }
 }
 ```
 
-A dependency is a name, or an object with `name`, `version` and `optional`.
-The `version` is recorded but not checked.
+A dependency is a name, or an object with `name`, `version` (recorded, not
+checked) and `optional`.
 
-- A **required** dependency that is not installed stops the whole boot: the
-  server logs `Failed to start resources: Resource 'my-shop' depends on missing
-  resource 'my-economy'` and starts nothing at all. A dependency that is
-  installed but fails to start fails only the resources that need it.
-- An **optional** dependency is started first when it is there, and skipped
-  with a warning when it is missing or fails.
-- A dependency cycle also stops the boot.
+| Case | Result |
+| --- | --- |
+| Required dependency not installed | The whole boot stops: `Resource 'my-shop' depends on missing resource 'my-economy'`. Nothing starts. |
+| Required dependency installed but fails to start | Only the resources that need it fail. |
+| Optional dependency missing or failing | Skipped with a warning. |
+| Dependency cycle | The whole boot stops. |
 
-`priority` looks like it should order resources, and the default gamemode even
-sets it, but nothing reads it. Use `resourceDependencies`.
+## Run code on start
 
-## Starting
-
-When a resource starts, its scripts run top to bottom, then `resourceStart`
-fires, and only then is the resource running. `resourceStart` goes to every
-resource's handlers, not just the one starting, so compare the name. There is
-no API that tells a script its own resource name; keep it in a constant, as the
-default gamemode does with `RESOURCE`.
+A starting resource runs its scripts top to bottom, then `resourceStart` fires.
+It fires for every resource, so compare the name. No API tells a script its
+own name; keep it in a constant.
 
 ```ts
 // server
@@ -122,100 +105,79 @@ async function loadScores(): Promise<void> {
 }
 ```
 
-Handlers may be `async`, and the server waits for them. A resource does not
-count as running, and nothing that depends on it starts, until every
-`resourceStart` handler has settled. If one rejects, or they take longer than
-30 seconds, the start fails and everything the resource had registered is
-cleaned up.
+The server awaits async handlers. The resource is not running, and its
+dependents do not start, until every handler settles. A rejection, or more
+than 30 seconds, fails the start and cleans up what it registered.
 
-## Stopping
+## Stop a resource
 
-`resourceStop` fires first, while the resource can still use everything it
-had. Like `resourceStart`, it goes to every resource. The server waits up to 10
-seconds for async handlers, logs loudly if they reject or time out, and then
-cleans up regardless.
+`resourceStop` fires first, for every resource, while yours can still use
+everything. The server waits up to 10 seconds for async handlers, logs a
+rejection or timeout, then cleans up anyway. Dependents stop first.
 
-When a resource stops, its dependents stop first, and the framework removes:
+The framework then removes:
 
-- its event handlers (`Events.on`, `once`, `onClient`, `onLocal`) and state
-  bag `onChange` subscriptions,
-- its `setTimeout` and `setInterval` timers,
-- its message handlers and exports; pending `Messages.request` calls to or
-  from it reject,
-- on the server, the entities it spawned: props, horses, NPCs, markers and the
-  rest,
-- on a client, its web views, key binds, `Controls` holds, prop placement and
-  native UI.
+- event handlers (`on`, `once`, `onClient`, `onLocal`) and state bag `onChange` subscriptions
+- `setTimeout` and `setInterval` timers
+- message handlers and exports; pending `Messages.request` calls to or from it reject
+- on the server, every entity it spawned (props, horses, NPCs, markers...)
+- on a client, its web views, key binds, `Controls` holds, prop placement and native UI
 
-What it does not know about stays behind: listeners you added to your own
-`EventEmitter` or to `process`, and timers created through `require('timers')`
-instead of the globals. Remove those in `resourceStop`.
+Remove anything else yourself in `resourceStop`: listeners on your own
+`EventEmitter` or on `process`, and timers from `require('timers')`.
 
-## Errors
+## Handle errors
 
-An event handler that throws is caught: the error and its stack go to the
-log, and the resource keeps running. An async handler that rejects does not
-stop anything either; its error is collected into the promise the emitter gets
-back (see [Events](../events/#async-handlers)).
-
-`errorBehavior` is about the errors nothing catches, on the server: an
-exception thrown from a timer callback, or a promise rejection nobody handles.
-The server attributes it to the resource whose file appears in the stack.
+An event handler that throws is caught and logged; the resource keeps running.
+A rejected async handler rejects the emitter's promise (see
+[Events](../events/#async-handlers)). `errorBehavior` covers what nothing
+catches on the server: a throw in a timer callback, or an unhandled rejection.
+It is charged to the resource whose file appears in the stack.
 
 | `errorBehavior` | After an uncaught error |
 | --- | --- |
-| `"stop"` | The resource is marked as failed. `ensure` it to bring it back. |
-| `"restart"` | The resource is started again after a delay of a second or more. |
-| `"continue"` | The error is logged and nothing else is done. |
+| `"stop"` | The resource is marked failed. `ensure` it to bring it back. |
+| `"restart"` | The resource starts again after a second or more. |
+| `"continue"` | The error is logged; nothing else happens. |
 
 :::caution
-Whichever you choose, an uncaught error marks the resource as failed, and the
-server despawns the entities it had spawned. Catch errors inside timer
-callbacks and at the end of fire-and-forget promise chains rather than relying
-on `errorBehavior`.
+Whatever you choose, an uncaught error marks the resource failed and despawns
+its entities. Catch errors in timer callbacks and at the end of
+fire-and-forget promise chains.
 :::
 
-## Reloading while the server runs
+## Reload while the server runs
 
-These console verbs work on a running server. They are covered in more detail
-in [Server console commands](../../hosting-a-server/console/).
-
-| Verb | Does |
+| Console command | Does |
 | --- | --- |
 | `start <name>` | Starts a stopped resource. |
-| `stop <name>` | Stops a running resource. `stop` with no name shuts the server down. |
-| `restart <name>` | Stops a running resource and starts it again with fresh code. |
-| `ensure <name>` | Starts it if stopped, restarts it if running. The one to use while developing. |
-| `refresh` | Rescans the resources folder for new resources, and leaves them stopped. |
+| `stop <name>` | Stops a running resource. `stop` alone shuts the server down. |
+| `restart <name>` | Stops a running resource and starts it with fresh code. |
+| `ensure <name>` | Starts it if stopped, restarts it if running. Use this while developing. |
+| `refresh` | Rescans the folder for new resources; leaves them stopped. |
 | `refreshall` | Rescans, then reloads everything that was running. |
 
-A restart re-reads `package.json` and your script files from disk, so edited
-code and manifest changes both take effect. Dependents that were stopped along
-with it start again afterwards. Connected players follow automatically: their
-client downloads only the files that changed and restarts its half of the
-resource in place.
+A restart re-reads `package.json` and scripts from disk, and restarts the
+dependents it stopped. Connected clients download only changed files and
+restart their half in place. There is no file watcher: rebuild, then
+`ensure my-mode`.
 
 :::note
-Reloading relies on the CommonJS module cache, which is what a TypeScript
-resource compiled to CommonJS uses. Modules you load with a dynamic `import()`
-are not re-read on reload.
+Reloading relies on the CommonJS module cache, which a TypeScript resource
+compiled to CommonJS uses. Modules loaded with dynamic `import()` are not
+re-read.
 :::
 
-There is no file watcher on a KCDC server: nothing reloads by itself when you
-save. Rebuild, then type `ensure my-mode`.
+## Share one runtime
 
-## One runtime for everyone
-
-All server resources share one Node.js runtime, and all client resources on a
-machine share one script context. Each resource's modules are separate, so a
-top-level `const` in one file does not leak into another resource. But
-`globalThis` is shared, and so is the event bus. Prefix your event names with
-your resource name (`"my-mode:round.start"`) and do not put things on
-`globalThis`.
+All server resources share one Node.js runtime; all client resources on a
+machine share one script context. Modules stay separate, but `globalThis` and
+the event bus are shared. Prefix event names (`"my-mode:round.start"`) and
+keep things off `globalThis`.
 
 ## Related
 
-- [Write your first resource](../../getting-started/first-resource/)
-- [Events](../events/)
-- [Exports and messages between resources](../sharing/)
-- [Show an HTML page (web views)](../../client-scripting/user-interface/web-views/)
+- [Write your first resource](../../getting-started/first-resource/): a manifest in practice
+- [Events](../events/): `resourceStart`, `resourceStop` and handler errors
+- [Share code between resources](../sharing/): `exports` and dependencies
+- [Console commands](../../hosting-a-server/run-a-server/#console-commands): the full console list

@@ -1,27 +1,27 @@
 ---
 title: Key binds and controls
-description: Bind keys with Key, poll them, and take the player's movement or show a pointer with Controls.
+description: Bind keys and mouse buttons with Key, poll them, and take the player's movement or show a pointer with Controls.
 sidebar:
+  label: Key binds
   order: 71
 ---
 
-[`Key`](../../reference/client/variables/Key.md) lets a client resource react
-to a physical key or mouse button. [`Controls`](../../reference/client/variables/Controls.md)
-does the opposite: it takes gameplay input away from the game, or draws a mouse
-pointer, while your resource needs it. Both exist only on the client.
+[`Key`](../../reference/client/variables/Key.md) runs your code when the player
+presses a key or mouse button. [`Controls`](../../reference/client/variables/Controls.md)
+takes gameplay input away from the game, or draws a mouse pointer, while your
+resource needs it. Both are client-only.
 
 ```ts
-Key.bind("f6", () => {
-  Hud.showInfoText("F6 pressed");
+Key.bind("g", () => {
+  Hud.showInfoText("G pressed");
 });
 ```
 
-## Binding a key
+## Bind a key
 
-`Key.bind(key, state, handler)` installs a handler. `state` is `"down"`,
-`"up"` or `"both"`; leave it out and pass the handler second to get `"down"`.
-The handler is called with the key name and the edge that actually fired, which
-is how one handler serves both edges:
+`Key.bind(key, state, handler)` takes `state` as `"down"`, `"up"` or `"both"`.
+Leave it out and pass the handler second to get `"down"`. The handler receives
+the key name and the edge that fired.
 
 ```ts
 let aiming = false;
@@ -31,20 +31,17 @@ Key.bind("mouse2", "both", (key, state) => {
 });
 
 Key.bind("e", "down", () => {
-  if (Key.isDown("lshift")) {
-    Events.emitServer("my-mode:interact", { alt: true });
-  } else {
-    Events.emitServer("my-mode:interact", { alt: false });
-  }
+  Events.emitServer("my-mode:interact", { alt: Key.isDown("lshift") });
 });
 ```
 
-`Key.isDown(key)` reads the live state of a key, which is what a modifier check
-or your own polling loop wants.
+`Key.isDown(key)` reads the live state of a key, for a modifier check or your
+own polling.
 
-To remove a bind, call `Key.unbind(key, state?, handler?)`. With only the key it
-removes every bind your resource has on that key; pass the state and the exact
-function to remove one:
+## Remove a bind
+
+`Key.unbind(key, state?, handler?)` with only the key removes every bind your
+resource has on it. Pass the state and the same function to remove one:
 
 ```ts
 const jump = (): void => {
@@ -55,13 +52,14 @@ Key.bind("space", "down", jump);
 Key.unbind("space", "down", jump);
 ```
 
-`unbind` only touches binds your own resource made, so it cannot remove
-another resource's handler by accident.
+`unbind` only touches your own resource's binds. When your resource stops or
+is hot-reloaded, all its binds are removed, so no `resourceStop` cleanup is
+needed.
 
 ## Key names
 
-Names are case-insensitive. Binding a name that is not in this table throws, so
-a typo fails at start-up rather than silently never firing.
+Names are case-insensitive. Binding a name not in this table throws, so a typo
+fails at start-up.
 
 | Group | Names |
 | --- | --- |
@@ -87,53 +85,43 @@ function bindFromConfig(name: string, handler: () => void): boolean {
 }
 ```
 
-:::caution[Keys that are already taken]
-F5 to F7 and F9 belong to the client itself (F7 opens the map editor), which is
-why the default gamemode puts its panel on F4. Voice push-to-talk is on `v`
-unless the player moved it. Nothing stops you binding these, but both actions
-will happen.
-:::
+### Keys already in use
 
-There is no rebinding menu for resource binds yet: the key you ask for is the
-key the player gets. If players need a choice, store it yourself and bind
-whatever they picked.
+Nothing stops you binding these, but both actions will happen:
+
+| Key | Used by |
+| --- | --- |
+| `f5`, `f6`, `f7`, `f9` | the client itself (`f7` opens the map editor) |
+| `f4` | the default gamemode's panel |
+| `v` | voice push-to-talk, unless the player moved it |
+
+There is no rebinding menu for resource binds yet. If players need a choice,
+store it yourself and bind what they picked.
 
 ## When binds fire
 
-A bind fires only when the player could otherwise be walking around:
+A bind fires only while:
 
 - the client is in a session,
-- nothing is capturing typed input: the chat box, a game menu, one of the mod's
-  native screens, or a focused [web view](../user-interface/web-views/), and
+- nothing captures typed input (the chat box, a game menu, one of the mod's
+  native screens, a focused [web view](../../user-interface/web-views/)), and
 - the game window is in the foreground.
 
-While any of those is false, key edges are swallowed and `isDown` answers
-`false`. A key pressed while the chat box is open does not fire when it closes.
-That is what keeps typing a message from triggering gameplay actions.
-
-Binds are polled once per frame, so they detect edges at the game's frame rate.
-That is fine for actions and too coarse for text entry; use a web view with a
-real text field for that.
+Otherwise key edges are swallowed and `isDown` answers `false`. A key pressed
+while the chat box is open does not fire when it closes. Binds are polled once
+per frame: fine for actions, too coarse for text entry (use a web view).
 
 :::caution
-`Controls.disable`, [placement](../placement/) and a [Free camera (noclip)](../noclip/) do
-not stop your binds. A `mouse1` bind still fires on the click that confirms a
-placement. Check `PropPlacer.isActive()` in a handler that should stay quiet
-then.
+`Controls.disable`, [placement](../placement/) and the
+[free camera](../camera/) do not stop your binds. A `mouse1` bind still fires on
+the click that confirms a placement, so check `PropPlacer.isActive()` in a
+handler that should stay quiet then.
 :::
 
-## Binds belong to the resource
-
-When your resource stops, or is hot-reloaded, every bind it made is removed.
-You do not need to unbind anything in a `resourceStop` handler; binding again at
-start-up is enough.
-
-## Taking control away: `Controls`
+## Freeze the player: `Controls`
 
 `Controls.disable()` stops the camera turning and the character moving, without
-drawing a pointer. `Controls.enable()` gives back one hold. Holds are counted
-per resource: gameplay input returns only once nothing holds it, whether that
-is your resource, a focused panel, the chat line or an overlay.
+a pointer. `Controls.enable()` gives back one hold.
 
 ```ts
 Events.on("my-mode:round.countdown", () => {
@@ -144,22 +132,28 @@ Events.on("my-mode:round.countdown", () => {
 });
 ```
 
-`Controls.showCursor()` draws the mod's pointer without taking input, and
-`hideCursor()` gives that hold back. The pointer's shape follows the topmost
-focused page, so a page's own CSS `cursor` is what the player sees.
+Holds are counted per resource. Input returns only once nothing holds it: your
+resource, a focused panel, the chat line or an overlay.
 
-`isEnabled()` and `isCursorVisible()` answer for everyone, not just your
-resource: `isEnabled()` is `false` while anything holds input.
+## Show a mouse pointer
+
+`Controls.showCursor()` draws the mod's pointer without taking input;
+`hideCursor()` gives that hold back. The pointer's shape follows the topmost
+focused page, so a page's CSS `cursor` is what the player sees.
+
+`isEnabled()` and `isCursorVisible()` answer for everyone: `isEnabled()` is
+`false` while anything holds input.
 
 :::tip
 Pair every `disable` with an `enable` and every `showCursor` with a
-`hideCursor`. A call to `enable` your resource has no hold for does nothing, so
-it cannot release someone else's. If your resource stops while holding either,
-its holds are given back for it.
+`hideCursor`. An `enable` your resource has no hold for does nothing, so it
+cannot release someone else's. A stopping resource's holds are given back for
+it.
 :::
 
 ## Related
 
-- [Show an HTML page (web views)](../user-interface/web-views/), for focus and typed input
-- [Camera and raycasts](../camera/), for what a key press is aimed at
+- [Show an HTML page (web views)](../../user-interface/web-views/), for focus and typed input
+- [Camera and free camera (noclip)](../camera/), for what a key press is aimed at
+- [Sounds and voice chat](../sound-and-voice/), to move push-to-talk
 - [Resource manifest and lifecycle](../../core-concepts/resources/)

@@ -1,28 +1,26 @@
 ---
 title: Exports and messages between resources
-description: Letting one resource call another with Exports and Imports, asking and answering with Messages, and structuring a library resource.
+description: Let one resource call another with Exports and Imports, ask and answer with Messages, and structure a library resource.
 sidebar:
+  label: Share code between resources
   order: 27
 ---
 
-Resources on the same side of the wire can use each other. A library resource
-exports functions; another resource reads and calls them. When you would
-rather ask than call, `Messages` gives you a request and a reply. All of this
-stays on one machine: server resources talk to server resources, and client
-resources to client resources. Crossing the wire is
+Resources on the same machine can use each other: a library exports
+functions, another resource calls them. All of this stays on one side; server
+resources talk to server resources, client to client. Crossing the wire is
 [networking](../networking/).
 
 | Tool | Shape | Use it for |
 | --- | --- | --- |
 | `Exports` and `Imports` | A direct reference to another resource's value | A library you depend on and call often. |
-| `Messages` | A request with a reply, or a one-way notice | A resource that might not be installed, or should stay loosely coupled. |
-| `Events.emitTo` | An event for one resource's handlers | A notification. See [Events](../events/#events-of-your-own). |
+| `Messages` | A request with a reply, or a one-way notice | A resource that may be missing, or should stay loosely coupled. |
+| `Events.emitTo` | An event for one resource's handlers | A notification. See [Events](../events/#emit-your-own-events). |
 
-## Exports
+## Export a function
 
-A resource offers values with
-[`Exports.register`](../../reference/server/variables/Exports.md), and must
-list every name in its manifest's `exports`:
+Register with [`Exports.register`](../../reference/server/variables/Exports.md)
+and list every name in the manifest's `exports`:
 
 ```json title="resources/my-economy/package.json"
 {
@@ -53,16 +51,17 @@ Exports.register("pay", pay);
 ```
 
 :::caution[Declare every export]
-Registering a name that is not in `mafiahub.exports` logs a warning and
-returns `true`, but the value is not stored. The first `Exports.get` for it
-then throws "export not found". If a register seems to do nothing, check the
-manifest.
+Registering a name missing from `mafiahub.exports` logs a warning and returns
+`true`, but stores nothing. The first `Exports.get` for it then throws "export
+not found".
 :::
 
-Another resource reads one export with `Exports.get(resource, name)`, or all
-of them at once with `Imports.get(resource)`. Both throw when the resource is
-not installed, not running, or (for `Exports.get`) has no export of that name.
-The value comes back as `unknown`, so give it a type where you read it:
+## Call another resource's export
+
+`Exports.get(resource, name)` reads one export; `Imports.get(resource)` reads
+all of them. Both throw when the resource is not installed or not running, and
+`Exports.get` also when the name does not exist. The value is `unknown`, so
+type it:
 
 ```ts title="my-shop/src/server/index.ts"
 type Pay = (playerId: number, amount: number) => boolean;
@@ -79,11 +78,9 @@ Events.on("playerCommand", (player, command) => {
 });
 ```
 
-The value is the real function or object, not a copy: both resources run in
-one runtime. That makes calls cheap, and it means an object you export can be
-changed by whoever holds it. Export functions rather than mutable state.
-
-### Depend on what you import
+You get the real function or object, not a copy, since both resources share a
+runtime. Calls are cheap, but an exported object can be changed by whoever
+holds it: export functions, not mutable state.
 
 Add the library to the consumer's `resourceDependencies`:
 
@@ -97,24 +94,16 @@ Add the library to the consumer's `resourceDependencies`:
 }
 ```
 
-That does three things. The library starts first, so its exports exist by the
-time your scripts run. `Imports.get` stops warning about an undeclared
-dependency. And when the library restarts, your resource is stopped and started
-with it.
+- The library starts first, so its exports exist when your scripts run.
+- `Imports.get` stops warning about an undeclared dependency.
+- When the library restarts, your resource restarts with it. An export you
+  held keeps pointing at the old code, so read exports when you use them.
 
-That last point matters because an export you already hold keeps pointing at
-the old code after the library reloads. Reading exports at the moment you use
-them, as above, is the simplest way never to hold a stale one.
+## Ask and answer with Messages
 
-`priority` in the manifest does not order anything; see
-[Resources](../resources/#start-order-and-dependencies).
-
-## Messages
-
-[`Messages`](../../reference/server/variables/Messages.md) is a
-request-and-reply channel addressed to a resource by name. The receiving
-resource registers a handler per message type; registering the same type again
-replaces it.
+[`Messages`](../../reference/server/variables/Messages.md) is a request and
+reply channel addressed to a resource by name. The receiver registers one
+handler per message type; registering a type again replaces it.
 
 ```ts title="my-discord-log/src/server/index.ts"
 Messages.handle("post", (payload, reply) => {
@@ -130,18 +119,17 @@ Messages.handle("post", (payload, reply) => {
 
 `Messages.request(resource, type, payload)` returns a promise:
 
-- It resolves with the first value the handler passes to `reply`. Later calls
-  are ignored, and the reply is delivered on the next tick even when the
-  handler answers at once.
-- It rejects with a string when the resource has no handlers at all
-  (`"Target resource not found"`) or none for that type (`"No handler for
-  message type"`), and with the error when the handler throws before replying.
-- If the handler never replies, it waits. There is no timeout; it only rejects
-  when one of the two resources stops.
+| Case | Result |
+| --- | --- |
+| Handler calls `reply(value)` | Resolves with the first value, on the next tick. Later replies are ignored. |
+| Resource has no handlers | Rejects with `"Target resource not found"`. |
+| No handler for that type | Rejects with `"No handler for message type"`. |
+| Handler throws before replying | Rejects with the error. |
+| Async handler throws after an `await`, or never replies | Waits forever. No timeout; rejects only if either resource stops. |
 
-An `async` handler that throws after an `await` does not reject the request,
-it just never replies. Reply from a `try`/`finally`, and put your own timeout
-on requests that matter:
+`Messages.send(resource, type, payload)` is one-way: `reply` does nothing, and
+a missing resource or handler is ignored. Reply from a `try`/`finally`, and add
+your own timeout when it matters:
 
 ```ts title="my-shop/src/server/log.ts"
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -169,33 +157,24 @@ export async function logSale(text: string): Promise<void> {
 }
 ```
 
-That is the case `Messages` is good at: `my-discord-log` can be missing
-entirely, listed as an optional dependency or not at all, and the shop carries
-on. `Messages.send(resource, type, payload)` is the one-way version. The
-handler's `reply` does nothing, and a missing resource or handler is silently
-ignored.
+Here `my-discord-log` can be missing entirely (an optional dependency, or none
+at all) and the shop carries on.
 
-## Library resources
+## Write a library resource
 
-A library is an ordinary resource that registers exports and has no gameplay
-of its own. A few habits make one pleasant to depend on:
+- Register exports at the top level of the entry script, not in
+  `resourceStart`, so dependents find them when they start.
+- Keep the manifest's `exports` in step with the code.
+- Ship a `.d.ts` describing the exports, so consumers can write
+  `Exports.get(...) as Economy["pay"]`.
+- Keep state in the library behind functions, so reloading a consumer loses
+  nothing.
 
-- Register everything at the top level of the entry script, not inside
-  `resourceStart`. Dependents start right after, and should find the exports
-  there.
-- Keep the export list in the manifest in step with the code.
-- Ship a small `.d.ts` beside it describing the exports, so a TypeScript
-  consumer can write `Exports.get(...) as Economy["pay"]` instead of spelling
-  the type out.
-- Keep state inside the library and expose functions over it, so that a reload
-  of a consumer does not lose anything.
-
-When the code only needs to run inside your own resource on both sides,
-you do not need any of this: put it in `sharedScripts`, or import the same
-file from your server and client entry points.
+Code shared only by your own resource's server and client needs none of this:
+use `sharedScripts`, or import the same file from both entry points.
 
 ## Related
 
-- [Resource manifest and lifecycle](../resources/)
-- [Structure a larger resource](../../getting-started/project-structure/)
-- [Events](../events/)
+- [Resource manifest and lifecycle](../resources/): `exports`, dependencies and start order
+- [Structure a larger resource](../../getting-started/project-structure/): splitting one resource into files
+- [Events](../events/): `emitTo` for notifications

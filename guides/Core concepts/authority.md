@@ -1,15 +1,15 @@
 ---
 title: Server vs client authority
-description: Which machine owns each piece of game state, and why a verb on a player is a request to their client rather than a write.
+description: Which machine owns each piece of game state, why a verb on a player is a request, and how to confirm that it worked.
 sidebar:
+  label: Server vs client
   order: 20
 ---
 
-Kingdom Come: Deliverance II keeps a player's whole state on their own machine:
-health, stamina, skills, inventory, clothes, buffs and where they are standing.
-The server does not have those tables. So the owning client is authoritative
-for its player's body, and the server is authoritative for everything between
-players. Almost every odd-looking corner of the API follows from that split.
+Each player's own client owns their body: health, stamina, skills, inventory,
+clothes, buffs and where they stand. The server owns everything shared between
+players. So reading a player gives you their last report, and every verb on a
+player is a request to their client.
 
 ```ts
 // server
@@ -20,35 +20,33 @@ Events.on("playerCommand", (player, command) => {
   above.z += 20;
 
   const sent = player.teleport(above);
-  // `sent` says the request went out. `player.position` still reads the old
-  // spot here: the new one arrives with the player's next update.
+  // `sent` means the request went out. player.position still reads the old
+  // spot here; the new one arrives with the player's next update.
   Chat.sendToPlayer(player, sent ? "Up you go." : "Your client could not be reached.");
 });
 ```
 
 ## Who owns what
 
-| Thing | Authority | What that means for you |
+| Thing | Owner | What you can do |
 | --- | --- | --- |
-| A player's body: pose, health, stamina, stats, skills, inventory, appearance, buffs | Their own client | You read what it last reported and send it requests. |
-| A horse standing idle | The server | Created and moved by the server. |
-| A horse with a rider | The rider's client | Handed over on `horseMount`, handed back on `horseDismount`. |
-| An NPC | The server, simulated by a nearby client | Identity, orders and health live on the server. A client only runs the body. |
-| Props, markers, particle effects, ground items, stashes, quests | The server | Spawn, change and destroy them directly. |
-| World clock and weather | The server | Every client adopts the server's time. |
-| Entity state bags | The server | Only the server writes; clients read. See [Entity state bags](../state/). |
+| A player's body: pose, health, stamina, stats, skills, inventory, appearance, buffs | That player's client | Read its last report; send it requests. |
+| A horse standing idle | The server | Spawn, move and change it directly. |
+| A horse with a rider | The rider's client | Handed over on `horseMount`, back on `horseDismount`. |
+| An NPC | The server; a nearby client runs the body | Identity, orders and health are the server's. Writes apply at once. |
+| Props, markers, particle effects, ground items, stashes, quests | The server | Spawn, change and destroy directly. |
+| World clock and weather | The server | Every client adopts the server's values. |
+| Entity state bags | The server | Only the server writes; clients read. See [State bags](../state/). |
 
-## Reading a player is reading a snapshot
+## Read a player: it is a snapshot
 
-Everything you can read about a player is the number their client last
-published. [`player.health`](../../reference/server/classes/Player.md#health)
-is what their game reported, not a value the server keeps. Until the client
-has reported anything, the fields hold placeholders: `health` reads 0 and
-`position` is the world origin.
+Every player property is the value their client last published, not one the
+server keeps. Until the first report arrives, fields hold placeholders:
+`health` reads 0 and `position` is the world origin.
 
-[`player.ready`](../../reference/server/classes/Player.md#ready) tells you when
-the first pose and character state have arrived. Check it before you use a
-player's position for anything that matters:
+[`player.ready`](../../reference/server/classes/Player.md#ready) turns true
+once the first pose and character state have arrived. Check it before a
+position matters:
 
 ```ts
 // server
@@ -58,39 +56,44 @@ function nearEnough(a: Player, b: Player, metres: number): boolean {
 }
 ```
 
-## Verbs on a player are requests
+## Act on a player: the return value means "sent"
 
-Everything you can **do** to a player is a request sent to their client. The
-return value says whether the request went out, not whether it worked. The
-effect shows up a moment later, when their client has applied it and reported
-back.
+A verb on a player returns whether the request went out, not whether it
+worked. The effect appears a moment later, once their client has applied it
+and reported back. Their game can still refuse: a buff that conflicts with one
+already there, or a beard the face was never modelled with.
 
 | Verb | Returns | How you learn it happened |
 | --- | --- | --- |
 | `teleport`, `spawn` | `true` when sent | `player.position` changes on a later update. |
-| `setAppearance` | `true` when sent | `player.appearance` reads back the new look once it is on. |
-| `giveItem` | `true` when sent | The item is in their inventory on their machine. |
-| `addBuff`, `removeBuff` | `true` when sent | `playerBuffAdded` and `playerBuffRemoved` fire. `hasBuff` straight after `addBuff` still says `false`. |
-| `revive` | `true` when sent | The player stands up. |
-| `takeItem` | A `Promise` | The one verb that waits: it resolves with how many were really removed. |
+| `setAppearance` | `true` when sent | `player.appearance` reads back the new look. |
+| `giveItem` | `true` when sent | The item appears in their inventory. |
+| `addBuff`, `removeBuff` | `true` when sent | `playerBuffAdded` or `playerBuffRemoved` fires. `hasBuff` straight after `addBuff` is still `false`. |
+| `heal` | `true` when sent | `player.health` rises; `playerInjuryHealed` fires per limb. |
+| `revive` | `true` when sent | The player stands up and `player.alive` turns true. |
+| `takeItem` | A `Promise` | The one verb that waits: it resolves with `removed`, the count really taken. |
 
-The game on the other end can still say no. It refuses a buff that conflicts
-with one already there, for example, and `setAppearance` refuses a beard the
-face was never modelled with. Treat `true` as "asked", and listen for the event
-or read the value back when you need to know.
+<details>
+<summary>Why is there no setter for health or position?</summary>
+
+A server-side write would be overwritten by the owner's next report a frame
+later, so the API leaves the setter out. `player.position` is inherited from
+[`Entity`](../../reference/server/classes/Entity.md) and can be assigned, but
+the owner's next pose replaces it. Use `teleport`.
+
+</details>
+
+## Confirm an outcome with an event
+
+When you need to know, listen for the event, or read the value back later.
 
 ```ts
 // server
 Events.on("playerCommand", (player, command, args) => {
   if (command !== "buff" || !args[0]) return;
-
   const info = Buffs.find(args[0]);
-  if (!info) {
-    Chat.sendToPlayer(player, `No buff called ${args[0]}.`);
-    return;
-  }
-  player.addBuff(info.name);
-  // player.hasBuff(info.name) is still false here. Wait for the event.
+  if (!info) return;
+  player.addBuff(info.name); // hasBuff is still false here
 });
 
 Events.on("playerBuffAdded", (player, buff, source) => {
@@ -98,67 +101,44 @@ Events.on("playerBuffAdded", (player, buff, source) => {
 });
 ```
 
-<details>
-<summary>Why is there no setter for health or stamina?</summary>
+## Write what the server owns
 
-A server-side write would be overwritten by the owner's next report a frame
-later. The API leaves the setter out rather than offering one that silently
-does nothing. The same goes for assigning `player.position`: the property is
-inherited from [`Entity`](../../reference/server/classes/Entity.md), but the
-owner's next pose replaces whatever you wrote. Use `teleport`.
+Writes on server-owned things apply at once. `npc.teleport` moves the body
+whoever simulates it; a pose the simulating client already sent cannot put it
+back. `npc.setAppearance` and assigning `horse.name` are writes too.
 
-</details>
+The client running an NPC's body changes as players move (`npcSimulatorChange`),
+and the NPC does not: the new simulator picks up from the server's copy. See
+[Spawn NPCs](../../npcs-and-animals/npcs/).
 
-## Writes on things the server owns
+## What the server validates for you
 
-Anything the server owns changes when you tell it to. `Npc.teleport` moves the
-body outright, whoever is simulating it: the server bumps the body's epoch, so
-a pose the simulating client had already sent cannot put it back.
-`npc.setAppearance` is a write for the same reason, since nobody owns an NPC's
-body but the server. Assigning `horse.name` renames the horse on every client.
+| Event | Checked how |
+| --- | --- |
+| `markerEnter` | Client detects it; server confirms against the position it replicates. |
+| `npcInteract` | Server confirms the distance. |
+| `npcDamage` | Attacker's client resolves the hit; server agrees, so `amount` is what was taken. |
+| `groundItemPickup` | Reports a pickup the server already granted. |
+| `doorInteract` | Server has already refused what the game's rules forbid (out of reach, locked by the server). |
 
-NPCs are the interesting middle case. The server holds who the NPC is, what it
-was told to do and how much health it has left. The nearest client runs the
-body, and that job moves between clients as players walk around
-(`npcSimulatorChange`). Nothing about the NPC changes when it moves: the new
-simulator picks up from the server's copy. See
-[NPCs](../../server-scripting/npcs-horses-and-dogs/npcs/).
-
-## What the server checks for you
-
-Some events start on a client. The ones that could be abused are checked
-against what the server already knows before they reach your handler:
-
-- `markerEnter` is detected by the client and confirmed against the position
-  the server replicates, so a claim it disagrees with never arrives.
-- `npcInteract` is confirmed against the distance the server sees.
-- `npcDamage` is resolved by the attacker's client and agreed to by the server,
-  so `amount` is what was really taken.
-- `groundItemPickup` reports a pickup the server has already granted.
-
-A few are simply reported, because the decision is the client's to make.
-`questTrackingChanged` fires when a player follows or unfollows a quest in
-their journal; you can react but not refuse. Buffs the game applies on its own,
-a potion they drank, arrive as `playerBuffAdded` with `source` set to
-`"native"`. If you need to overrule those, `Buffs.claim` turns them into
+Some events are just reported, because the client decides: `questTrackingChanged`,
+`playerDamage`, and buffs the game applies itself (`playerBuffAdded` with
+`source` `"native"`). To overrule native buffs, `Buffs.claim` turns them into
 `playerBuffBlocked` events for you to decide on.
 
-Your own events are the exception. A payload that arrives through
-`Events.onClient` is whatever a client chose to send, and nothing has checked
-it. [Send data between server and client](../networking/#validate-everything-a-client-sends)
-shows how to treat it.
+:::caution
+Your own events are not checked. A payload that arrives through
+`Events.onClient` is whatever the client sent. See
+[Validate everything a client sends](../networking/#validate-everything-a-client-sends).
+:::
 
-## A habit that follows from all this
-
-Decide on the server, and let the client do what it is told. If a round ends,
-the server decides that and asks each client to teleport. If a shop sells a
-sword, the server checks the price and calls `giveItem`. A client resource is
-for input, UI and effects on that one machine; it should never be the place a
-rule is enforced, because the player controls it.
+Decide on the server and let the client do what it is told. A client resource
+is for input, UI and effects on one machine; never enforce a rule there,
+because the player controls it.
 
 ## Related
 
-- [Teleport, kick and other player actions](../../server-scripting/players/actions/)
-- [Player health, stats and skills](../../server-scripting/players/reading/)
-- [Horses](../../server-scripting/npcs-horses-and-dogs/horses/)
-- [Send data between server and client](../networking/)
+- [Teleport, kick and other player actions](../../players/actions/): the verbs in the table above
+- [Read health, stats and skills](../../players/stats/): what a snapshot holds
+- [Spawn and manage horses](../../npcs-and-animals/horses/): authority changing hands on mount
+- [Send data between server and client](../networking/): your own events, and validating them

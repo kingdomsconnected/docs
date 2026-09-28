@@ -2,42 +2,44 @@
 title: Build a team capture-zone mode
 description: Two teams kept in state bags, a spawn per team, a capture zone scored by a round timer, and a resource that cleans up after itself.
 sidebar:
+  label: Capture-zone mode
   order: 95
 ---
 
-This is a complete game loop on the server: players are split into two teams, each team spawns at its own base, and a round timer scores whichever team holds a capture zone. When the round ends the winner is announced, and after a short break the next round starts.
+You will build a complete game loop: players split into red and blue, each team spawns at its own base, and a round timer scores whichever team holds a capture zone. In game, a clock line shows the time and score, and when the round ends the winner is announced in chat and a new round starts after a short break.
 
-What you will build:
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/), with both the server and client programs.
+- [Entity state bags](../../core-concepts/state/), [Markers and trigger zones](../../world/markers/) and [Join, spawn and respawn](../../players/join-and-spawn/).
 
-- teams stored in each player's [state bag](../../core-concepts/state/), so every client can see who is on which side,
-- a spawn point per team, used both when a player joins and when they respawn,
-- a capture zone made from a trigger [marker](../../server-scripting/world-and-objects/markers/), with `markerEnter` and `markerExit` tracking who stands in it,
-- a one-second round timer that scores the zone, and a small client script that shows the clock,
-- `/round start`, `/round stop`, `/team` and `/team spawn`,
-- full cleanup when a player leaves and when the resource stops.
+Difficulty: advanced. Time: about an hour.
+:::
+
+## What you will learn
+
+- Storing each player's team in their [state bag](../../core-concepts/state/), visible to every client, and private per-player data with `scope: "server"`.
+- Spawning and respawning players at a team base with [`playerSpawning` and `revive`](../../players/join-and-spawn/).
+- Tracking who stands in a trigger [marker](../../world/markers/) with `markerEnter` and `markerExit`.
+- Running a round on timers, broadcasting a clock with [server and client messages](../../core-concepts/networking/) and showing it with [HUD messages](../../user-interface/hud/).
 
 ```text
 team-rounds/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   src/server/
-    index.ts
-    teams.ts
-    zone.ts
-    round.ts
+    index.ts             player lifecycle, commands, cleanup
+    teams.ts             team assignment and bases
+    zone.ts              the capture zone
+    round.ts             the round timer and score
   src/client/
-    tsconfig.json
-    index.ts
+    tsconfig.json        from Use TypeScript
+    index.ts             the clock
 ```
 
-The config files are the ones from [Use TypeScript](../../getting-started/typescript/), with both programs.
+## 1. Write the manifest
 
-:::note[Why a zone and not kills]
-`playerDied` carries only the player who died. Nothing in the API says who killed them, so a kill cannot be credited to a team. A zone is something the server can observe for itself, which is what a score has to be built on.
-:::
-
-## 1. The manifest
+The client script must be in `files` so the server streams it to players.
 
 ```json title="package.json"
 {
@@ -57,9 +59,9 @@ The config files are the ones from [Use TypeScript](../../getting-started/typesc
 }
 ```
 
-## 2. Teams
+## 2. Assign teams
 
-A player's team is one key, `team`, in their state bag. The default `broadcast` scope sends it to every client that can see the player, so a client script could colour names or draw icons from it without asking the server. The key also dies with the player's entity, so a leaving player takes their team with them.
+A player's team is one key, `team`, in their state bag. The default `broadcast` scope sends it to every client that can see the player, and the key dies with the player's entity.
 
 ```ts title="src/server/teams.ts"
 export type Team = "red" | "blue";
@@ -102,9 +104,9 @@ export function sendHome(player: Player): boolean {
 }
 ```
 
-## 3. The capture zone
+## 3. Track the capture zone
 
-The zone is a cylinder marker with `trigger` on, which makes clients report crossings and the server raise `markerEnter` and `markerExit` once it agrees with them. The server keeps the ids of everyone inside.
+Teams score by holding a zone, not by kills, because `playerDied` does not say who killed. The zone is a trigger marker: the server raises `markerEnter` and `markerExit` as players cross it and keeps the ids of everyone inside.
 
 ```ts title="src/server/zone.ts"
 import { teamOf, type Team } from "./teams.js";
@@ -152,13 +154,11 @@ export function installZoneHandlers(): void {
 }
 ```
 
-:::caution
-`markerExit` is not raised when the marker is removed, when `trigger` is turned off, or when the player leaves the world. Each of those has to empty the set by hand, which is what `removeZone` and the `playerDisconnect` handler do. Miss one and a player who left an hour ago still holds the zone.
-:::
+- `markerExit` is not raised when the marker is removed, `trigger` is turned off, or the player leaves the world. `removeZone` and the `playerDisconnect` handler empty the set by hand; miss one and a player who left an hour ago still holds the zone.
 
-## 4. The round
+## 4. Run the round
 
-The round is a small state machine: idle, running, or on a break between rounds. While it runs, a one-second interval scores the zone, and the clock goes to every client. Each player's own seconds in the zone go in their state bag with `scope: "server"`: per-player storage with the same lifetime as the player, that never goes on the wire.
+The round is idle, running, or on a break. While it runs, a one-second interval scores the zone and sends the clock to every client. Each player's seconds in the zone go in their state bag with `scope: "server"`, which never goes on the wire.
 
 ```ts title="src/server/round.ts"
 import { sendHome, type Team } from "./teams.js";
@@ -234,9 +234,9 @@ export function stopRounds(): void {
 }
 ```
 
-`startRound` calls `stopRounds` first, so starting a round while one is running or on a break never leaves a second timer behind.
+- `startRound` calls `stopRounds` first, so starting a round during a round or a break never leaves a second timer behind.
 
-## 5. Wiring the server
+## 5. Wire the server
 
 The entry point connects the player lifecycle to the teams, and the commands to the round.
 
@@ -315,13 +315,11 @@ Events.on("resourceStop", (name) => {
 });
 ```
 
-:::note[Authority]
-`player.spawn` and `player.teleport` are requests to the player's own client, which owns its body. They return true when the request went out, not when the player has arrived. The zone only counts players once their client reports them inside, so a player sent home is not counted as leaving the zone until their body actually moves.
-:::
+- `player.spawn` returns true when the request went out, not when the player arrived ([Server vs client authority](../../core-concepts/authority/)). A player sent home leaves the zone only once their client reports the body moved.
 
-## 6. The client's clock
+## 6. Show the clock on the client
 
-The client shows the clock in the info line, and a notification when the server puts it on a team. The team arrives as a state bag change on the local player's own entity.
+The client shows the clock in the info line, and a notification when its own `team` state key changes.
 
 ```ts title="src/client/index.ts"
 const RESOURCE = "team-rounds";
@@ -345,24 +343,17 @@ Events.on(`${RESOURCE}:clock`, (payload) => {
 
 ## Try it
 
-Build the resource and start it with at least two players connected, so the teams have somebody on each side:
-
-```sh title="Server console"
-ensure team-rounds
-```
-
-In game:
+Build the resource and run `ensure team-rounds` in the server console, with at least two players connected so each team has somebody. In game:
 
 1. Each player walks to where their base should be and types `/team spawn`.
 2. One player walks to open ground and types `/round start`. The zone appears around them and everybody is sent to their base.
-3. Walk into the zone. The clock line says your team holds it, and your score climbs once a second. When both teams stand in it, nobody scores.
+3. Walk into the zone. The clock line says your team holds it, and your score climbs once a second. With both teams in it, nobody scores.
 4. Die, and you come back at your base.
 5. After three minutes, or when a team reaches 90, the winner and the longest holder are announced, and a new round starts 20 seconds later.
-6. `ensure team-rounds` again while a round runs, which reloads it. The zone disappears, nametags go back to white, and everyone is put on a team again. The bases are gone too, because they lived in the old copy of the script: set them again.
+6. `ensure team-rounds` during a round reloads it: the zone goes, nametags turn white, everyone gets a new team, and the bases must be set again.
 
-## Where to go next
+## Next steps
 
-- [Entity state bags](../../core-concepts/state/) covers scopes, limits and `onChange`.
-- [Spawn points and respawning](../../server-scripting/players/spawning/) covers `playerSpawning` and weighted spawn pickers.
-- [Player join and leave events](../../server-scripting/players/lifecycle/) lists what is still readable in `playerDisconnect`.
-- [Build a /command system](../command-system/) replaces the `if` chain in `index.ts` once you have more than a handful of commands.
+- Read teammates' `team` key on each client with `onChange` from [Entity state bags](../../core-concepts/state/), for example to list your team on screen.
+- Put the capture zone on the map for everyone with [Map markers and blips](../../user-interface/map/).
+- Replace the `if` chain in `index.ts` with the [/command system](../command-system/) once you have more than a handful of commands.

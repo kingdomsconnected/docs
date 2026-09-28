@@ -1,88 +1,80 @@
 ---
 title: Introduction
-description: What a Kingdoms Connected resource is, where it runs, and which guide to read first.
+description: What a Kingdoms Connected resource is, where it runs, and which page to open for the task in front of you.
 sidebar:
+  label: Introduction
   order: 1
 ---
 
-Kingdoms Connected (KCDC) puts other players into Kingdom Come: Deliverance
-II's own world. Everything that makes a server feel like *your* server, from
-where people spawn to what `/help` prints, lives in **resources**: folders of
-JavaScript or TypeScript that the server loads at startup.
-
-A resource can run code in two places:
+Kingdoms Connected (KCDC) puts other players into Kingdom Come: Deliverance II's own world. Everything
+that makes a server yours lives in **resources**: folders of JavaScript or TypeScript the server loads.
 
 | | Server half | Client half |
 | --- | --- | --- |
-| Runs on | The dedicated server, in Node.js | Every connected player's game, in a sandboxed V8 |
-| Owns | Everything shared: who is connected, horses, NPCs, props, quests, the clock | Nothing shared. It reads what this machine can see and draws UI |
-| Typical jobs | Spawn points, commands, game rules, economy, persistence | Menus, HUD, key binds, placement previews |
+| Runs on | The dedicated server | Every connected player's game |
+| Owns | Everything shared: players, horses, NPCs, props, quests, the clock | Nothing shared. It reads what this machine sees and draws UI |
+| Typical jobs | Spawns, commands, game rules, economy, persistence | Menus, HUD, key binds, placement previews |
 | Reference | [Server API](../reference/server/index.md) | [Client API](../reference/client/index.md) |
 
-The server that ships with KCDC answers no commands on its own. Every `/`
-command you have seen in game (`/horse`, `/give`, `/tp`, `/world`...) comes
-from the **default gamemode**, a resource written against the same public API
-you use. It is the best example code there is, and the guides point into it
-often.
+## Start here
 
-## Where to start
+Read **Getting started** in order:
 
-:::tip[New to KCDC scripting?]
-Read **Getting started** in order. It takes you from an empty machine to a
-running server with the default gamemode, then to your own resource in plain
-JavaScript, then to a TypeScript setup that can grow.
-:::
-
-The sidebar is split by where your code runs:
-
-| Section | What is in it |
-| --- | --- |
-| **Getting started** | Tools, running the default gamemode, your first resource, TypeScript, debugging |
-| **Core concepts** | Ideas every page relies on: authority, events, networking, state, positions |
-| **Server scripting** | Everything a gamemode does on the server, grouped by what it acts on |
-| **Client scripting** | Code that runs in each player's game: input, camera, and the user interface |
-| **Tutorials** | Complete features built end to end |
-| **Hosting a server** | Running, configuring and opening a server to players |
-
-Right under this page, [List your server in the server
-browser](../publish-on-masterlist/) covers getting a public server into the
-in-game browser.
+1. [Install and run a server](../getting-started/install/): from nothing to standing in your own server.
+2. [Write your first resource](../getting-started/first-resource/): a command, a key bind and a server round trip.
+3. [Use TypeScript](../getting-started/typescript/): autocomplete and type checking for the whole API.
+4. [Structure a larger resource](../getting-started/project-structure/): folders that stay easy to change.
+5. [Logs and debugging](../getting-started/debugging/): find out why nothing happened.
 
 ## Find it fast
 
-Most gamemode work happens on the server. If you know what you want to do,
-this is where it lives:
+| Section | I want to... | Page |
+| --- | --- | --- |
+| Players | Greet players, choose where they spawn and respawn | [Join, spawn and respawn](../players/join-and-spawn/) |
+| Players | Read health, stamina, stats or skills | [Read health, stats and skills](../players/stats/) |
+| Players | Teleport, kick, revive or rename a player | [Teleport, kick and other actions](../players/actions/) |
+| Players | Give, take or drop items, read equipment | [Items](../players/items/) |
+| Players | Change a face, hair or body; add a buff | [Appearance](../players/appearance/), [Buffs](../players/buffs/) |
+| Players | Add `/commands` or send chat messages | [Chat and /commands](../players/chat/) |
+| World | Change the time or the weather | [Time of day and weather](../world/clock-and-weather/) |
+| World | Place objects, stashes or particle effects | [Props](../world/props/), [Stashes](../world/stashes/), [Effects](../world/effects/) |
+| World | Lock a door, open a castle gate | [Lock doors, open gates](../world/doors-and-gates/) |
+| World | Mark a spot, detect players entering an area | [Markers and trigger zones](../world/markers/) |
+| World | Trace a ray, find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
+| NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
+| NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
+| NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
+| Quests, dialogue and shops | Add a quest, show dialogue choices, open a shop | [Quests](../quests-dialogue-and-shops/quests/), [Dialogue](../quests-dialogue-and-shops/dialogue/), [Shops](../quests-dialogue-and-shops/vendors/) |
+| Core concepts | React to any game event | [Events and handlers](../core-concepts/events/) |
+| Core concepts | Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
+| Core concepts | Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
+| Client scripting | Read the local player, bind a key | [Local player](../client-scripting/local-player/), [Key binds](../client-scripting/input/) |
+| Client scripting | Move the camera, fly a free camera | [Camera and noclip](../client-scripting/camera/) |
+| Client scripting | Play sounds, use voice chat, set Discord status | [Sound and voice](../client-scripting/sound-and-voice/), [Discord presence](../client-scripting/discord-presence/) |
+| User interface | Show an HTML menu and talk to it | [Web views](../user-interface/web-views/), [Page data bridge](../user-interface/page-bridge/) |
+| User interface | Show a HUD message, nametag or map blip | [HUD](../user-interface/hud/), [Map and blips](../user-interface/map/) |
+| Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
+| Hosting a server | Run a dedicated server, change its settings | [Run a server](../hosting-a-server/run-a-server/), [server.json](../hosting-a-server/server-json/) |
+| Hosting a server | Let players connect, list the server publicly | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
 
-| I want to... | Page |
-| --- | --- |
-| Greet players, track who is online | [Player join and leave events](../server-scripting/players/lifecycle/) |
-| Choose where players spawn, respawn after death | [Spawn points and respawning](../server-scripting/players/spawning/) |
-| Read health, stamina, stats or skills | [Player health, stats and skills](../server-scripting/players/reading/) |
-| Teleport, kick, revive or rename a player | [Teleport, kick and other player actions](../server-scripting/players/actions/) |
-| Give or take items, read equipment | [Give and take items](../server-scripting/players/inventory/) |
-| Change a face, hair or body | [Player appearance](../server-scripting/players/appearance/) |
-| Add `/commands` or send chat messages | [Chat messages and /commands](../server-scripting/players/chat/) |
-| Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
-| Change the time or the weather | [Time of day and weather](../server-scripting/world-and-objects/clock-and-weather/) |
-| Place objects in the world | [Spawn props and objects](../server-scripting/world-and-objects/props/) |
-| Mark a spot, detect players entering an area | [Markers and trigger zones](../server-scripting/world-and-objects/markers/) |
-| Lock a door, open a castle gate | [Lock doors, open gates](../server-scripting/world-and-objects/doors-and-gates/) |
-| Spawn horses or dogs | [Horses](../server-scripting/npcs-horses-and-dogs/horses/), [Dogs](../server-scripting/npcs-horses-and-dogs/dogs/) |
-| Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../server-scripting/npcs-horses-and-dogs/npcs/), [Move NPCs](../server-scripting/npcs-horses-and-dogs/npc-orders/) |
-| Add a quest to the journal | [Quests in the journal](../server-scripting/quests-dialogue-and-shops/quests/) |
-| Show dialogue choices | [Dialogue choices](../server-scripting/quests-dialogue-and-shops/dialogue/) |
-| Open a shop | [Shops (vendors)](../server-scripting/quests-dialogue-and-shops/vendors/) |
-| React to any game event | [Events and handlers](../core-concepts/events/) (the full list) |
-| Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
-| Bind a key, show a menu or a HUD message | [Key binds](../client-scripting/input/), [HTML pages](../client-scripting/user-interface/web-views/), [HUD messages](../client-scripting/user-interface/hud/) |
-| Show what players are doing in their Discord profile | [Discord Rich Presence](../client-scripting/discord-presence/) |
-| Get my server listed in the in-game server browser | [List your server in the server browser](../publish-on-masterlist/) |
-| Understand why a verb returns before anything happened | [Server vs client authority](../core-concepts/authority/) |
+## How the sidebar is organised
+
+| Group | What is in it | Runs on |
+| --- | --- | --- |
+| Getting started | Install, first resource, TypeScript, layout, debugging | Both |
+| Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing | Both |
+| Players | Join and spawn, stats, actions, items, appearance, buffs, chat | Server |
+| World | Clock and weather, props, stashes, doors, markers, effects, raycasts | Server (raycasts: both) |
+| NPCs and animals | NPCs, their orders and events, horses, dogs | Server |
+| Quests, dialogue and shops | Journal quests, dialogue choices, vendors | Server |
+| Client scripting | Local player, key binds, camera, placement, sound, Discord | Client |
+| User interface | Web views, page bridge, HUD, map, native screens | Client |
+| Tutorials | Multi-file builds of complete features | Both |
+| Hosting a server | Running, configuring, connecting, listing, containers | Server operators |
 
 ## A taste
 
-Two files are a complete resource. The server half greets people and hands
-out a horse on request:
+Two files are a complete resource. The server half greets people and spawns a horse on `/horse`:
 
 ```js title="server/main.js"
 Events.on("playerSpawned", (player) => {
@@ -95,7 +87,7 @@ Events.on("playerCommand", (player, command) => {
 });
 ```
 
-The client half shows the player their own health whenever they press F8:
+The client half shows the player their health when they press F8:
 
 ```js title="client/main.js"
 Key.bind("f8", "down", () => {
@@ -104,30 +96,17 @@ Key.bind("f8", "down", () => {
 });
 ```
 
-[Write your first resource](../getting-started/first-resource/) builds exactly this, step by
-step.
+[Write your first resource](../getting-started/first-resource/) builds one like it step by step.
 
 ## One rule explains most of the API
 
-Kingdom Come keeps a player's whole state (health, skills, what they wear,
-where they stand) on their own machine. So the owning client is the authority
-for its player's body, and the server is the authority for everything between
-players. Reading `player.health` on the server gives you the last number their
-game reported; calling `player.teleport(...)` sends their game a request.
-
-That is why there is no `player.health = 100`, and why most verbs return
-whether a request *went out* rather than whether it *worked*.
-[Server vs client authority](../core-concepts/authority/) walks through it properly.
+Each player's own game keeps their state (health, skills, clothing, position) and is the authority for
+it; the server is the authority for everything shared. So `player.teleport(...)` sends that game a request, and most
+verbs return whether the request went out, not whether it worked. See [Server vs client
+authority](../core-concepts/authority/).
 
 ## Where the reference comes from
 
-Every function, property and event in the API reference is generated from the
-mod's own binding registrations. When the runtime installs `player.teleport`,
-it records the name, signature and description in the same call, so the
-reference cannot drift from the code. The same declarations power
-autocomplete and type checking in your editor; [Use
-TypeScript](../getting-started/typescript/) shows how to get them.
-
-When a guide and the reference disagree, the reference is right. Please
-[open an issue](https://github.com/kingdomsconnected/docs/issues) so the
-guide gets fixed.
+The API reference is generated from the runtime's own bindings, so when a guide and the reference
+disagree, the reference wins. Please [open an issue](https://github.com/kingdomsconnected/docs/issues)
+so the guide gets fixed.

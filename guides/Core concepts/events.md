@@ -1,16 +1,15 @@
 ---
 title: Events and handlers
-description: Subscribing to native events, how async handlers behave, every event the server and client raise, and events of your own.
+description: Subscribe to events, write async handlers safely, look up every event the server and client raise, and emit events of your own.
 sidebar:
+  label: Events
   order: 22
 ---
 
-Almost everything a resource does starts in an event handler: a player
-connects, a horse is mounted, a chat line arrives. You subscribe with
-[`Events.on`](../../reference/server/variables/Events.md), and the arguments
-are typed from the [`EventMap`](../../reference/server/interfaces/EventMap.md),
-which is generated from the runtime's own registrations. If an event is not in
-the tables below, the game does not raise it.
+Almost everything a resource does starts in an event handler. Subscribe with
+[`Events.on`](../../reference/server/variables/Events.md); the arguments are
+typed from the [`EventMap`](../../reference/server/interfaces/EventMap.md). If
+an event is not in the lists below, the game does not raise it.
 
 ```ts
 // server
@@ -19,11 +18,13 @@ Events.on("playerSpawned", (player) => {
 });
 ```
 
-## Subscribing and unsubscribing
+## Subscribe and unsubscribe
 
-`Events.on` returns a function that removes that subscription. `Events.once`
-removes the handler before its first call and returns nothing. `Events.off`
-takes the same name and function you subscribed with.
+| Call | Does |
+| --- | --- |
+| `Events.on(name, fn)` | Subscribes. Returns a function that unsubscribes. |
+| `Events.once(name, fn)` | Removes the handler before its first call. Returns nothing. |
+| `Events.off(name, fn)` | Unsubscribes the same name and function. |
 
 ```ts
 // server
@@ -31,54 +32,40 @@ const stop = Events.on("playerChat", (player, text) => {
   console.log(`${player.nickname}: ${text}`);
 });
 stop();
-
-function greet(player: Player): void {
-  Chat.sendToPlayer(player, "Welcome.");
-}
-Events.once("playerSpawned", greet);
-Events.off("playerSpawned", greet);
 ```
 
-You never need to unsubscribe when your resource stops: its handlers are
-removed with it. See [Resources](../resources/#stopping).
+Handlers are removed when your resource stops; you never need to clean up
+there. See [Resources](../resources/#stop-a-resource).
 
 ## Async handlers
 
-A handler may be `async`. Handlers run in the order they were registered, each
-one up to its first `await`, and the emitter gets a promise that settles once
-all of them have. If any handler throws or rejects, that promise rejects with
-an `AggregateError` holding every failure, and a synchronous throw is also
-logged with its stack.
+Handlers run in registration order, each up to its first `await`. The emitter
+gets a promise that settles when all have; if any throws or rejects, it
+rejects with an `AggregateError`. A synchronous throw is also logged with its
+stack.
 
-Two things follow. Work after an `await` happens later than the event, so the
-world may have moved on: re-check that a player is still connected before you
-act on them. And a few events need their answer synchronously.
+Code after an `await` runs later than the event, so re-check that a player is
+still connected before acting on them. Some events need an answer in the
+handler itself:
 
-:::caution[playerSpawning]
-`playerSpawning` is raised while the joining client waits behind its loading
-screen for somewhere to stand. Call `player.spawn(...)` in the handler itself.
-A spawn chosen after an `await` arrives too late to count, and the player
-lands on the level's default start point.
-:::
+- `playerSpawning`: call `player.spawn(...)` before any `await`, or the player
+  lands on the level's default start point.
+- `horseMounting`, `horseGearChanging`, `playerPickpocketStart`, `doorInteract`:
+  return `false` to refuse. An async handler cannot refuse.
 
-On the client, some events say "handler promises are not awaited" in their
-reference entry (`questTrackingChanged`, `poiDiscovered`, `noclipChanged`).
-Your async handler still runs; nothing waits for it.
+On the client, `questTrackingChanged`, `poiDiscovered` and `noclipChanged` do
+not await handler promises. Your async handler still runs; nothing waits.
 
-## Handles are valid inside the handler
+## Keep ids, not handles
 
-Every event hands you live handles, and teardown events fire while their
-subject can still be read: `playerDisconnect` before the body is destroyed,
-`horseDestroy`, `npcDestroy` and the other `...Destroy` events while the handle
-still resolves. That is the place to read a name one last time and clean up.
-
-Do not keep a handle for later. Keep the id and look it up again, because
-`Player.getById` returns `null` once the id no longer names anyone:
+Handles are valid inside the handler. Teardown events (`playerDisconnect`,
+`npcDestroy` and the other `...Destroy` events) fire while the handle still
+reads, so read a name there one last time. To use a subject later, keep its id
+and look it up again: `getById` returns `null` once it is gone.
 
 ```ts
 // server
 const inQueue = new Set<number>();
-
 Events.on("playerSpawned", (player) => inQueue.add(player.id));
 Events.on("playerDisconnect", (player) => inQueue.delete(player.id));
 
@@ -92,82 +79,141 @@ function announce(text: string): void {
 
 ## Server events
 
-| Event | Arguments | Guide |
-| --- | --- | --- |
-| `playerConnect` | `player` | [Player join and leave events](../../server-scripting/players/lifecycle/) |
-| `playerSpawning` | `player` | [Spawn points](../../server-scripting/players/spawning/) |
-| `playerSpawned` | `player` | [Player join and leave events](../../server-scripting/players/lifecycle/) |
-| `playerDied` | `player` | [Spawn points](../../server-scripting/players/spawning/) |
-| `playerDisconnect` | `player` | [Player join and leave events](../../server-scripting/players/lifecycle/) |
-| `playerChat` | `player, text` | [Chat messages and /commands](../../server-scripting/players/chat/) |
-| `playerCommand` | `player, command, args` | [Chat messages and /commands](../../server-scripting/players/chat/) |
-| `playerBuffAdded` | `player, buff, source` | [Buffs](../../server-scripting/players/buffs/) |
-| `playerBuffRemoved` | `player, buff, reason` | [Buffs](../../server-scripting/players/buffs/) |
-| `playerBuffBlocked` | `player, buff` | [Buffs](../../server-scripting/players/buffs/) |
-| `horseSpawn`, `horseDestroy` | `horse` | [Horses](../../server-scripting/npcs-horses-and-dogs/horses/) |
-| `horseMount`, `horseDismount` | `horse, player` | [Horses](../../server-scripting/npcs-horses-and-dogs/horses/) |
-| `dogSpawn`, `dogDestroy` | `dog` | [Dogs](../../server-scripting/npcs-horses-and-dogs/dogs/) |
-| `dogOwnerChanged` | `dog, player` | [Dogs](../../server-scripting/npcs-horses-and-dogs/dogs/) |
-| `dogModeChanged` | `dog, mode` | [Dogs](../../server-scripting/npcs-horses-and-dogs/dogs/) |
-| `npcSpawn`, `npcDestroy` | `npc` | [NPCs](../../server-scripting/npcs-horses-and-dogs/npcs/) |
-| `npcIntentDone` | `npc, status` | [Move NPCs: walk, follow, patrol](../../server-scripting/npcs-horses-and-dogs/npc-orders/) |
-| `npcDamage` | `npc, attacker, amount` | [NPC events](../../server-scripting/npcs-horses-and-dogs/npc-events/) |
-| `npcDeath` | `npc, attacker` | [NPC events](../../server-scripting/npcs-horses-and-dogs/npc-events/) |
-| `npcRevive` | `npc` | [NPC events](../../server-scripting/npcs-horses-and-dogs/npc-events/) |
-| `npcInteract` | `npc, player` | [NPC events](../../server-scripting/npcs-horses-and-dogs/npc-events/) |
-| `npcSimulatorChange` | `npc, player` | [NPC events](../../server-scripting/npcs-horses-and-dogs/npc-events/) |
-| `worldDayChange` | `day` | [Time of day and weather](../../server-scripting/world-and-objects/clock-and-weather/) |
-| `worldWeatherChange` | `preset, previous, seconds` | [Time of day and weather](../../server-scripting/world-and-objects/clock-and-weather/) |
-| `groundItemSpawn`, `groundItemDestroy` | `groundItem` | [Items lying on the ground](../../server-scripting/world-and-objects/ground-items/) |
-| `groundItemPickup` | `groundItem, player` | [Items lying on the ground](../../server-scripting/world-and-objects/ground-items/) |
-| `propSpawn`, `propDestroy` | `prop` | [Props](../../server-scripting/world-and-objects/props/) |
-| `vfxSpawn`, `vfxDestroy` | `vfx` | [Particle effects](../../server-scripting/world-and-objects/effects/) |
-| `markerPlace`, `markerRemove` | `marker` | [Markers](../../server-scripting/world-and-objects/markers/) |
-| `markerEnter`, `markerExit` | `marker, player` | [Markers](../../server-scripting/world-and-objects/markers/) |
-| `questTrackingChanged` | `quest, player, tracked` | [Quests](../../server-scripting/quests-dialogue-and-shops/quests/) |
-| `dialogueChoice` | `session, player, optionId` | [Dialogue](../../server-scripting/quests-dialogue-and-shops/dialogue/) |
-| `dialogueClosed` | `session, player, reason` | [Dialogue](../../server-scripting/quests-dialogue-and-shops/dialogue/) |
-| `vendorTrade` | `vendor, player, bought, sold, balance` | [Vendors](../../server-scripting/quests-dialogue-and-shops/vendors/) |
-| `vendorClosed` | `vendor, player, reason` | [Vendors](../../server-scripting/quests-dialogue-and-shops/vendors/) |
-| `resourceStart`, `resourceStop` | `resourceName` | [Resources](../resources/) |
-| `entityStateChange` | `entity, key, value, previous` | [Entity state bags](../state/) |
+An argument typed `Player | null` (noted as `attacker?`, `player?` and so on)
+can be `null`: check it. The
+[`EventMap` reference](../../reference/server/interfaces/EventMap.md) has
+exact types and every union value.
 
-Where an argument is `Player | null` (`horseMount`, `dogOwnerChanged`,
-`npcDamage`, `groundItemPickup` and others), check it before use. The
-[`EventMap` reference](../../reference/server/interfaces/EventMap.md) has each
-event's exact types and the engineers' notes on when it fires.
+### Players
+
+Guides: [Join and spawn](../../players/join-and-spawn/),
+[Health and stats](../../players/stats/), [Buffs](../../players/buffs/),
+[Chat](../../players/chat/).
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `playerConnect` | `player` | Their body exists, still loading. `ready` is false. |
+| `playerSpawning` | `player` | Their body needs a place to stand. Answer synchronously. |
+| `playerSpawned` | `player` | They are standing in the loaded world. Give kit here. |
+| `playerDisconnect` | `player` | They are leaving; the handle still reads. |
+| `playerDamage` | `player, attacker?, amount, bodyPart?, reason` | Health came off them. Reported by their own client. |
+| `playerInjured` | `player, bodyPart` | A limb becomes injured. |
+| `playerInjuryHealed` | `player, bodyPart` | A limb injury is gone. |
+| `playerDied` | `player, killer?, reason` | A death is accepted. No automatic respawn. |
+| `playerChat` | `player, text` | They submit a plain chat line. |
+| `playerCommand` | `player, command, args` | A `/` line no built-in command claimed. |
+| `playerBuffAdded` | `player, buff, source` | An effect appears. `source` is `"server"` or `"native"`. |
+| `playerBuffRemoved` | `player, buff, reason` | An effect leaves. `reason` is `"server"` or `"expired"`. |
+| `playerBuffBlocked` | `player, buff` | The game tried a buff kind you `Buffs.claim`ed. |
+| `playerPickpocketStart` | `thief, victim` | A Rob attempt begins. Return `false` to refuse. |
+| `playerPickpocketed` | `thief, victim, items` | A theft settled; `items` is what really moved. |
+| `playerPickpocketCaught` | `thief, victim` | The victim noticed. Nothing was taken. |
+
+### Horses and dogs
+
+Guides: [Horses](../../npcs-and-animals/horses/), [Dogs](../../npcs-and-animals/dogs/).
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `horseSpawn`, `horseDestroy` | `horse` | A horse is created, or is being despawned. |
+| `horseMounting` | `horse, player` | A player climbs on. Return `false` to refuse. |
+| `horseMount`, `horseDismount` | `horse, player?` | A rider got on or off (including on death or disconnect). |
+| `horseDamage` | `horse, attacker?, amount, reason` | Health came off a horse. |
+| `horseDeath` | `horse, killer?, reason` | A horse dies. |
+| `horseGearChanging` | `horse, player?, gear` | A player changes gear. Return `false` to refuse. |
+| `horseGearChanged` | `horse, player?, gear` | Gear changed on every client. `player` is null for a script. |
+| `dogSpawn`, `dogDestroy` | `dog` | A dog is created, or is being despawned. |
+| `dogOwnerChanged` | `dog, player?` | A dog is handed over or left masterless. |
+| `dogModeChanged` | `dog, mode` | Its companion mode actually changes. |
+
+### NPCs
+
+Guides: [Spawn NPCs](../../npcs-and-animals/npcs/),
+[Move NPCs](../../npcs-and-animals/npc-orders/),
+[NPC damage and death](../../npcs-and-animals/npc-events/).
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `npcSpawn`, `npcDestroy` | `npc` | An NPC is spawned or adopted, or is being despawned. |
+| `npcIntentDone` | `npc, status` | An order ends: `reached`, `blocked` or `failed`. |
+| `npcDamage` | `npc, attacker?, amount` | Health came off, as agreed by the server. |
+| `npcDeath` | `npc, attacker?` | Its health runs out. The corpse stays. |
+| `npcRevive` | `npc` | A dead NPC is brought back. |
+| `npcInteract` | `npc, player` | A player presses use on an `interactable` NPC. |
+| `npcSimulatorChange` | `npc, player?` | The client running it changes. `null` means dormant. |
+
+### World and objects
+
+Guides: [Time and weather](../../world/clock-and-weather/),
+[Doors and gates](../../world/doors-and-gates/), [Props](../../world/props/),
+[Particle effects](../../world/effects/), [Markers](../../world/markers/),
+[Items](../../players/items/).
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `worldDayChange` | `day` | The clock crosses midnight. `day` is the new one. |
+| `worldWeatherChange` | `preset, previous, seconds` | A weather blend starts. |
+| `doorInteract` | `player, door, action, keySide` | A player works a door. Return `false` to refuse. |
+| `propSpawn`, `propDestroy` | `prop` | A prop is created, or is being despawned. |
+| `vfxSpawn`, `vfxDestroy` | `vfx` | An effect is placed, or is being stopped. |
+| `markerPlace`, `markerRemove` | `marker` | A marker is drawn, or is being removed. |
+| `markerEnter`, `markerExit` | `marker, player` | A player walks into or out of a `trigger` marker. |
+| `groundItemSpawn`, `groundItemDestroy` | `groundItem` | A stack is laid down, or is being removed. |
+| `groundItemPickup` | `groundItem, player?` | A pickup was granted. `groundItemDestroy` follows. |
+
+### Quests, dialogue and shops
+
+Guides: [Quests](../../quests-dialogue-and-shops/quests/),
+[Dialogue](../../quests-dialogue-and-shops/dialogue/),
+[Shops](../../quests-dialogue-and-shops/vendors/).
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `questTrackingChanged` | `quest, player, tracked` | A player follows or unfollows a quest. Cannot be refused. |
+| `dialogueChoice` | `session, player, optionId` | A player picks an option. |
+| `dialogueClosed` | `session, player, reason` | A conversation ends. |
+| `vendorTrade` | `vendor, player, bought, sold, balance` | A deal has settled. |
+| `vendorClosed` | `vendor, player, reason` | A trading session ends. |
+
+### Resources and state
+
+| Event | Arguments | Fires when |
+| --- | --- | --- |
+| `resourceStart` | `resourceName` | Any resource's scripts have run, just before it counts as running. See [Resources](../resources/). |
+| `resourceStop` | `resourceName` | Any resource is stopping, before cleanup. |
+| `entityStateChange` | `entity, key, value, previous` | A state bag key changes. See [State bags](../state/). |
 
 ## Client events
 
-| Event | Arguments | Guide |
-| --- | --- | --- |
-| `resourceStart`, `resourceStop` | `resourceName` | [Resources](../resources/) |
-| `entityStateChange` | `entity, key, value, previous` | [Entity state bags](../state/) |
-| `questTrackingChanged` | `questKey, tracked` | [Quests](../../server-scripting/quests-dialogue-and-shops/quests/) |
-| `vendorOpened` | `session, npc` | [Vendors](../../server-scripting/quests-dialogue-and-shops/vendors/) |
-| `vendorClosed` | `session, reason` | [Vendors](../../server-scripting/quests-dialogue-and-shops/vendors/) |
-| `poiDiscovered` | `poiId` | [Map markers and blips](../../client-scripting/user-interface/map/) |
-| `mapOpened`, `mapClosed` | none | [Map markers and blips](../../client-scripting/user-interface/map/) |
-| `mapWaypointSet` | `position, mapId, moved` | [Map markers and blips](../../client-scripting/user-interface/map/) |
-| `mapWaypointCleared` | `position, mapId` | [Map markers and blips](../../client-scripting/user-interface/map/) |
-| `noclipChanged` | `active, reason` | [Free camera (noclip)](../../client-scripting/noclip/) |
-| `browserCreated`, `browserDocumentReady`, `browserLoadingStart`, `browserLoadingFailed` | `event` | [Show an HTML page (web views)](../../client-scripting/user-interface/web-views/) |
-| `browserNavigate`, `browserPopup`, `browserOriginChange`, `browserResourceBlocked` | `event` | [Show an HTML page (web views)](../../client-scripting/user-interface/web-views/) |
-| `browserCursorChange`, `browserTooltip`, `browserInputFocusChange`, `browserConsoleMessage` | `event` | [Send data to and from a page](../../client-scripting/user-interface/page-bridge/) |
+| Event | Arguments | Fires when | Guide |
+| --- | --- | --- | --- |
+| `resourceStart`, `resourceStop` | `resourceName` | As on the server. | [Resources](../resources/) |
+| `entityStateChange` | `entity, key, value, previous` | A state write arrives. | [State bags](../state/) |
+| `questTrackingChanged` | `questKey, tracked` | This player follows or unfollows a quest. | [Quests](../../quests-dialogue-and-shops/quests/) |
+| `vendorOpened` | `session, npc` | The trade screen actually comes up. | [Shops](../../quests-dialogue-and-shops/vendors/) |
+| `vendorClosed` | `session, reason` | That screen goes away. | [Shops](../../quests-dialogue-and-shops/vendors/) |
+| `poiDiscovered` | `poiId` | A silent POI discovery is accepted. | [Map and blips](../../user-interface/map/) |
+| `mapOpened`, `mapClosed` | none | The map screen opens or closes. | [Map and blips](../../user-interface/map/) |
+| `mapWaypointSet` | `position, mapId, moved` | The player drops or moves their map marker. | [Map and blips](../../user-interface/map/) |
+| `mapWaypointCleared` | `position, mapId` | The player removes it. | [Map and blips](../../user-interface/map/) |
+| `noclipChanged` | `active, reason` | Free camera starts or ends. | [Camera and noclip](../../client-scripting/camera/) |
+| `browserCreated`, `browserLoadingStart`, `browserDocumentReady`, `browserLoadingFailed` | `event` | A web view is created, loads, is ready for `Web.emit`, or fails. | [HTML pages](../../user-interface/web-views/) |
+| `browserNavigate`, `browserPopup`, `browserOriginChange`, `browserResourceBlocked` | `event` | A view navigates, blocks a popup, changes origin, or blocks a request. | [HTML pages](../../user-interface/web-views/) |
+| `browserCursorChange`, `browserTooltip`, `browserInputFocusChange`, `browserConsoleMessage` | `event` | A view asks for a cursor or tooltip, gains or loses text focus, or logs. | [Page data bridge](../../user-interface/page-bridge/) |
 
-Chat lines arriving from the server come through a reserved `chatMessage`
-event that the declarations mention but do not type; see
-[Chat box on the client](../../client-scripting/user-interface/chat/).
+Chat lines from the server arrive through a reserved `chatMessage` event that
+the declarations mention but do not type; see
+[Chat and /commands](../../players/chat/).
 
-## Events of your own
+## Emit your own events
 
-Any name that is not native works as a custom event, on the same bus. Prefix
-it with your resource name, because every resource shares that bus:
+Any name that is not native is a custom event on the same bus. Every resource
+shares it, so prefix names with your resource name.
 
 ```ts
 // server
 Events.on("my-mode:round.end", (winner) => {
-  if (typeof winner !== "string") return;
+  if (typeof winner !== "string") return; // custom arguments are `unknown`
   Chat.sendToAll(`${winner} wins the round.`);
 });
 
@@ -176,29 +222,30 @@ Events.emit("my-mode:round.end", "Ravens").catch((error) => {
 });
 ```
 
-Custom handlers receive `unknown`: nothing checks what the emitter passed, so
-narrow it. `Events.emit` returns the promise described above. `await` it to
-wait for every handler, or attach a `.catch`: a rejection nobody handles counts
-as an uncaught error, which triggers your
-[`errorBehavior`](../resources/#errors).
-
-:::danger
-Nothing stops a script from emitting a native name. `Events.emit("playerDied",
-player)` runs every resource's `playerDied` handler as if the game had raised
-it. Never do it, and never emit a name you did not define.
-:::
-
-Three variations narrow who hears an event:
+`Events.emit` returns the promise described in [Async handlers](#async-handlers).
+`await` it or attach a `.catch`: an unhandled rejection triggers your
+[`errorBehavior`](../resources/#handle-errors).
 
 | Call | Reaches |
 | --- | --- |
+| `Events.emit(name, ...args)` | Every resource's `Events.on` handlers. |
 | `Events.emitTo(resourceName, name, ...args)` | Only that resource's `Events.on` handlers. |
-| `Events.emitLocal(name, ...args)` | Only handlers the calling resource registered with `Events.onLocal`. Other resources cannot hear or send these. |
-| `Events.listenerCount(name)` | Not an emit: counts `Events.on` and `once` handlers across all resources. |
+| `Events.emitLocal(name, ...args)` | Only your own `Events.onLocal` handlers. `onLocal` has no `off`. |
+| `Events.listenerCount(name)` | Not an emit: counts `on` and `once` handlers across resources. |
 
-`onLocal` has no matching `off`; its handlers live until the resource stops.
+:::danger
+Nothing stops you emitting a native name. `Events.emit("playerDied", ...)` runs
+every resource's handler as if the game had raised it. Never emit a name you
+did not define.
+:::
 
-Events that cross the network use the same `Events.on` on the client, and a
-separate `Events.onClient` table on the server so that a client can never
-trigger a native or resource event. That is its own page:
+Events between server and client use `Events.onClient` on the server, a
+separate table a client cannot use to reach native or resource events. See
 [Send data between server and client](../networking/).
+
+## Related
+
+- [Server vs client authority](../authority/): what an event confirms
+- [Send data between server and client](../networking/): events across the wire
+- [Resource manifest and lifecycle](../resources/): `resourceStart`, `resourceStop` and errors
+- [EventMap reference](../../reference/server/interfaces/EventMap.md): exact types and notes

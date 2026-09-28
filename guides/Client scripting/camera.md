@@ -1,164 +1,207 @@
 ---
-title: Camera and raycasts
-description: Find out where the player is looking with Camera, and ask the client's World what a ray hits, what is underfoot and what is nearby.
+title: Camera and free camera (noclip)
+description: Read where this client's camera is and what it points at, and take it over with NoClip to fly, spectate or frame a shot.
 sidebar:
+  label: Camera and noclip
   order: 72
 ---
 
-[`Camera`](../../reference/client/variables/Camera.md) describes the view this
-client is drawing through. The client's
-[`World`](../../reference/client/variables/World.md) answers questions about
-the level around it: what a ray meets, how high the ground is, which entities
-are inside a sphere. Together they answer "what is the player looking at".
+[`Camera`](../../reference/client/variables/Camera.md) reads the view this
+client is drawing through. [`NoClip`](../../reference/client/variables/NoClip.md)
+takes that view over and flies it through the world, walls included: an admin
+fly mode, a spectator camera or a scripted shot.
 
 ```ts
-function lookedAt(range = 40): WorldRayHit | null {
-  const ray = Camera.screenRay({ range });
-  if (!ray) {
-    return null;
-  }
-  return World.raycast(ray.origin, ray.target, { mode: "anything" });
-}
-
-Key.bind("e", () => {
-  const hit = lookedAt();
-  if (hit) {
-    Hud.showInfoText(`${hit.entityClass ?? "ground"} (${hit.surface}), ${hit.distance.toFixed(1)} m`);
+Key.bind("f8", () => {
+  if (NoClip.isActive()) {
+    NoClip.disable();
+  } else {
+    NoClip.enable({ mode: "body", speed: 12 });
   }
 });
 ```
 
-## The camera
+## Read the camera pose
 
 `Camera.getPose()` returns a [CameraPose](../../reference/client/interfaces/CameraPose.md):
-the eye `position`, the unit vectors `forward`, `right` and `up`, the vertical
-`fov` in degrees and the `aspectRatio`. The basis is read off the camera itself,
-so it carries roll.
+the eye `position`, the unit vectors `forward`, `right` and `up` (roll
+included), the vertical `fov` in degrees and the `aspectRatio`.
 
-This is the game's camera, whichever one the game has right now: behind the
-player, in a dialogue, in a cutscene, or a [free flight](../noclip/). It is not a
-camera of the mod's own, and there is no way to move it from here. `NoClip` is
-what takes it over.
+It is whichever camera the game has now: behind the player, in a dialogue, in a
+cutscene or in a free flight. `Camera` cannot move it; only `NoClip` can.
 
-`Camera.screenRay({ x, y, range })` turns a point on screen into a
+## Aim through a point on screen
+
+`Camera.screenRay({ x, y, range })` returns a
 [CameraRay](../../reference/client/interfaces/CameraRay.md): `origin` (the eye),
-a unit `direction`, and `target`, which is `origin` plus `direction` times
-`range`. `x` and `y` are normalized device coordinates, from -1 at the left and
-bottom to +1 at the right and top, so the default `(0, 0)` is the centre of the
-screen where the crosshair is. `range` is 100 metres by default and at most
-4096.
+a unit `direction`, and `target` (`origin` plus `direction` times `range`).
 
-Coordinates are normalized rather than pixels because the mod does not own the
-size of the back buffer. To aim through a pixel from a web view, divide by the
-screen size first.
-
-:::caution
-Both return `null` in the main menu and across a level load, when there is no
-active view. Check before you use the result.
-:::
-
-## Casting a ray
-
-`World.raycast(from, to, options?)` traces the segment between two points and
-returns the first [WorldRayHit](../../reference/client/interfaces/WorldRayHit.md),
-or `null` when it met nothing. The segment can be up to 4096 metres long; a ray
-of no length is refused.
-
-`mode` picks which of the game's three traces runs:
-
-| Mode | Sees | Use it for |
-| --- | --- | --- |
-| `cover` (default) | static geometry, props, doors; not bodies | line of sight |
-| `anything` | everything, bodies included | picking what the player aims at |
-| `ground` | only surfaces a player could stand on | placing things |
-
-`ignoreSelf` is on by default and lets the ray pass through the local player's
-own body. The camera sits where the player stands, so a ray from the camera
-would otherwise mostly hit them.
-
-A hit carries more than a position:
-
-| Field | Meaning |
-| --- | --- |
-| `position`, `normal`, `distance` | where it hit, the surface normal, metres along the ray |
-| `surface` | the material name, such as `mat_wood`, `mat_stone`, `mat_water` |
-| `terrain` | `true` when the ground itself was hit |
-| `entityGuid` | the level's own id for what was hit, the same on every machine; `null` for terrain, static geometry and anything the session spawned |
-| `entityName`, `entityClass` | the level's name and the engine class (`AnimDoor`, `NPC_NAI`, `GeomEntity`) |
-| `entityId` | this machine's own handle; not a network id and not portable |
-
-To tell the server what the player picked, send `entityGuid`. It is what the
-server's GUID lookups such as `Door.find` take, and it means the same thing on
-the server as here. `entityId` does not.
+- `x` and `y` run from -1 (left, bottom) to +1 (right, top). The default
+  `(0, 0)` is the crosshair. From a web view, divide pixels by the screen size.
+- `range` is 100 metres by default and at most 4096.
 
 ```ts
-Key.bind("f", () => {
-  const ray = Camera.screenRay({ range: 4 });
-  const hit = ray ? World.raycast(ray.origin, ray.target, { mode: "anything" }) : null;
-  if (hit?.entityClass === "AnimDoor" && hit.entityGuid) {
-    Events.emitServer("my-mode:door.knock", { guid: hit.entityGuid });
+const ray = Camera.screenRay({ range: 40 });
+const hit = ray ? World.raycast(ray.origin, ray.target, { mode: "anything" }) : null;
+```
+
+[Raycasts and nearby entities](../../world/raycasts/) covers what `World.raycast`
+returns.
+
+:::caution
+`getPose` and `screenRay` return `null` in the main menu and across a level
+load, when there is no active view.
+:::
+
+## Free camera modes
+
+With the defaults, the player flies with the photo mode keys (forward, back,
+left, right, jump to rise, crouch to sink, fast movement to boost), holds Alt to
+crawl and turns with the mouse. The keys follow the Controls menu and the
+keyboard layout. It is the same camera the F7 map editor flies.
+
+| `mode` | What happens to the body |
+| --- | --- |
+| `body` (default) | travels with the camera through geometry, the world streams in around it, and it lands where the flight ends |
+| `camera` | stays where it stood; only the view moves |
+
+:::caution[Other players see a body flight]
+In `body` mode the flown entity is the one this client replicates, so everyone
+watches the player fly through walls. The server neither grants nor refuses
+NoClip. If flying is an admin privilege, have the server tell the client when
+it may enable it, and see [Server vs client authority](../../core-concepts/authority/).
+:::
+
+## Start and stop the free camera
+
+`enable(options?)` returns a string:
+
+| Result | Meaning |
+| --- | --- |
+| `enabled` | the flight started |
+| `alreadyActive` | one was already running; the new options are not applied |
+| `noCamera` | there is no level to put the camera in |
+| `cameraBusy` | the F7 map editor holds the camera |
+
+| Option | Meaning |
+| --- | --- |
+| `mode` | `body` or `camera`, see above |
+| `input` | whether this machine's keyboard and mouse fly it (default `true`) |
+| `speed` | metres a second, 0.05 to 400 (default 12) |
+| `fov` | degrees, up to 140; left out, the game's own is kept |
+
+`disable({ keepPosition })` ends the flight. By default the body stays where
+the camera stopped; `keepPosition: false` puts it back where it took off,
+facing the same way. In `camera` mode neither matters.
+
+The game's controls are held during the flight, so the character does not walk.
+Your [key binds](../input/) still fire, so a bind can turn the flight off.
+
+## Know when the flight ends
+
+A flight can end without your resource asking. `noclipChanged` reports every
+start and end:
+
+```ts
+Events.on("noclipChanged", (active, reason) => {
+  if (!active && reason !== "script") {
+    Hud.showInfoText(`Free camera ended (${reason}).`);
   }
 });
 ```
 
-`World.raycastAll(from, to, options?)` returns every solid hit along the ray,
-nearest first, up to `maxHits` (8 at most). Each is found by tracing again past
-the one before, so a window does not hide the wall it is set in.
+| `reason` | Cause |
+| --- | --- |
+| `script` | a resource started or ended it |
+| `mapEditor` | F7 took the camera |
+| `viewLost` | the level went away |
+| `sessionOver` | the session ended |
 
-## The ground under a point
-
-`World.getGroundZ(position)` returns the height of whatever is underfoot, or
-`null` when the probe found nothing. It is a trace rather than a heightmap read,
-so it stands on a bridge, a floor or a roof rather than the terrain beneath it.
-`World.resolveGround(position)` runs the same probe and returns the whole hit,
-slope and surface included.
+:::caution
+A flight is not cleaned up when the resource that started it stops. End it
+yourself:
 
 ```ts
-function groundBelow(point: Vector3): Vector3 | null {
-  const z = World.getGroundZ(point, { up: 5, down: 50 });
-  return z === null ? null : new Vector3(point.x, point.y, z);
-}
+Events.on("resourceStop", (name) => {
+  if (name === "my-mode" && NoClip.isActive()) {
+    NoClip.disable({ keepPosition: false });
+  }
+});
 ```
+:::
 
-The probe starts `up` metres above the point (5 by default, so a point slightly
-underground still resolves) and reaches `down` metres below it (200 by
-default). Both go up to 512.
+## Move the free camera from code
 
-## Entities nearby
-
-`World.entitiesInRadius(centre, radius, options?)` lists what the engine has
-inside a sphere of up to 256 metres, nearest first, as
-[WorldNearbyEntity](../../reference/client/interfaces/WorldNearbyEntity.md)
-entries. `class` narrows it to one engine class, `max` caps the count (64 at
-most), and `physicalOnly` skips entities with no physics.
+While a flight runs you can place and aim the camera. Every setter returns
+`false` when no flight is running.
 
 ```ts
-const me = LocalPlayer;
-if (me) {
-  const doors = World.entitiesInRadius(me.position, 10, { class: "AnimDoor", max: 5 });
-  for (const door of doors) {
-    console.log(`${door.name || "door"} ${door.distance.toFixed(1)} m away, guid ${door.guid}`);
+function frame(target: Vector3): void {
+  if (NoClip.enable({ mode: "camera", input: false }) !== "cameraBusy") {
+    NoClip.focus(target, 8); // face it, then stand 8 m back
   }
 }
 ```
 
-A class name the engine does not know matches nothing rather than everything.
+| Call | Does |
+| --- | --- |
+| `setPosition(position)`, `getPosition()` | place or read the camera |
+| `setRotation({ yaw, pitch })`, `getRotation()` | degrees; yaw wraps to -180 to 180 (0 faces +Y, rising yaw turns left), pitch is clamped to -89 to 89 |
+| `setPose(position, forward)`, `lookAt(point)`, `focus(target, distance?)` | place and aim in one call |
+| `getForward()` | the view direction |
+| `setSpeed()`, `getSpeed()` | flight speed, kept across flights |
+| `setFov()`, `getFov()` | field of view |
+| `getState()` | everything as one [NoClipState](../../reference/client/interfaces/NoClipState.md), read on the same frame, or `null` |
 
-## None of this is authority
+## Drive the free camera yourself
 
-Every answer here describes what one client has streamed in at one moment. A
-point far from the player has not been streamed and answers nothing. And a
-client can lie about what its ray hit.
+With `input: false` (or `setInputEnabled(false)` mid-flight), the keyboard
+stops flying the camera and you call `move(input, deltaSeconds)` each frame:
 
-:::note[Authority]
-Use these queries to aim, preview and decide what to ask for. When a decision
-matters (whether a player may open that door, whether a spot is inside a zone)
-the server decides, from its own data. The server's `World` can ask a client
-the same questions itself; see [Raycasts and nearby entities](../../server-scripting/world-and-objects/raycasts/).
-:::
+```ts
+let last = Date.now();
+
+const timer = setInterval(() => {
+  const now = Date.now();
+  const delta = (now - last) / 1000;
+  last = now;
+  NoClip.move({ strafe: 1, yaw: 20 * delta }, delta); // a slow orbit
+}, 16);
+
+// When the shot is over: clearInterval(timer); NoClip.disable();
+```
+
+- `forward`, `strafe` and `lift` run from -1 to 1 along the heading, its right
+  and world up. `yaw` and `pitch` are this frame's turn in degrees.
+- `boost` multiplies the speed by six; `crawl` divides it by five.
+- A frame longer than 0.1 seconds counts as 0.1, so a stall does not launch
+  the camera across the map.
+- `move` returns `false` while the built-in driver has the camera.
+
+## Aim through the free camera
+
+`rayThroughScreen(x, y)` gives the world direction through a point of the
+frame, and `projectToScreen(point)` does the reverse, in the same -1 to 1
+coordinates as `Camera.screenRay`:
+
+```ts
+function pickUnderCentre(): WorldRayHit | null {
+  const from = NoClip.getPosition();
+  const direction = NoClip.rayThroughScreen(0, 0);
+  if (!from || !direction) {
+    return null;
+  }
+  const to = from.clone().add(direction.clone().mul(200));
+  return World.raycast(from, to, { mode: "anything" });
+}
+```
+
+`Camera.getPose()` keeps working during a flight, since the free camera is the
+game's active view while it runs.
 
 ## Related
 
+- [Raycasts and nearby entities](../../world/raycasts/), for what a ray hits
+- [Key binds and controls](../input/), to toggle the flight
 - [Let players place objects](../placement/), which does its own aiming
-- [Free camera (noclip)](../noclip/)
 - [Positions, rotations and vectors](../../core-concepts/math/)

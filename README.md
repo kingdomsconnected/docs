@@ -6,16 +6,16 @@ The closed-source mod remains authoritative for the generated client and server 
 
 ## Structure
 
-- `guides/` holds every page. Its folders become the sidebar's sections, labelled with the folder name exactly as written, so folders are named the way readers should see them ("Server scripting", "Quests, dialogue and shops"). Their URLs are the lowercased, dashed form (`server-scripting/quests-dialogue-and-shops/`).
-  - `overview.md` is the introduction, with a task index, above every section.
-  - `Getting started/` is the beginner path, meant to be read in order: tools, running the default gamemode, a first resource, TypeScript, project layout, debugging.
-  - `Core concepts/` holds the ideas every other page leans on: authority, resources, events, networking, state, positions, virtual worlds, sharing code.
-  - `Server scripting/` is split by what the code acts on: `Players/`, `World and objects/`, `NPCs, horses and dogs/`, `Quests, dialogue and shops/`.
-  - `Client scripting/` covers code in each player's game, with interface APIs under `User interface/`.
-  - `Tutorials/` holds advanced, multi-file builds.
+- `guides/` holds every page. Its folders become the sidebar's groups, labelled with the folder name exactly as written, so folders are named the way readers should see them ("Players", "Quests, dialogue and shops"). Their URLs are the lowercased, dashed form (`quests-dialogue-and-shops/`). The generator renders every guide group expanded, so the tree is kept to **one level of folders**: a new page goes into an existing group, and a new group needs a good reason.
+  - `overview.md` is the introduction and the task index ("I want to... -> page"). Add a row there for every new page.
+  - `Getting started/` is the beginner path, read in order: install and run a server, a first resource, TypeScript, a larger layout, debugging.
+  - `Core concepts/` holds the ideas every other page leans on: authority, resources, events, networking, state, positions, virtual worlds, sharing code. Other pages link here instead of re-explaining them.
+  - Server features are grouped by what they act on: `Players/`, `World/`, `NPCs and animals/`, `Quests, dialogue and shops/`. A feature with a client side too (chat, raycasts) keeps both halves on one page.
+  - `Client scripting/` covers code in each player's game (input, camera, placement, sound, Discord), and `User interface/` covers pages, HUD, map and native screens.
+  - `Tutorials/` holds multi-file builds, all in the same shape: before you start, what you will learn, file tree, numbered steps, try it, next steps.
   - `Hosting a server/` is for server operators.
-  - Page titles lead with the task or keyword a reader scans for ("Give and take items", not "Items").
-- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains. Each section owns a range (Getting started 10s, Core concepts 20s, Players 30s, World and objects 40s, NPCs 50s, Quests 60s, Client scripting 70s, User interface 80s, Tutorials 90s, Hosting 100s), so give a new guide an order inside its area's range.
+  - Page titles lead with the task or keyword a reader scans for ("Give and take items", not "Items"). Each page also sets a short `sidebar.label`, because the sidebar is narrow and always open.
+- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains. Each group owns a range (Getting started 10s, Core concepts 20s, Players 30s, World 40s, NPCs and animals 50s, Quests 60s, Client scripting 70s, User interface 80s, Tutorials 90s, Hosting 100s), so give a new guide an order inside its group's range.
 - Image directories live beside the Markdown document that references them.
 - `docs.config.json` owns the published site's generator pin, branding, links, navigation inputs, and community-content mapping.
 - `scripts/sync_contract.mjs` downloads and verifies the public scripting contract.
@@ -31,10 +31,11 @@ Guides document the API as it is, not as it is planned. Every global, function a
 
 ### Writing a guide
 
-- **One page, one topic.** Split a page before it passes about 250 lines.
-- **Frontmatter:** every page has a `title`, a one-sentence `description` and a `sidebar.order`.
+- **One page, one topic.** Aim for 80 to 150 lines; split a page before it passes about 250.
+- **Example first.** One or two sentences on what the page lets you do, then a working sample, then task headings ("Give an item", "React to a hit"). Properties, events and failure cases go in tables. Rationale goes in a short `:::note` or a `<details>`, or is left to the Core concepts page that already explains it.
+- **Frontmatter:** every page has a `title`, a one-sentence `description`, a short `sidebar.label` and a `sidebar.order`.
 - **Plain punctuation.** No em or en dashes, and no `--` standing in for one. Write the way you would explain it to a colleague.
-- **Links** between guides use the page's route, relative to the page you are writing: from `guides/Getting started/typescript.md` (served at `guides/getting-started/typescript/`) the events page is `[Events](../../core-concepts/events/)`. Lowercase every folder and replace spaces with dashes. (A `.md` link cannot cross a folder whose name has a space in it.) Links into the API reference are relative `.md` links, as if `reference/` sat next to `guides/`: `[Player](../../../reference/server/classes/Player.md#teleport)` from a page two folders deep. Never use absolute `/...` links, because the site can be deployed under a base path. `pnpm check:site` verifies every link and anchor.
+- **Links** between guides use the page's route, relative to the page you are writing: from `guides/Getting started/typescript.md` (served at `guides/getting-started/typescript/`) the events page is `[Events](../../core-concepts/events/)`. Lowercase every folder and replace spaces with dashes. (A `.md` link cannot cross a folder whose name has a space in it.) Links into the API reference are relative `.md` links, as if `reference/` sat next to `guides/`: `[Player](../../reference/server/classes/Player.md#teleport)` from a page in a group folder. Never use absolute `/...` links, because the site can be deployed under a base path. `pnpm check:site` verifies every link and anchor.
 - **Markdown only.** Asides (`:::note`, `:::tip[Title]`, `:::caution`, `:::danger`), titled code blocks (`title="src/server/index.ts"`), line markers (`{2-4}`, `ins={3}`, `del={5}`), `diff lang="ts"` blocks, `<details>` and tables all work. MDX components do not.
 - **The generator rejects a page** containing `<script`, `<style`, `<button`, `<meta`, `<link`, `<input`, `<form`, `<iframe`, `<object`, `<embed`, `<base`, an ` onX=` attribute or a `javascript:` URL anywhere, **code blocks included**. Show web pages without those tags, and put their JavaScript in its own block.
 
@@ -42,7 +43,7 @@ Guides document the API as it is, not as it is planned. Every global, function a
 
 `pnpm check` type-checks every `js` and `ts` block against the contract's own declarations, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
 
-- Blocks on pages under `guides/Client scripting/` use the client declarations; everything else uses the server's. A block whose first line is `// client` or `// server`, or whose title names a `client/` or `server/` path, picks its side explicitly.
+- Blocks on pages under `guides/Client scripting/` and `guides/User interface/` use the client declarations; everything else uses the server's. A block whose first line is `// client` or `// server`, or whose title names a `client/` or `server/` path, picks its side explicitly.
 - Blocks titled with a file path are compiled together, so a tutorial's files can import each other (`./command.js`).
 - A few names are pre-declared so short samples need no setup: `player`, `target`, `horse`, `quest`, `npc`, `dog` and `session` on the server, `player` on the client. See `PLACEHOLDERS` in the script.
 - `<!-- check: skip -->` on the line before a fence skips a block that is not meant to compile on its own (a fragment, or browser code). Use it rarely.

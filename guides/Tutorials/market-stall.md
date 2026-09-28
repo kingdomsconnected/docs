@@ -2,31 +2,45 @@
 title: Build an NPC shop
 description: An NPC shopkeeper who talks first and trades second, combining npcInteract, a dialogue and a vendor with a purse that can run dry.
 sidebar:
+  label: NPC shop
   order: 92
 ---
 
-NPCs, conversations and shops are three separate APIs in Kingdoms Connected, and none of them knows about the others. A [`Vendor`](../../reference/server/variables/Vendor.md) is a price list and a purse. A [`Dialogue`](../../reference/server/variables/Dialogue.md) runs on a player, not on an NPC. What makes them a stall is the glue you write.
+You will build `/stall`, which puts a grocer in front of you. Press use on him and he greets you; from the conversation you can open his trade screen or ask whether he is buying, and he says so when his 400-coin purse runs low.
 
-You will build `/stall`, which puts a grocer in front of you. Press use on him and he greets you. From the conversation you can open his trade screen or ask whether he is buying. He starts with 400 coins, pays for what you sell out of them, and says so when he runs low.
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/).
+- [Spawn NPCs](../../npcs-and-animals/npcs/), [Dialogue choices](../../quests-dialogue-and-shops/dialogue/) and [Shops (vendors)](../../quests-dialogue-and-shops/vendors/).
 
-The default gamemode has both halves separately, in `src/server/commands/vendor.ts` and `src/server/commands/dialogue.ts`. This tutorial joins them.
+Difficulty: intermediate. Time: about 40 minutes.
+:::
+
+## What you will learn
+
+- Spawning an interactable, invulnerable NPC with [`Npc.create`](../../npcs-and-animals/npcs/).
+- Reacting to the use key with [`npcInteract`](../../npcs-and-animals/npc-events/).
+- Running a multi-page conversation with [`Dialogue`](../../quests-dialogue-and-shops/dialogue/), shared safely with other resources.
+- Creating a [`Vendor`](../../quests-dialogue-and-shops/vendors/) with stock, buy prices and a purse, and reacting to `vendorTrade`.
+- Placing and facing an entity with [positions and rotations](../../core-concepts/math/).
 
 ```text
 market-stall/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   src/server/
-    index.ts
-    place.ts
-    wares.ts
-    stall.ts
-    talk.ts
+    index.ts             /stall, npcInteract, cleanup
+    place.ts             a spot in front of the player
+    wares.ts             prices and purse
+    stall.ts             keeper + vendor pairs, vendorTrade
+    talk.ts              the conversation
 ```
 
-`tsconfig.json` and `types/runtime.d.ts` are the ones from [Use TypeScript](../../getting-started/typescript/). It is all server code.
+NPCs, dialogues and vendors do not know about each other: the stall is the glue you write. The default gamemode has the halves separately, in `src/server/commands/vendor.ts` and `src/server/commands/dialogue.ts`.
 
-## 1. The manifest
+## 1. Write the manifest
+
+It is all server code.
 
 ```json title="package.json"
 {
@@ -44,9 +58,9 @@ market-stall/
 }
 ```
 
-## 2. Where the stall goes
+## 2. Find a spot in front of the player
 
-The stall is put a couple of metres in front of whoever typed the command, with the keeper turned to face them. The world is Z up and an unrotated entity faces +Y; [Positions, rotations and vectors](../../core-concepts/math/) explains the maths.
+The stall goes a couple of metres ahead of whoever typed the command, with the keeper turned to face them. The world is Z up and an unrotated entity faces +Y.
 
 ```ts title="src/server/place.ts"
 /** `distance` metres ahead of the player on the ground, turned back to face them. */
@@ -63,9 +77,9 @@ export function inFrontOf(player: Player, distance: number): { position: Vector3
 }
 ```
 
-## 3. The wares
+## 3. Set the prices
 
-Prices are in money units, the amount of the game's `money` item. Item names are the game's own item names, the same ones `player.giveItem` takes.
+Prices are in money units (the game's `money` item). Item names are the game's own, the same ones `player.giveItem` takes.
 
 ```ts title="src/server/wares.ts"
 export const STOCK: VendorStockRow[] = [
@@ -84,9 +98,9 @@ export const BUYS: VendorBuyRow[] = [
 export const PURSE = 400;
 ```
 
-## 4. The stall
+## 4. Open the stall
 
-A stall is two ids: the keeper's NPC id and the vendor id. They are kept together in one map, looked up by the keeper when somebody presses use, and by the vendor when a deal settles.
+A stall is two ids, the keeper's NPC id and the vendor id, kept together in one map. It is looked up by keeper when somebody presses use, and by vendor when a deal settles.
 
 ```ts title="src/server/stall.ts"
 import { BUYS, PURSE, STOCK } from "./wares.js";
@@ -146,15 +160,13 @@ export function installTrading(): void {
 }
 ```
 
-`interactable: true` is what makes pressing use on the keeper raise `npcInteract` at all. `invulnerable: true` keeps a bored customer from killing the shop.
+- `interactable: true` is what makes pressing use on the keeper raise `npcInteract` at all.
+- `invulnerable: true` keeps a bored customer from killing the shop.
+- What players sell does not join the vendor's stock. To resell it, call `Vendor.setStock` in `vendorTrade`; its lines name items by GUID in `item` and by game name in `name`.
 
-:::note
-What players sell to a vendor does not join its stock. If your grocer should resell the apples he buys, add them back with `Vendor.setStock` in the `vendorTrade` handler. The lines it receives name items by GUID in `item` and by the game's name in `name`.
-:::
+## 5. Write the conversation
 
-## 5. The conversation
-
-A conversation belongs to a player, so the map is keyed by player id, and each entry remembers which stall it is about. `Dialogue.update` swaps the page inside the same session instead of opening a new one.
+A conversation belongs to a player, so the map is keyed by player id and each entry remembers its stall. `Dialogue.update` swaps the page inside the same session instead of opening a new one.
 
 ```ts title="src/server/talk.ts"
 import type { Stall } from "./stall.js";
@@ -222,15 +234,13 @@ export function installTalk(): void {
 }
 ```
 
-:::tip
-The contract spells `line`, `onRight` and `enabled` as properties that must be present, even though the runtime treats them as optional. Typing each page as `DialoguePage` and naming all three keeps the compiler happy and makes a malformed page a compile error instead of a refused call.
-:::
+- Typing each page as `DialoguePage` with `line`, `onRight` and `enabled` spelled out keeps the compiler happy: the contract requires them even though the runtime treats them as optional.
+- Choices come back by option id, never by index, so a rebuilt page still routes correctly.
+- The `talk.session` check is what lets this resource share `dialogueChoice` with every other resource.
 
-Choices come back by option id, never by index, so a page you rebuild with different rows still routes correctly. The check against `talk.session` is what lets this resource share `dialogueChoice` with every other resource on the server.
+## 6. Wire it up
 
-## 6. Wiring it up
-
-The entry point connects the pieces: the command, the use key, and cleanup.
+The entry point connects the command, the use key and cleanup.
 
 ```ts title="src/server/index.ts"
 import { inFrontOf } from "./place.js";
@@ -274,31 +284,23 @@ Events.on("resourceStop", (name) => {
 });
 ```
 
-:::caution
-Stopping a resource removes its event handlers and timers, but not the vendors, conversations or NPCs it created. Without the `resourceStop` handler, every reload leaves a mute grocer behind whose shop nobody can open.
-:::
-
-There is no `playerDisconnect` handler, and none is needed: a disconnect closes the player's conversation with reason 3 and their trade screen with reason 4, and the `dialogueClosed` handler already tidies the map.
+- Without the `resourceStop` handler, every reload leaves behind a mute grocer whose shop nobody can open: stopping a resource removes its handlers and timers, not its vendors, conversations or NPCs.
+- No `playerDisconnect` handler is needed. A disconnect closes the player's conversation (reason 3) and trade screen (reason 4), and `dialogueClosed` tidies the map.
 
 ## Try it
 
-Build the resource, then:
-
-```sh title="Server console"
-ensure market-stall
-```
-
-In game:
+Build the resource and run `ensure market-stall` in the server console. In game:
 
 1. `/stall`. Ondra appears in front of you, facing you.
 2. Walk up and press use. He turns to you and the conversation opens.
-3. Pick "Are you buying today?", then "Then let us trade." The game's own trade screen opens with Ondra as the trader.
+3. Pick "Are you buying today?", then "Then let us trade." The game's trade screen opens with Ondra as the trader.
 4. Buy a loaf. He thanks you by name over his head.
-5. With the default gamemode running, `/give apple 150`, then sell him apples until his purse gives out. Ask him again and he tells you it is empty.
+5. With the default gamemode running, `/give apple 150`, then sell him apples until his purse gives out. Ask him again and he says it is empty.
 6. `/stall clear` removes him.
 
-## Where to go next
+## Next steps
 
-- [Vendors](../../server-scripting/quests-dialogue-and-shops/vendors/) and [Dialogue](../../server-scripting/quests-dialogue-and-shops/dialogue/) cover each API in full, including the client's `vendorOpened` and `vendorClosed`.
-- [NPCs](../../server-scripting/npcs-horses-and-dogs/npcs/) lists the roles you can use instead of `townsman`.
-- [Script an NPC cutscene](../scripted-scene/) makes NPCs move and talk on their own.
+- Refill his purse on a timer with `Vendor.setPurse`, or restock what players sold him in `vendorTrade`. See [Shops (vendors)](../../quests-dialogue-and-shops/vendors/).
+- Try another role than `townsman` from [Spawn NPCs](../../npcs-and-animals/npcs/).
+- Tie a purchase to a journal entry with [Quests in the journal](../../quests-dialogue-and-shops/quests/).
+- Make NPCs move and talk on their own in [Script an NPC cutscene](../scripted-scene/).

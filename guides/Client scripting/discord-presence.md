@@ -2,7 +2,8 @@
 title: Discord Rich Presence
 description: Show what a player is doing on your server in their Discord profile with the client's Discord global.
 sidebar:
-  order: 76
+  label: Discord presence
+  order: 75
 ---
 
 Discord Rich Presence is the activity Discord shows on a player's profile while
@@ -24,7 +25,7 @@ doing and tells their client, which publishes it. Kingdoms Connected does not
 publish a presence of its own, so nothing is shown until your code publishes
 something.
 
-## Stage, then publish
+## Stage fields, then publish
 
 Every setter only stages a value. Nothing reaches Discord until you publish:
 
@@ -69,7 +70,7 @@ application in the Discord Developer Portal, by its key. Leave the image fields
 out unless you know a key the application has.
 :::
 
-## Clearing and resetting
+## Clear or reset the presence
 
 - `clear()` removes the presence from Discord and empties the staged fields.
 - `reset()` empties the staged fields but leaves Discord showing the last
@@ -92,13 +93,13 @@ Events.on("resourceStop", (name) => {
 :::note[One presence per player]
 Every client resource shares the same staged fields. If two resources set
 presence, each publish sends whatever the other staged too, and the last one to
-publish wins. Keep presence in one resource.
+publish wins. Keep presence in one resource, usually your gamemode.
 :::
 
 ## When Discord is unavailable
 
-The game connects to Discord once, at startup. `isAvailable()` tells you
-whether that worked. The setters are safe to call either way, and `update`,
+Presence only shows while the Discord app is running. The game connects to
+Discord once, at startup, and `isAvailable()` tells you whether that worked. The setters are safe to call either way, and `update`,
 `setPresence` and `clear` return `false` instead of throwing, so you rarely need
 to check first. A `true` only means the update was handed to Discord: if
 Discord rejects it, your script is not told.
@@ -121,7 +122,7 @@ something changes (a round starts, a player joins a team), never from a
 per-frame or per-second loop. The timestamps exist so the timer ticks on
 Discord's side without you sending anything.
 
-## Driven by the server
+## Drive the presence from the server
 
 The server knows the round and the team, so it tells each client what to show.
 The client only turns that into a presence:
@@ -171,3 +172,9 @@ Events.on("resourceStop", (name) => {
 [Send data between server and client](../../core-concepts/networking/) covers
 the events used here, including why a client that just joined should ask the
 server for its state rather than wait to be told.
+
+## Related
+
+- [Send data between server and client](../../core-concepts/networking/), for the presence event
+- [Resource manifest and lifecycle](../../core-concepts/resources/), for `resourceStop`
+- [Sounds and voice chat](../sound-and-voice/), the other client-only player features

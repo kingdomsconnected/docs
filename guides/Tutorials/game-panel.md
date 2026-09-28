@@ -2,41 +2,49 @@
 title: Build an in-game HTML panel
 description: A web page on a key, fed by the client with the local body and by the server with what only it knows, the way the default gamemode's F4 panel works.
 sidebar:
+  label: HTML panel
   order: 91
 ---
 
-A web view is an HTML page drawn over the game. On its own it knows nothing: it cannot read the player, and it cannot reach the server. Everything it shows is pushed in by your client script, and everything it does goes back out through that same script.
+You will build an HTML panel that opens on F8. It shows your health, stamina and position, the world clock and everyone connected, and has a link that sends `/help` as if you had typed it.
 
-You will build a small panel on F8 that shows:
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/), with both the server and client programs.
+- [Show an HTML page (web views)](../../user-interface/web-views/) and [Send data to and from a page](../../user-interface/page-bridge/).
 
-- your own health, stamina and position, read on the client from [`LocalPlayer`](../../reference/client/variables/LocalPlayer.md),
-- the world clock and everyone connected, which only the server knows, polled while the panel is open,
-- a link that sends a `/` command, as if you had typed it.
+Difficulty: intermediate. Time: about 45 minutes.
+:::
 
-It is the default gamemode's F4 panel (`src/client/index.ts`, `panel.ts`, `snapshot.ts` and `src/server/panel.ts`) with the tabs taken out.
+## What you will learn
+
+- Creating, showing, focusing and hiding a [web view](../../user-interface/web-views/).
+- Talking to the page with `Web.emit`, `Web.on` and `callEvent` through the [page bridge](../../user-interface/page-bridge/), without losing messages sent before it loads.
+- Reading the [local player](../../client-scripting/local-player/) on the client.
+- Polling the server for data only it has, with [server and client messages](../../core-concepts/networking/).
+- Binding a [key](../../client-scripting/input/) and cleaning up on `resourceStop`.
 
 ```text
 my-panel/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   ui/
-    index.html
-    app.js
+    index.html           the page
+    app.js               the page's script
   src/server/
-    index.ts
+    index.ts             answers the poll
   src/client/
-    tsconfig.json
-    index.ts
-    view.ts
-    snapshot.ts
+    tsconfig.json        from Use TypeScript
+    index.ts             key, page handlers, refresh timer
+    view.ts              owns the web view
+    snapshot.ts          reads the local player
 ```
 
-The three config files are the ones from [Use TypeScript](../../getting-started/typescript/), with both programs.
+It is the default gamemode's F4 panel (`src/client/index.ts`, `panel.ts`, `snapshot.ts` and `src/server/panel.ts`) with the tabs taken out.
 
-## 1. The manifest
+## 1. Write the manifest
 
-`files` is what the server streams to clients. The compiled client script and the page both have to be in it, or the view has nothing to load.
+`files` is what the server streams to clients: the compiled client script and the page must both be in it.
 
 ```json title="package.json"
 {
@@ -56,9 +64,9 @@ The three config files are the ones from [Use TypeScript](../../getting-started/
 }
 ```
 
-## 2. The page
+## 2. Write the page
 
-The page is plain HTML. It is served from the per-server asset cache as `fw://resources/my-panel/ui/index.html`.
+The page is plain HTML, served as `fw://resources/my-panel/ui/index.html`.
 
 ```html title="ui/index.html"
 <!doctype html>
@@ -77,10 +85,10 @@ The page is plain HTML. It is served from the per-server asset cache as `fw://re
 ```
 
 :::note
-This site cannot publish a script tag, even inside a code listing, so the listing stops at a comment. In your file, replace that comment with a script element whose `src` is `app.js`. The default gamemode's `ui/index.html` is a complete page to compare against.
+This site cannot publish a script tag, even in a listing. In your file, replace the comment with a script element whose `src` is `app.js`. The default gamemode's `ui/index.html` is a complete page to compare against.
 :::
 
-The script talks in two directions. `callEvent(name, json)` is a function the view injects into the page, and it reaches your client script's `Web.on` handlers. Your client script's `Web.emit` arrives as a `CustomEvent` on `window`, with the payload in `event.detail`.
+The page's script calls `callEvent(name, json)` to reach your client script's `Web.on` handlers, and receives `Web.emit` as a `CustomEvent` on `window`, with the payload in `event.detail`.
 
 <!-- check: skip -->
 ```js title="ui/app.js"
@@ -128,13 +136,15 @@ document.addEventListener("keydown", (event) => {
 send("panel:ready");
 ```
 
+- `send("panel:ready")` on the last line tells the client script the page is listening. Step 3 depends on it.
+
 :::danger
-Player names are chosen by players. Put them in the page with `textContent`, never `innerHTML`. With `innerHTML`, a player who names themselves with a snippet of HTML gets it run in everyone's panel.
+Player names are chosen by players. Put them in the page with `textContent`, never `innerHTML`, or a player named with a snippet of HTML gets it run in everyone's panel.
 :::
 
-## 3. The view
+## 3. Own the view
 
-`view.ts` owns the one view and the rule that makes a web page reliable: **nothing is sent before the page says it is ready.** A page that is still loading has no listeners, and `Web.emit` into it is simply lost. So `push` remembers the newest value per channel, and `markReady` sends all of them at once when the page's `panel:ready` arrives.
+`view.ts` owns the one view and one rule: **nothing is sent before the page says it is ready**, because `Web.emit` into a page that is still loading is lost. `push` remembers the newest value per channel, and `markReady` sends them all when `panel:ready` arrives.
 
 ```ts title="src/client/view.ts"
 const PAGE = "fw://resources/my-panel/ui/index.html";
@@ -202,11 +212,11 @@ function create(handlers: PageHandlers): boolean {
 }
 ```
 
-Hiding keeps the view and its page alive, so opening it again is instant and the page keeps whatever it last drew.
+- `hide` keeps the view and its page alive, so opening it again is instant.
 
-## 4. The client's own data
+## 4. Read the local player
 
-The client can read its own body directly. The snapshot copies plain numbers out of it, rounded, because the page only needs to draw them.
+The client reads its own body directly and copies out rounded numbers for the page to draw.
 
 ```ts title="src/client/snapshot.ts"
 export interface SelfSnapshot {
@@ -237,9 +247,9 @@ export function readSelf(): SelfSnapshot | null {
 }
 ```
 
-## 5. The server's half
+## 5. Answer the poll on the server
 
-The world clock and the player list live on the server. It answers a poll from one client with [`player.emit`](../../reference/server/classes/Player.md#emit), which takes a JSON string. Answering on demand means a panel nobody has open costs the server nothing.
+The clock and the player list live on the server. It answers one client's poll with [`player.emit`](../../reference/server/classes/Player.md#emit), which takes a JSON string, so a panel nobody has open costs nothing.
 
 ```ts title="src/server/index.ts"
 const RESOURCE = "my-panel";
@@ -259,9 +269,9 @@ Events.onClient(`${RESOURCE}:poll`, (sender) => {
 });
 ```
 
-## 6. Wiring the client
+## 6. Wire the client
 
-The entry point binds the key, handles what the page sends, refreshes once a second while the panel is visible, and destroys the view when the resource stops.
+The entry point binds F8, handles what the page sends, refreshes once a second while the panel is visible, and destroys the view when the resource stops.
 
 ```ts title="src/client/index.ts"
 import { readSelf } from "./snapshot.js";
@@ -305,26 +315,21 @@ Events.on("resourceStop", (name) => {
 });
 ```
 
-:::caution[A focused view owns the keyboard]
-While the view has focus, `Key.bind` handlers do not fire, so F8 cannot close the panel. That is why the page sends `panel:close` on Escape and has its own Close link. If you forget both, the player is stuck in your panel until the resource stops.
-:::
+- `Chat.send` sends the line exactly as if the player typed it, with the player's own permissions, so the page never gets more power than the player has.
 
-`Chat.send` sends the line exactly as if the player had typed it, so the link runs whatever command resource answers `/help`, with the player's own permissions. The page never gets more power than the player already has.
+:::caution[A focused view owns the keyboard]
+While the view has focus, `Key.bind` handlers do not fire, so F8 cannot close the panel. That is why the page sends `panel:close` on Escape and has a Close link. Without both, the player is stuck until the resource stops.
+:::
 
 ## Try it
 
-Build the resource, then:
+Build the resource and run `ensure my-panel` in the server console. In game, press F8. Your own numbers appear straight away, and the clock and player list a moment later, once the server answers. Take some damage and watch the health line change. Click "Send /help" and read the answer in chat, then press Escape.
 
-```sh title="Server console"
-ensure my-panel
-```
+If the panel stays blank, look for a `browserLoadingFailed` line in the client log: usually the page is missing from `files`, or the URL does not match the resource's folder name.
 
-In game, press F8. Your own numbers appear straight away and the clock and player list a moment later, once the server has answered. Take some damage and watch the health line change. Click "Send /help" and read the answer in chat, then press Escape.
+## Next steps
 
-If the panel stays blank, the client log has a `browserLoadingFailed` line: usually the page is missing from `files`, or the URL does not match the resource's folder name.
-
-## Where to go next
-
-- [Show an HTML page (web views)](../../client-scripting/user-interface/web-views/) and [Send data to and from a page](../../client-scripting/user-interface/page-bridge/) cover every `Web` call and the `browser*` events.
-- [Send data between server and client](../../core-concepts/networking/) explains why `player.emit` takes a string and `Events.emitServer` does not.
-- The default gamemode's `ui/index.html` is a full five-tab version of this page.
+- Add a button that sends a `/give` line to the [/command system](../command-system/).
+- Show a HUD message or notification alongside the panel with [HUD messages, nametags and compass](../../user-interface/hud/).
+- Push server data only when it changes, with [entity state bags](../../core-concepts/state/), instead of polling.
+- Compare with the default gamemode's `ui/index.html`, a full five-tab version of this page.

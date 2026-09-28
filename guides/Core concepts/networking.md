@@ -1,40 +1,25 @@
 ---
 title: Send data between server and client
-description: Sending named events from the server to one client or all of them and back, what a payload can carry, and how to validate what a client sends.
+description: Send named events from the server to one client or all of them and back, know what a payload can carry, and validate what a client sends.
 sidebar:
+  label: Server and client messages
   order: 23
 ---
 
-Your server script and your client script run on different machines, so they
-talk by sending named events. The server can send to one player or to
-everyone; a client can only send to the server. Events arrive reliably and in
-the order they were sent, for as long as the connection holds.
+Server and client scripts talk by sending named events. The server sends to
+one player or to everyone; a client sends only to the server. Events arrive
+reliably and in order while the connection holds.
 
-| Direction | Send with | Receive with |
-| --- | --- | --- |
-| Server to one client | `player.emit(name, jsonText)` | client `Events.on(name, (payload) => ...)` |
-| Server to every client | `Events.emitAllClients(name, payload)` | client `Events.on(name, (payload) => ...)` |
-| Client to server | `Events.emitServer(name, payload)` | server `Events.onClient(name, (sender, payload) => ...)` |
-
-`emitAllClients` and `emitServer` are real but missing from the declarations.
-A TypeScript resource declares them in `types/runtime.d.ts`, as shown in
-[Use TypeScript](../../getting-started/typescript/).
-
-## A round trip
-
-A client asks for the scoreboard when its script starts, and the server answers
-that one player. Asking from the client side avoids a race: when the server
-sends something at `playerConnect`, the player's client scripts may not be
-running yet.
+A client asks for the scoreboard when its script starts, and the server
+answers that player. Asking from the client avoids a race: at `playerConnect`
+the client scripts may not be running yet.
 
 ```ts title="src/client/scores.ts"
 const RESOURCE = "my-mode";
 
 Events.on(`${RESOURCE}:scores`, (payload) => {
   if (!Array.isArray(payload)) return;
-  for (const row of payload) {
-    console.log(JSON.stringify(row));
-  }
+  for (const row of payload) console.log(JSON.stringify(row));
 });
 
 Events.on("resourceStart", (name) => {
@@ -53,54 +38,53 @@ Events.onClient(`${RESOURCE}:scores.ask`, (sender) => {
 });
 ```
 
-The same client handler also works when the server pushes to everyone:
-`Events.emitAllClients("my-mode:scores", rows)`.
+## Pick the call
+
+| Direction | Send with | Payload | Receive with |
+| --- | --- | --- | --- |
+| Server to one client | `player.emit(name, jsonText)` | A JSON **string**, or nothing | client `Events.on(name, (payload) => ...)` |
+| Server to every client | `Events.emitAllClients(name, payload)` | Any value | client `Events.on(name, (payload) => ...)` |
+| Client to server | `Events.emitServer(name, payload)` | Any value | server `Events.onClient(name, (sender, payload) => ...)` |
+
+`emitAllClients` and `emitServer` exist at runtime but are missing from the
+declarations. A TypeScript resource declares them in `types/runtime.d.ts`; see
+[Use TypeScript](../../getting-started/typescript/).
+
+:::caution
+Server-to-client events land in the `Events.on` table every client resource
+shares. Prefix every name with your resource name.
+:::
 
 ## What a payload can carry
 
-Every payload crosses the wire as JSON text and is parsed on arrival. Plain
-objects, arrays, strings, numbers, booleans and `null` survive. Class
-instances arrive as plain objects: a `Vector3` becomes `{ x, y, z }` without
-its methods. Functions and `undefined` fields disappear. To refer to a player,
-horse or NPC, send its `id` and look it up with `getById` on the other side.
+Payloads cross the wire as JSON and arrive parsed, typed `unknown`.
 
-How you hand the payload over depends on the call:
+| You send | They receive |
+| --- | --- |
+| Objects, arrays, strings, numbers, booleans, `null` | The same |
+| A class instance, such as a `Vector3` | A plain object (`{ x, y, z }`), no methods |
+| Functions, `undefined` fields | Nothing |
+| A player, horse or NPC | Do not: send its `id` and use `getById` on the other side |
 
-- **`player.emit`** takes a string that already is JSON. Pass
-  `JSON.stringify(value)`, or leave the payload out for an event that carries
-  nothing. A string that is not valid JSON, like `"hello"`, is dropped by the
-  client with an error in its log.
-- **`Events.emitAllClients`** and **`Events.emitServer`** take any value.
-  Anything but a string is JSON-encoded for you. A string is sent as it is,
-  which means it must itself be JSON text: `Events.emitServer("x", "hello")` is
-  dropped with a "malformed JSON payload" warning in the server log. Pass
-  objects, and wrap a bare string as `{ text: "hello" }`.
-
-The receiver always gets the parsed value, typed as `unknown`.
-
-:::caution
-Server-to-client events land in the same `Events.on` table that every client
-resource shares. Any client resource that listens for `"scores"` would hear
-yours. Prefix every name with your resource name.
-:::
+`emitAllClients` and `emitServer` JSON-encode anything but a string. A string
+is sent as is, so it must itself be JSON: `Events.emitServer("x", "hello")` is
+dropped with a "malformed JSON payload" warning. Wrap it as `{ text: "hello" }`.
+`player.emit` likewise needs `JSON.stringify(value)`; a non-JSON string is
+dropped with an error in the client log.
 
 ## Validate everything a client sends
 
-The player controls their client. Anything that arrives through
-`Events.onClient` could have been written by hand, so check it the way the
-default gamemode's `src/server/build.ts` does before it spawns a prop where a
-client asked:
+The player controls their client, so anything reaching `Events.onClient` may
+be forged. Check:
 
-- **Who**: the sender is the connection the packet came from, and a client
-  cannot fake it. Cast it with `sender as Player`, and never trust a player id
-  inside the payload.
-- **Whether they may**: check your own state, not the client's claim. Is this
-  player actually in a build session, a shop, a round?
-- **Shape**: read each field and check its type. Reject numbers that are not
-  finite.
-- **Sense**: compare positions with where the server thinks the player is.
+| Check | How |
+| --- | --- |
+| Who | The `sender` is the connection it came from and cannot be faked. Never trust a player id in the payload. |
+| Whether they may | Check your own state: is this player really in a shop, a build session, a round? |
+| Shape | Read each field and check its type. Reject non-finite numbers. |
+| Sense | Compare positions with where the server sees the player. |
 
-```ts title="src/server/throw.ts"
+```ts title="src/server/flare.ts"
 const MAX_REACH = 30;
 
 function readPosition(payload: unknown): Vector3 | null {
@@ -116,22 +100,18 @@ Events.onClient("my-mode:flare", (sender, payload) => {
   const target = readPosition(payload);
   if (!target || !player.ready) return;
   if (player.position.distance(target) > MAX_REACH) return;
-
   Vfx.burst("WH_Particels.fires.campfire_a", target);
 });
 ```
 
-:::note
-`Events.onClient` handlers live in their own table, separate from `Events.on`.
-A client can only reach the handlers you registered for it, and never a native
-event like `playerDied` or another resource's custom event.
-:::
+`Events.onClient` handlers live in their own table. A client reaches only the
+handlers you registered there, never a native event like `playerDied` or
+another resource's custom event.
 
-## Keeping traffic down
+## Keep traffic down
 
-Nothing in the framework limits how often a client may send, so a modified
-client can call your `onClient` handler as fast as its connection allows.
-Keep those handlers cheap, and throttle anything expensive per player:
+Nothing limits how often a client may send. Keep `onClient` handlers cheap and
+throttle expensive ones per player:
 
 ```ts
 // server
@@ -148,19 +128,17 @@ Events.onClient("my-mode:scores.ask", (sender) => {
 Events.on("playerDisconnect", (player) => lastAsk.delete(player.id));
 ```
 
-Going the other way, a few habits keep the server from flooding its players:
+From the server side:
 
-- Send only while someone is looking. The default gamemode's debug panel polls
-  the server twice a second, and only while the panel is open.
-- Send what changed, not everything, when the whole snapshot is large.
-- For data attached to one entity (a team, a role, a score shown over a head),
-  use a [state bag](../state/) instead. It is sent only to clients that can see
-  the entity, batched once per tick, and delivered again to anyone who comes
-  into range.
+- Send only while someone is looking (a panel that is open, for example).
+- Send what changed, not the whole snapshot, when it is large.
+- For data about one entity (team, role, a score over a head), use a
+  [state bag](../state/): sent only to clients that see the entity, batched
+  per tick, and re-sent to anyone who comes into range.
 
 ## Related
 
-- [Events](../events/)
-- [Server vs client authority](../authority/)
-- [Send data to and from a page](../../client-scripting/user-interface/page-bridge/), for the hop from a client
-  script to its web view
+- [Events](../events/): the bus these calls share
+- [Server vs client authority](../authority/): why the server decides
+- [State bags](../state/): per-entity data without events
+- [Page data bridge](../../user-interface/page-bridge/): the hop from a client script to its web view

@@ -2,30 +2,44 @@
 title: Script an NPC cutscene
 description: Two NPCs play a short scene in front of one player, driven by a state machine on npcIntentDone and pinned to that player's client.
 sidebar:
+  label: NPC cutscene
   order: 93
 ---
 
-An NPC order like `moveTo` does not block and has no callback. The server sends it to whichever client is simulating the NPC, and some time later raises `npcIntentDone` with how it went. A scene of several steps is therefore a state machine: each step issues an order, and the event (or a timer, for steps that are just talking) moves it to the next one.
+You will build `/scene`: two townsfolk appear a few metres in front of you, Vendel walks over to Marketa, they trade a few lines over their heads, and he walks back to where he started.
 
-You will build `/scene`. Two townsfolk appear a few metres in front of you. Vendel walks over to Marketa, they trade a few lines, and he walks back to where he started. Both actors are pinned to your client for the length of the scene.
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/).
+- [Spawn NPCs](../../npcs-and-animals/npcs/) and [Move NPCs: walk, follow, patrol](../../npcs-and-animals/npc-orders/).
 
-This is the default gamemode's `/npcdemo scene` (`startScene` and `advanceScene` in `src/server/commands/npcdemo.ts`), rewritten so that the scene is a list of steps you can edit.
+Difficulty: intermediate. Time: about 30 minutes.
+:::
+
+## What you will learn
+
+- Spawning named NPCs with [`Npc.create`](../../npcs-and-animals/npcs/) and making them talk with `say`.
+- Giving [orders](../../npcs-and-animals/npc-orders/) with `moveTo` and `lookAt`, and waiting for `npcIntentDone`.
+- Writing a scene as an editable list of steps, run by a small state machine.
+- Pinning NPCs to one player's client with [`pin`](../../reference/server/classes/Npc.md#pin).
+- Ending early on [`npcDestroy`](../../npcs-and-animals/npc-events/), a disconnect or `resourceStop`.
 
 ```text
 scripted-scene/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   src/server/
-    index.ts
-    place.ts
-    steps.ts
-    scene.ts
+    index.ts             /scene and cleanup
+    place.ts             ground position and facing helpers
+    steps.ts             the scene, one function per step
+    scene.ts             the state machine
 ```
 
-`tsconfig.json` and `types/runtime.d.ts` are the ones from [Use TypeScript](../../getting-started/typescript/).
+This is the default gamemode's `/npcdemo scene` (`startScene` and `advanceScene` in `src/server/commands/npcdemo.ts`), rewritten so the scene is a list you can edit.
 
-## 1. The manifest
+## 1. Write the manifest
+
+It is all server code.
 
 ```json title="package.json"
 {
@@ -43,9 +57,9 @@ scripted-scene/
 }
 ```
 
-## 2. Placing the stage
+## 2. Place the stage
 
-Two helpers: a point on the ground ahead of the player, and a yaw-only rotation that faces a direction. Z is up, and an unrotated entity faces +Y.
+Two helpers: a point on the ground ahead of the player, and a yaw-only rotation facing a direction. Z is up, and an unrotated entity faces +Y ([Positions, rotations and vectors](../../core-concepts/math/)).
 
 ```ts title="src/server/place.ts"
 /** `distance` metres ahead of the player, on the ground plane. */
@@ -62,9 +76,9 @@ export function facing(x: number, y: number): Quaternion {
 }
 ```
 
-## 3. The scene as a list of steps
+## 3. Write the scene as steps
 
-Each step gets the cast, issues what it needs to, and says how it ends: `"walk"` means "wait for Vendel's `npcIntentDone`", and a number means "wait that many milliseconds". Reordering the scene, or adding a line or another walk, is an edit to this array and nothing else.
+NPC orders do not block and have no callback, so each step issues its orders and says how it ends: `"walk"` waits for Vendel's `npcIntentDone`, and a number waits that many milliseconds. Changing the scene is an edit to this array and nothing else.
 
 ```ts title="src/server/steps.ts"
 export interface Cast {
@@ -101,13 +115,12 @@ export const STEPS: Step[] = [
 ];
 ```
 
-:::note[One order at a time]
-An NPC holds one intent. A second order replaces the first, and the `npcIntentDone` you then get is about the second. That is why each step gives Vendel at most one order. Speech is not an intent: `say` is a one-shot, so it can go out beside any order.
-:::
+- An NPC holds one intent: a second order replaces the first, and `npcIntentDone` then reports the second. So each step gives Vendel at most one order.
+- `say` is not an intent, so it can go out beside any order.
 
-## 4. The machine
+## 4. Run the steps
 
-`scene.ts` holds the running scene and walks the list.
+`scene.ts` holds the running scene, walks the list, and cleans up when an actor or the viewer goes away.
 
 ```ts title="src/server/scene.ts"
 import { facing } from "./place.js";
@@ -210,19 +223,17 @@ export function installSceneHandlers(): void {
 }
 ```
 
-A few details carry the weight here.
-
-`scene.waiting` is what keeps the machine honest. During a talking step the timer owns the scene, and an `npcIntentDone` from Vendel (his `lookAt` may well report one) must not skip ahead. The guard makes the event count only when the scene is actually waiting on a walk.
-
-The actors are looked up by id at every step, never held. An NPC can be removed by another resource or a console command at any moment; `Npc.getById` returning null is the signal, and `npcDestroy` ends the scene early.
-
-[`pin`](../../reference/server/classes/Npc.md#pin) is the reason the scene works at all. Without it the server gives each NPC to whichever client is nearest, and a second player walking past could take Vendel over mid-sentence, with the timing of his walk now running on a machine that is not watching. Pinned, the NPC stays with the viewer's client; if the viewer walks out of range it goes dormant rather than moving to someone else. `endScene` hands both back with `pin(null)`.
+- `scene.waiting` stops an `npcIntentDone` from skipping ahead during a talking step (his `lookAt` may report one). The event only counts while the scene waits on a walk.
+- Actors are looked up by id at every step, never held: another resource or a console command can remove an NPC at any moment.
+- Without `pin`, the server gives each NPC to the nearest client, and a player walking past could take Vendel over mid-sentence. Pinned, he stays with the viewer's client, going dormant if the viewer walks out of range. `pin(null)` hands him back.
 
 :::caution
-The default `kinematic` locomotion walks in straight lines and does not path around anything. Stage a scene on open, flat ground, or Vendel will walk into a fence and report `blocked`.
+The default `kinematic` locomotion walks in straight lines and does not path around anything. Stage a scene on open, flat ground, or Vendel walks into a fence and reports `blocked`.
 :::
 
-## 5. The command
+## 5. Add the command
+
+The entry point starts and stops the scene, and removes the actors when the resource stops.
 
 ```ts title="src/server/index.ts"
 import { aheadOf } from "./place.js";
@@ -261,15 +272,9 @@ Events.on("resourceStop", (name) => {
 
 ## Try it
 
-Build the resource, then:
+Build the resource and run `ensure scripted-scene` in the server console. In game, stand on open ground and type `/scene`. Vendel walks to Marketa, three lines appear over their heads a few seconds apart, and he walks back. `/scene` again replaces the old pair with a new one, and `/scene stop` removes them.
 
-```sh title="Server console"
-ensure scripted-scene
-```
-
-In game, stand on open ground and type `/scene`. Vendel walks to Marketa, three lines appear over their heads a few seconds apart, and he walks back. Run `/scene` again and the old pair is replaced by a new one. `/scene stop` removes them.
-
-To watch the pinning, log who runs the actors. Add this to `index.ts`, then have a second player stand nearer to the actors than you while the scene plays. While the scene runs, every line names you, because the pins hold both actors on your client. Once it ends and the pins come off, they can move to the nearer player.
+To watch the pinning, add this to `index.ts` and have a second player stand nearer the actors than you. While the scene runs every line names you; once it ends and the pins come off, the actors can move to the nearer player.
 
 ```ts
 Events.on("npcSimulatorChange", (npc, player) => {
@@ -277,8 +282,9 @@ Events.on("npcSimulatorChange", (npc, player) => {
 });
 ```
 
-## Where to go next
+## Next steps
 
-- [Move NPCs: walk, follow, patrol](../../server-scripting/npcs-horses-and-dogs/npc-orders/) lists every intent and what `npcIntentDone` reports for each.
-- [NPC damage, death and interaction](../../server-scripting/npcs-horses-and-dogs/npc-events/) covers the rest of the events an NPC raises.
-- [Build an NPC shop](../market-stall/) gives an NPC a shop instead of a script.
+- Add a step type that waits for the viewer to press use on an actor, with `npcInteract` from [NPC damage, death and interaction](../../npcs-and-animals/npc-events/).
+- Swap `moveTo` for a patrol or follow order from [Move NPCs](../../npcs-and-animals/npc-orders/).
+- Show a HUD line for each spoken line with [HUD messages, nametags and compass](../../user-interface/hud/).
+- Give an NPC a shop instead of a script in [Build an NPC shop](../market-stall/).

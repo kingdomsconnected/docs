@@ -2,31 +2,45 @@
 title: Build a placement mode
 description: A placement preview on the client, a server that re-measures every confirmed spot before it spawns anything, and a veto for rules only the server can judge.
 sidebar:
+  label: Placement mode
   order: 94
 ---
 
-Building splits cleanly between the two sides. The client has the camera and the world, so it draws the preview and colours it red or green. The server has authority, so it decides what actually gets built. A client that saw green is making a request, not a decision.
+You will build `/build`: a translucent barrel follows your crosshair, green where you can build and red where you cannot, and left click builds a real one there. Each player gets ten pieces; when you run out, the preview stays red until you clear what you built.
 
-You will build `/build`. It puts a translucent barrel under your crosshair; left click asks the server to build one there, right click ends the mode. The server checks the spot is within reach of where it thinks you stand, and gives each player ten pieces. When you run out, the server tells your client to veto every spot, and the preview stays red until you clear what you built.
+:::note[Before you start]
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/), with both the server and client programs.
+- [Let players place objects](../../client-scripting/placement/) and [Spawn props and objects](../../world/props/).
 
-The default gamemode's `/build` is the same design (`src/server/build.ts`, `src/server/commands/build.ts` and `src/client/build.ts`); this version adds the budget and the veto.
+Difficulty: advanced. Time: about 45 minutes.
+:::
+
+## What you will learn
+
+- Running a native placement preview with [`PropPlacer`](../../client-scripting/placement/): tints, rules and `confirm`.
+- Validating every client request on the server, as [Server vs client authority](../../core-concepts/authority/) requires.
+- Spawning [props](../../world/props/) in the builder's [virtual world](../../core-concepts/virtual-worlds/).
+- Enforcing a server-side rule on the client's preview with `PropPlacer.setVeto`.
+- Designing a small protocol of [server and client messages](../../core-concepts/networking/).
 
 ```text
 build-mode/
   package.json
-  tsconfig.json
-  types/runtime.d.ts
+  tsconfig.json          from Use TypeScript
+  types/runtime.d.ts     from Use TypeScript
   src/server/
-    index.ts
-    build.ts
+    index.ts             /build and cleanup
+    build.ts             sessions, budget, validation, spawning
   src/client/
-    tsconfig.json
-    index.ts
+    tsconfig.json        from Use TypeScript
+    index.ts             the preview and the veto
 ```
 
-The config files are the ones from [Use TypeScript](../../getting-started/typescript/), with both programs.
+The default gamemode's `/build` has the same design (`src/server/build.ts`, `src/server/commands/build.ts`, `src/client/build.ts`); this version adds the budget and the veto.
 
-## 1. The manifest
+## 1. Write the manifest
+
+The client script must be in `files` so the server streams it to players.
 
 ```json title="package.json"
 {
@@ -46,9 +60,9 @@ The config files are the ones from [Use TypeScript](../../getting-started/typesc
 }
 ```
 
-## 2. The conversation between the halves
+## 2. Plan the messages
 
-Six events, all namespaced with the resource name:
+The client draws the preview; the server decides what gets built. Green on a client is a request, not a decision. The two halves talk with six events:
 
 | Event | Direction | Payload |
 | --- | --- | --- |
@@ -59,9 +73,9 @@ Six events, all namespaced with the resource name:
 | `build-mode:stop` | server to client | none |
 | `build-mode:ended` | client to server | none |
 
-## 3. The server
+## 3. Validate and spawn on the server
 
-The server keeps who is building what, and the id of every prop each player has built. Everything a client sends is checked field by field before it is used.
+The server keeps who is building what and the id of every prop each player built. Everything a client sends is checked field by field before it is used.
 
 ```ts title="src/server/build.ts"
 const RESOURCE = "build-mode";
@@ -173,13 +187,12 @@ export function installBuildHandlers(): void {
 }
 ```
 
-:::note[Authority]
-The distance check uses `player.position`, the position the server replicates, not anything the client said about itself. Checking the pose against a player position sent in the same payload would check nothing: a modified client would send both.
-:::
+- The reach check uses `player.position`, the position the server replicates. Checking against a position the client sent in the same payload would check nothing, since a modified client would fake both.
+- `player.virtualWorld` makes a builder in another virtual world build in their own world, not the global one.
 
-`player.virtualWorld` is passed to `Prop.spawn` so a builder in another [virtual world](../../core-concepts/virtual-worlds/) builds in their own world rather than the global one.
+## 4. Add the command
 
-The command lives in the entry point:
+The entry point handles `/build`, `/build stop` and `/build clear`, and removes every piece when the resource stops.
 
 ```ts title="src/server/index.ts"
 import { BUDGET, beginBuild, clearBuilt, installBuildHandlers, sendBudget, stopBuild } from "./build.js";
@@ -211,9 +224,9 @@ Events.on("resourceStop", (name) => {
 });
 ```
 
-## 4. The client
+## 5. Run the preview on the client
 
-The client does three things: run the preview, send what the player confirms, and apply what the server says. [`PropPlacer`](../../reference/client/variables/PropPlacer.md) runs the whole loop natively, so there is no per-frame script here.
+The client runs the preview, sends what the player confirms, and applies what the server says. [`PropPlacer`](../../reference/client/variables/PropPlacer.md) runs the loop natively, so there is no per-frame script.
 
 ```ts title="src/client/index.ts"
 const RESOURCE = "build-mode";
@@ -273,32 +286,23 @@ Events.on(`${RESOURCE}:refused`, (payload) => {
 Events.on(`${RESOURCE}:stop`, () => PropPlacer.end());
 ```
 
-The `rules` are a hint for one screen. Two players aiming at the same patch of ground both see green, and a modified client can see green anywhere. That is fine, because none of it is trusted: the server measures again.
-
-The veto is the other half. `rules` only covers what the engine can judge from the aim ray (slope, surface, distance, clearance). A rule that needs server knowledge, like a budget, a price or a claim on the land, goes through [`setVeto`](../../reference/client/variables/PropPlacer.md#setveto): a latch that refuses every spot until cleared, so a player is not invited to click on something the server would refuse.
-
-:::caution
-`PropPlacer.begin` throws for a mesh the shared catalog does not carry, and returns false when a session is already running or another part of the mod holds the controls. Both paths tell the server the session ended, or the server would keep a session open for a client that is not placing anything.
-:::
+- `rules` only hint at what one screen sees (slope, surface, distance, clearance). Two players can both see green on the same spot, and a modified client sees green anywhere; the server measures again.
+- [`setVeto`](../../reference/client/variables/PropPlacer.md#setveto) covers rules only the server knows, like a budget, a price or a land claim: a latch that refuses every spot until cleared.
+- `PropPlacer.begin` throws for a mesh the shared catalog does not carry, and returns false when a session is already running or another part of the mod holds the controls. Both paths send `ended`, or the server would keep a session open for nothing.
 
 ## Try it
 
-Build the resource, then:
+Build the resource and run `ensure build-mode` in the server console. In game:
 
-```sh title="Server console"
-ensure build-mode
-```
-
-In game:
-
-1. `/build`. A green barrel follows your crosshair. Aim at a steep slope or into the sky and it turns red.
+1. `/build`. A green barrel follows your crosshair. Aim at a steep slope or the sky and it turns red.
 2. Left click a few times. Each click builds a barrel and the info line counts down your pieces.
 3. Keep going until you run out. The preview turns red and stays red.
-4. `/build clear` removes your barrels and gives you ten pieces again; if you are still building, the preview turns green again. `/build objects/manmade/barrels/barrel_a.cgf` names the mesh explicitly.
+4. `/build clear` removes your barrels and gives you ten pieces again; if you are still building, the preview turns green. `/build objects/manmade/barrels/barrel_a.cgf` names the mesh explicitly.
 5. Right click ends the mode.
 
-## Where to go next
+## Next steps
 
-- [Let players place objects](../../client-scripting/placement/) covers `PropPlacer` and `PropGhost` in full, including multi-piece blueprints.
-- [Props](../../server-scripting/world-and-objects/props/) covers `Prop.spawn`, physics kinds and scale.
-- [Build a team capture-zone mode](../team-rounds/) builds a whole game loop on the server.
+- Charge for each piece: take money with `takeItem` from [Items: give, take and drop](../../players/items/) before spawning, and veto when the player cannot pay.
+- Add `/build undo`, which destroys the player's last piece from `built` (see [Spawn props and objects](../../world/props/)) and calls `sendBudget`.
+- Place multi-piece blueprints with the rest of [Let players place objects](../../client-scripting/placement/).
+- Build a whole game loop on the server in [Build a team capture-zone mode](../team-rounds/).

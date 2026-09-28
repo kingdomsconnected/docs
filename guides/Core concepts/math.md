@@ -1,16 +1,15 @@
 ---
 title: Positions, rotations and vectors
-description: The world's axes, working with Vector3 and Quaternion, turning a facing into a heading, and putting things in front of a player.
+description: Work with the world's Z-up axes, Vector3 and Quaternion, turn a facing into a heading, and place things in front of a player.
 sidebar:
+  label: Positions and vectors
   order: 25
 ---
 
-Positions are [`Vector3`](../../reference/server/classes/Vector3.md) values
-in metres, and rotations are
-[`Quaternion`](../../reference/server/classes/Quaternion.md) values. The
-world is CryEngine's, which trips up anyone coming from a Y-up engine: **Z is
-up**, X and Y lie on the ground, and an entity with the identity rotation faces
-**+Y**.
+Positions are [`Vector3`](../../reference/server/classes/Vector3.md) values in
+metres; rotations are [`Quaternion`](../../reference/server/classes/Quaternion.md)
+values. The world is CryEngine's: **Z is up**, X and Y lie on the ground, and
+an entity with the identity rotation faces **+Y**.
 
 ```ts
 // server
@@ -21,43 +20,35 @@ Events.on("playerCommand", (player, command) => {
 });
 ```
 
-## Vector3
+## Work with Vector3
 
 `new Vector3(x, y, z)` makes one. Anywhere the API takes a position it also
-accepts any object with `x`, `y` and `z`, which is handy for coordinates kept
-in a config file.
+accepts any `{ x, y, z }` object, handy for coordinates in a config file.
 
-The arithmetic methods (`add`, `sub`, `mul`, `div`, `normalize`, `cross`,
-`lerp`, `set`) change the vector **in place** and return it for chaining. Call
-`clone()` first when the original must survive:
+| Members | Behaviour |
+| --- | --- |
+| `add`, `sub`, `mul`, `div`, `normalize`, `cross`, `lerp`, `set` | Change the vector **in place** and return it. `clone()` first to keep the original. |
+| `dot`, `distance` | Return a number; change nothing. |
+| `length`, `lengthSquared` | Read-only properties. |
 
 ```ts
 // server
 const ahead = player.position.clone().add(new Vector3(0, 5, 0));
 ```
 
-`dot` and `distance` return numbers without changing anything. `length` and
-`lengthSquared` are read-only properties.
-
 :::caution
-`Vector3.up()` returns `(0, 1, 0)` and `Vector3.forward()` returns
-`(0, 0, 1)`. Those follow the framework's generic Y-up convention, not this
-world. In Kingdom Come, `(0, 0, 1)` is up and `(0, 1, 0)` is the identity
-facing. Write the vectors out instead of using the helpers.
+`Vector3.up()` returns `(0, 1, 0)` and `Vector3.forward()` returns `(0, 0, 1)`,
+following a generic Y-up convention. Here `(0, 0, 1)` is up and `(0, 1, 0)` is
+the identity facing. Write the vectors out instead.
 :::
 
-## Distances
+## Measure distance on the ground
 
-`a.distance(b)` is the straight-line distance. For reach checks you usually
-want the distance along the ground, so a player on a roof is not "far" from
-someone standing below:
+`a.distance(b)` is straight-line. For reach checks you usually want ground
+distance, so a player on a roof is not "far" from someone below:
 
 ```ts
 // server
-function groundDistance(a: Vector3, b: Vector3): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
 function within(a: Vector3, b: Vector3, metres: number): boolean {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
@@ -65,44 +56,41 @@ function within(a: Vector3, b: Vector3, metres: number): boolean {
 }
 ```
 
-## Rotations
-
-Reading `entity.rotation` gives a `Quaternion`, but the property is declared
-as `Quaternion | Vector3` because you may also assign Euler angles. Cast the
-read, as the default gamemode does: `player.rotation as Quaternion`.
+## Pass a rotation
 
 Everything that takes a rotation (`player.spawn`, `Horse.spawn`, `Prop.spawn`,
-`npc.teleport` and the rest) accepts either:
+`npc.teleport`...) accepts either:
 
 - a `Quaternion`, or
-- a `Vector3` of Euler angles **in degrees**, one per axis. On flat ground
-  only `z` matters: `new Vector3(0, 0, 90)` turns the entity 90 degrees
-  counterclockwise seen from above, so it faces -X.
+- a `Vector3` of Euler angles **in degrees**. On flat ground only `z` matters:
+  `new Vector3(0, 0, 90)` turns 90 degrees counterclockwise seen from above,
+  facing -X.
 
-The `Quaternion` class works in **radians**, and its constructor takes the
-scalar first: `new Quaternion(w, x, y, z)`. `new Quaternion(1, 0, 0, 0)` is
-the identity, as is `Quaternion.identity()`.
+Reading `entity.rotation` gives a `Quaternion`, but it is declared
+`Quaternion | Vector3` because you may assign either. Cast the read:
+`player.rotation as Quaternion`.
+
+| Quaternion API | Notes |
+| --- | --- |
+| `new Quaternion(w, x, y, z)` | Scalar first. `new Quaternion(1, 0, 0, 0)` and `Quaternion.identity()` are the identity. Works in **radians**. |
+| `Quaternion.fromAxisAngle(new Vector3(0, 0, 1), radians)` | Turns an entity on the spot. |
+| `q.rotateVector(v)` | Returns a new rotated vector. On `(0, 1, 0)` it gives the facing. |
+| `q.mul(other)`, `q.slerp(other, t)` | Compose in place; blend toward another. |
+| `q.toEuler()` | The heading is in its `z` component. |
 
 :::caution[fromEuler]
-`Quaternion.fromEuler(pitch, yaw, roll)` names its angles for a Y-up world:
-`yaw` turns about Y, which is horizontal here. To turn an entity on the spot,
-rotate about Z with `Quaternion.fromAxisAngle(new Vector3(0, 0, 1), radians)`.
-Likewise `toEuler()` returns the heading in its `z` component.
+`Quaternion.fromEuler(pitch, yaw, roll)` names angles for a Y-up world: `yaw`
+turns about Y, which is horizontal here. Use `fromAxisAngle` about Z instead.
 :::
 
-`q.rotateVector(v)` applies a rotation to a direction and returns a new
-vector. Applied to `(0, 1, 0)`, it gives the way an entity is facing. `mul`
-composes two rotations in place; `slerp` blends toward another.
+For where a player is looking rather than where their body faces, read
+`player.lookDirection`: a world-space direction, zero until their client
+reports one.
 
-For where a player is looking, rather than which way their body faces, read
-`player.lookDirection`: a world-space direction, zero until their client has
-reported one.
+## Place something in front of a player
 
-## In front of a player
-
-The default gamemode keeps these helpers in `src/server/place.ts`, and uses
-them for every command that puts something down. They are worth copying
-whole:
+The default gamemode keeps these helpers in `src/server/place.ts` and uses them
+for every command that puts something down. Copy them whole:
 
 ```ts title="src/server/place.ts"
 /** The entity's facing flattened onto the ground, so looking up or down does not shorten it. */
@@ -133,35 +121,23 @@ export function inFrontOf(player: Player, distance: number, lift: number = 0): P
 }
 ```
 
-`Math.atan2(-x, y)` is the heading of a direction on the ground, in radians,
-measured from +Y and counterclockwise. It is the inverse of rotating
-`(0, 1, 0)` about Z, which is why `yawTowards` round-trips with
-`groundForward`.
-
-Using it:
+`Math.atan2(-x, y)` is a ground direction's heading in radians, from +Y
+counterclockwise: the inverse of rotating `(0, 1, 0)` about Z.
 
 ```ts title="src/server/horse.ts"
 import { inFrontOf } from "./place.js";
 
 Events.on("playerCommand", (player, command) => {
   if (command !== "horse") return;
-  if (!player.ready) {
-    Chat.sendToPlayer(player, "Your position has not reached the server yet.");
-    return;
-  }
+  if (!player.ready) return; // position is still the world origin
   const spot = inFrontOf(player, 3);
   Horse.spawn(spot.position, spot.rotation);
 });
 ```
 
-The `player.ready` check matters: until a player's client has reported a pose,
-their position is the world origin, and everything you place relative to them
-ends up there.
-
 ## Related
 
-- [Server vs client authority](../authority/), for why a player's position lags a
-  teleport
-- [Props](../../server-scripting/world-and-objects/props/)
-- [Let players place objects](../../client-scripting/placement/), for letting the player choose the
-  spot
+- [Server vs client authority](../authority/): why a position lags a teleport
+- [Spawn props and objects](../../world/props/): positions and rotations in use
+- [Raycasts and nearby entities](../../world/raycasts/): find the ground under a point
+- [Let players place objects](../../client-scripting/placement/): let the player pick the spot

@@ -1,14 +1,14 @@
 ---
 title: Read the local player
-description: Read the player at this machine and the other players this client can see, and why a client asks the server instead of changing them.
+description: Read the health, stats, conditions and buffs of the player at this machine and of the other players this client can see.
 sidebar:
+  label: Local player
   order: 70
 ---
 
-A client resource can read the body of the player sitting at this machine, and
-of anyone else this client can currently see. It cannot change either one. What
-a client can do is look closely: health, stamina, conditions, skills, what is in
-their hands, which effects are on them, and a few things only a client knows.
+A client resource can read the player sitting at this machine, and anyone else
+this client can currently see: health, stamina, conditions, skills, what is in
+their hands and which effects are on them. It cannot change them.
 
 ```ts
 const me = LocalPlayer;
@@ -17,17 +17,11 @@ if (me) {
 }
 ```
 
-## `LocalPlayer` is read fresh, not held
+## Read `LocalPlayer` fresh
 
-[`LocalPlayer`](../../reference/client/variables/LocalPlayer.md) is a global
-that reads `null` while this client has no body: before the session spawns one,
-and again after it ends. A resource that starts early sees `null` on its first
-read and a handle a moment later, so read it where you need it rather than
-caching one at start-up.
-
-The default gamemode's F4 panel does exactly that. Its `src/client/snapshot.ts`
-reads `LocalPlayer` on every tick and returns `null` when there is nothing to
-read:
+[`LocalPlayer`](../../reference/client/variables/LocalPlayer.md) reads `null`
+while this client has no body: before the session spawns one, and after it
+ends. Read it where you need it rather than caching it at start-up.
 
 ```ts
 function checkOnMe(): void {
@@ -35,7 +29,6 @@ function checkOnMe(): void {
   if (!me || !me.ready) {
     return;
   }
-
   if (me.bleeding > 0) {
     Hud.showInfoText("You are bleeding. Bandage up.");
   }
@@ -44,16 +37,16 @@ function checkOnMe(): void {
 setInterval(checkOnMe, 1000);
 ```
 
-`ready` is false for the first moments of a connection, until the body has both
-a pose and a soul. Values such as `health` read 0 until then, so check it before
-you draw a bar from them.
+`ready` is `false` for the first moments of a connection, until the body has a
+pose and a soul. Values such as `health` read 0 until then, so check it before
+you draw a bar. The default gamemode's F4 panel (`src/client/snapshot.ts`)
+reads `LocalPlayer` this way on every tick.
 
-## What a client can read
+## Fields you can read
 
-The readonly view of a body is the same on both sides, because the server and
-every client read the same published snapshot. The
-[Player](../../reference/client/classes/Player.md) reference lists every field;
-these are the groups:
+The server and every client read the same published snapshot, so the readonly
+fields match on both sides. The [Player](../../reference/client/classes/Player.md)
+reference lists every one.
 
 | Group | Fields |
 | --- | --- |
@@ -65,16 +58,12 @@ these are the groups:
 | Movement | `position`, `rotation`, `velocity`, `lookDirection`, `inAir`, `crouched`, `moveSpeedTag`, `moveDirTag`, `stanceTag`, `physicsProfile` |
 | Combat | `fistsUp`, `guard`, `combatZone`, `rightHandItem`, `leftHandItem`, `equipment` |
 
-Most of these are in the game's own units rather than percentages, which is why
-each value comes with its maximum. `healthPercent` is the one exception: it is
-what the nametag bar draws.
+- Most values are in the game's own units, which is why each comes with its
+  maximum. `healthPercent` is the exception: it is what the nametag bar draws.
+- `skills` is one object with the nine skills (`me.skills.sword`,
+  `me.skills.defense`).
 
-`skills` is read as a whole object (`me.skills.sword`, `me.skills.defense`),
-because the snapshot carries the nine skills together.
-
-## What only a client knows
-
-A few properties exist on the client's `Player` and not on the server's:
+## Client-only fields
 
 | Property | Meaning |
 | --- | --- |
@@ -84,15 +73,16 @@ A few properties exist on the client's `Player` and not on the server's:
 | `mounted` | whether they are in a saddle |
 | `buffs` | the status effects on the body (local player only) |
 
-`entityId` is what [Audio](../audio-and-voice/) and client `Vfx.attach` take,
-but it is not stable. It reads 0 across a level load and before the body exists,
-and the engine reuses ids. Use `id`, the network id, for anything you want to
-remember.
+`entityId` is what [Audio](../sound-and-voice/) and client `Vfx.attach` take,
+but it is not stable: it reads 0 across a level load and before the body
+exists, and the engine reuses ids. Use `id`, the network id, for anything you
+want to remember.
+
+## List the local player's buffs
 
 `buffs` lists potions, poison, drunkenness, injuries and anything the server
 added, as [BuffState](../../reference/client/interfaces/BuffState.md) entries.
-It reads empty for every handle except your own: other clients do not publish
-their effects, only the consequences.
+It reads empty on every handle except your own.
 
 ```ts
 function describeBuffs(): string[] {
@@ -100,7 +90,6 @@ function describeBuffs(): string[] {
   if (!me) {
     return [];
   }
-
   return me.buffs.map((buff) => {
     const left = buff.duration < 0 ? "no end" : `${Math.round(buff.duration - buff.since)} s left`;
     return `${buff.name} (${buff.class}, ${left}, from ${buff.source})`;
@@ -111,11 +100,11 @@ function describeBuffs(): string[] {
 `duration - since` is only roughly what is left, because each client advances
 buff time on its own frame clock.
 
-## Other players
+## Read another player
 
-The `Player` constructor takes a network id and gives you a handle to a player
-this client already knows about. There is no client-side list of every player,
-so the id usually comes from the server:
+`new Player(id)` gives a handle to a player this client already knows about.
+There is no client-side list of players, so the id usually comes from the
+server:
 
 ```ts
 // server
@@ -134,36 +123,27 @@ Events.on("my-mode:newcomer", (payload) => {
   if (typeof id !== "number") {
     return;
   }
-
   const other = new Player(id);
   const me = LocalPlayer;
   if (!me || !other.ready) {
     return;
   }
-
   const metres = Math.round(me.position.distance(other.position));
   Hud.showInfoText(`${other.nickname} arrived, ${metres} m away.`);
 });
 ```
 
-Constructing a handle does not connect or spawn anyone, and it does not check
-the id either. A handle for someone this client cannot see reads empty values:
-`nickname` is an empty string once their body is gone. Check `ready` before you
-trust what it says.
+The constructor does not check the id. A handle for someone this client cannot
+see reads empty values (`nickname` is an empty string once their body is gone),
+so check `ready` first. `other.state.get("my-mode:team")` reads the player's
+[state bag](../../core-concepts/state/).
 
-Every player also carries its [state bag](../../core-concepts/state/), so
-`other.state.get("my-mode:team")` reads what the server wrote there.
+## Change a player: ask the server
 
-## Why there are no client-side verbs
-
-A player's own game is authoritative for their body, so a client-side setter for
-health or position would work. That is the problem: it would put the decision of
-what a player may do to themselves inside code that player is running.
-
-:::note[Authority]
+:::note[No client-side verbs]
 Everything that changes a player lives on the server's `Player`, where the
-server can refuse it. A client that wants something asks for it, and the server
-decides. See [Server vs client authority](../../core-concepts/authority/).
+server can refuse it. A client asks with an event and the server decides; see
+[Server vs client authority](../../core-concepts/authority/).
 :::
 
 ```ts
@@ -185,6 +165,7 @@ Events.onClient("my-mode:horse.request", (sender) => {
 
 ## Related
 
+- [Read health, stats and skills](../../players/stats/), the server side
+- [Buffs and status effects](../../players/buffs/), to add or remove them
+- [Send data between server and client](../../core-concepts/networking/), for requests like the one above
 - [Key binds and controls](../input/)
-- [Send data between server and client](../../core-concepts/networking/)
-- [Reading a player on the server](../../server-scripting/players/reading/)
