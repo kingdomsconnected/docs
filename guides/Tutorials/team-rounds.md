@@ -26,7 +26,6 @@ Difficulty: advanced. Time: about an hour.
 team-rounds/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   src/server/
     index.ts             player lifecycle, commands, cleanup
     teams.ts             team assignment and bases
@@ -49,6 +48,7 @@ The client script must be in `files` so the server streams it to players.
     "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {
@@ -174,8 +174,8 @@ export type Phase = "idle" | "running" | "break";
 
 let phase: Phase = "idle";
 let left = 0;
-let ticker = -1;
-let pause = -1;
+let ticker: Timeout | undefined;
+let pause: Timeout | undefined;
 const score: Record<Team, number> = { red: 0, blue: 0 };
 
 export function currentPhase(): Phase {

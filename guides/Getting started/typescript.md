@@ -8,38 +8,31 @@ sidebar:
 
 Compile your resource from TypeScript and your editor knows every global, method, event name and
 argument in the API. A misspelt `nickname` or a wrong argument shows up while you type, not in the
-server log. This page converts `hello` from [Write your first resource](../first-resource/), using the
-default gamemode's setup.
+server log. This page converts `hello` from [Write your first resource](../first-resource/).
 
 ## The layout
 
 ```text
-server/
-  scripting-api/                 declarations, from Install and run a server
-    shared.d.ts
-    generated/server-api.d.ts
-    generated/client-api.d.ts
-  resources/hello/
-    package.json
-    tsconfig.json                the server program
-    src/
-      server/
-        index.ts
-        runtime.d.ts
-      client/
-        tsconfig.json            the client program
-        index.ts
-        runtime.d.ts
-    dist/                        compiler output; what the server runs
+resources/hello/
+  package.json
+  tsconfig.json                the server program
+  src/
+    server/
+      index.ts
+    client/
+      tsconfig.json            the client program
+      index.ts
+  dist/                        compiler output; what the server runs
 ```
 
-You need `scripting-api/` next to the server binary. If you do not have it, run the
-[fetch script](../install/#3-fetch-the-declarations).
+The declarations come from npm as
+[`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types), published with
+every release. Its version is the release version.
 
 :::note[Why two programs?]
 The server's `Player` and the client's `Player` are different classes with the same name (only the
 server's can `kick` or `teleport`). One program cannot load both, so each half has its own
-`tsconfig.json` and `pnpm run build` compiles them in turn.
+`tsconfig.json`, naming its side of the package, and `pnpm run build` compiles them in turn.
 :::
 
 ## 1. package.json
@@ -54,9 +47,6 @@ server's can `kick` or `teleport`). One program cannot load both, so each half h
     "watch": "tsc -p tsconfig.json --watch",
     "watch:client": "tsc -p src/client/tsconfig.json --watch"
   },
-  "devDependencies": {
-    "typescript": "^5.9.2"
-  },
   "mafiahub": {
     "serverScripts": ["dist/server/index.js"],
     "clientScripts": ["dist/client/index.js"],
@@ -66,11 +56,19 @@ server's can `kick` or `teleport`). One program cannot load both, so each half h
 ```
 
 The manifest now points at compiled files in `dist/`. `files` ships the whole compiled client folder,
-because a client split across several files needs all of them. Install the compiler:
+because a client split across several files needs all of them.
+
+Install the compiler and the declarations for the version your server runs (here 1.5.0):
 
 ```sh title="In resources/hello/"
-pnpm install
+pnpm add -D typescript @kingdomsconnected/types@1.5.0
 ```
+
+:::caution[Match the server's version]
+A newer package can declare methods an older server does not have, and the compiler will happily let
+you call them. The server's status page, `http://<server>:27016/`, shows its version as
+`mod_version`.
+:::
 
 ## 2. The server program
 
@@ -78,25 +76,24 @@ pnpm install
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "lib": ["ES2022"],
+    "types": ["@kingdomsconnected/types/server"],
     "rootDir": "src/server",
     "outDir": "dist/server",
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "types": []
+    "noUncheckedIndexedAccess": true
   },
-  "include": ["src/server/**/*.ts", "../../scripting-api/generated/server-api.d.ts"]
+  "include": ["src/server/**/*.ts"]
 }
 ```
 
 | Option | Why |
 | --- | --- |
-| `"module": "CommonJS"` | Resources are loaded with `require()`. Write `import`; the output uses `require`. |
-| `"types": []` | Stops TypeScript loading `@types/node` or DOM types. Globals come from the declarations only. |
-| The `include` path | Pulls in the server declarations from `scripting-api/`, two folders up. |
-| `"lib": ["ES2022"]` | Modern JavaScript, no browser globals like `document` or `window`. |
+| `"types"` | Loads the server declarations, and nothing else: no `@types/node`, no DOM. Every API global (`Events`, `Player`, `setTimeout`, `console`...) comes from here, with no import. |
+| `"module": "node16"` | Resources are loaded with `require()`. Write `import`; because `package.json` has no `"type": "module"`, the output uses `require`. Works with TypeScript 5.9 and later. |
+| `"lib": ["ES2022"]` | Modern JavaScript. Leave out `"DOM"`: it declares a second `console` and `setTimeout`. |
 
 :::caution[Imports need `.js`]
 Write relative imports with the compiled extension: `import { roll } from "./dice.js"` for `dice.ts`.
@@ -111,77 +108,25 @@ It sits beside the client sources, so an editor opening a client file finds the 
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "lib": ["ES2022"],
+    "types": ["@kingdomsconnected/types/client"],
     "rootDir": ".",
     "outDir": "../../dist/client",
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "types": []
+    "noUncheckedIndexedAccess": true
   },
-  "include": ["**/*.ts", "../../../../scripting-api/generated/client-api.d.ts"]
+  "include": ["**/*.ts"]
 }
 ```
 
-Same options, the client declarations, and paths two folders deeper.
+Same options, with the client side of the package and the output two folders up.
 
-## 4. Fill the gaps in the declarations
-
-A few things exist at runtime but are missing from the published declarations. Declare them once per
-side. These files have no `import` or `export`, which makes their declarations global.
-
-```ts title="resources/hello/src/server/runtime.d.ts"
-// What the server runtime has and the published declarations leave out.
-
-interface EventBus {
-  /** Sends an event to every connected client's `Events.on` handlers. */
-  emitAllClients(eventName: string, payload?: unknown): void;
-}
-
-declare function setTimeout(handler: () => void, milliseconds?: number): number;
-declare function clearTimeout(handle: number): void;
-declare function setInterval(handler: () => void, milliseconds?: number): number;
-declare function clearInterval(handle: number): void;
-```
-
-```ts title="resources/hello/src/client/runtime.d.ts"
-// What the client runtime has and the published declarations leave out.
-
-interface EventBus {
-  /** Sends an event to the server's `Events.onClient` handlers. */
-  emitServer(eventName: string, payload?: unknown): void;
-}
-
-declare function setTimeout(handler: () => void, milliseconds?: number): number;
-declare function clearTimeout(handle: number): void;
-declare function setInterval(handler: () => void, milliseconds?: number): number;
-declare function clearInterval(handle: number): void;
-```
-
-:::note[Two more quirks]
-- The declarations type `console.log` as taking **one array**, so `console.log("ready")` does not
-  compile although it runs. Wrap it once, as `log.ts` below does.
-- The client declarations list `Events.onClient`, but it only works on the server. On the client, use
-  `Events.on`.
-:::
-
-## 5. The code
-
-```ts title="resources/hello/src/server/log.ts"
-// The console binding takes any number of values at runtime, but its
-// declaration says one array. The cast lives here, once.
-type Variadic = (...values: unknown[]) => void;
-
-export function log(...values: unknown[]): void {
-  (console.log as unknown as Variadic)(...values);
-}
-```
+## 4. The code
 
 ```ts title="resources/hello/src/server/index.ts"
-import { log } from "./log.js";
-
-log("hello is running");
+console.log("hello is running");
 
 Events.on("playerSpawned", (player) => {
   Chat.sendToPlayer(player, `Hello, ${player.nickname}. Try /roll.`);
@@ -231,7 +176,7 @@ Events.on("hello:online", (payload) => {
 
 Delete the old `server/main.js` and `client/main.js`: the manifest no longer points at them.
 
-## 6. Build and reload
+## 5. Build and reload
 
 ```sh title="In resources/hello/"
 pnpm run build
@@ -250,15 +195,19 @@ pnpm run watch:client     # client half, in a second terminal
 runtime. A clean build prints nothing; read the output before you `ensure`.
 :::
 
-## Keeping declarations current
+## Update after a server upgrade
 
-After updating the server to a new release, run the [fetch script](../install/#3-fetch-the-declarations)
-again and rebuild every resource. Removed or renamed methods become compile errors instead of surprises
-in production.
+Move the package to the server's new version and rebuild. Removed or renamed methods become compile
+errors instead of surprises in production:
+
+```sh title="In resources/hello/"
+pnpm add -D @kingdomsconnected/types@1.5.0
+pnpm run build
+```
 
 ## Related
 
 - [Structure a larger resource](../project-structure/): the next step; split a resource into folders and share code between halves.
-- [Install and run a server](../install/): where the declarations come from.
+- [@kingdomsconnected/types on npm](https://www.npmjs.com/package/@kingdomsconnected/types): the declarations and their versions.
 - [Logs and debugging](../debugging/): reading errors from compiled code.
 - [Server API reference](../../reference/server/index.md): everything your editor now autocompletes.

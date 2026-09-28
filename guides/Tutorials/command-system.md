@@ -9,7 +9,7 @@ sidebar:
 You will build a command registry where each `/command` lives in its own file. In game, `/give "Hunting Sword"` works with spaces in the name, a bad argument answers with the command's usage, and `/help` always lists exactly the commands the server answers.
 
 :::note[Before you start]
-- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/): this tutorial reuses that `tsconfig.json` and `types/runtime.d.ts`.
+- [Write your first resource](../../getting-started/first-resource/) and [Use TypeScript](../../getting-started/typescript/): this tutorial reuses that `tsconfig.json`.
 - [Chat and /commands](../../players/chat/) for `playerCommand` and `Chat`.
 - [Items: give, take and drop](../../players/items/) for `giveItem` and `takeItem`.
 
@@ -27,7 +27,6 @@ Difficulty: intermediate. Time: about 30 minutes.
 my-commands/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   src/server/
     index.ts             builds the registry, handles playerCommand
     command.ts           Command, CommandContext, CommandRegistry
@@ -52,6 +51,7 @@ The resource has a server program only.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

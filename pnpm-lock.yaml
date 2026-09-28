@@ -8,11 +8,17 @@ importers:
 
   .:
     devDependencies:
+      '@kingdomsconnected/types':
+        specifier: 1.5.0
+        version: 1.5.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
 
 packages:
+
+  '@kingdomsconnected/types@1.5.0':
+    resolution: {integrity: sha512-zlV4x/O6IvBkNnMx+S0trtnuz219RPSn453gCQi1rfuNw6Tcsw0Q02n9aLnKWok8Dp6yMei+bJPNNHuqMi1Lyg==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -20,5 +26,7 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@kingdomsconnected/types@1.5.0': {}
 
   typescript@5.9.3: {}

@@ -16,8 +16,8 @@ standing in it. It takes about ten minutes the first time.
 | Kingdom Come: Deliverance II on Steam | The client runs inside the game, and Steam tells the launcher where it is | Join a server |
 | A KCDC release | The launcher, the client and the dedicated server for Windows and Linux | Run anything |
 | Node.js 22 or newer | Runs the TypeScript compiler | Build the default gamemode or any TypeScript resource |
-| pnpm 10 | Installs the gamemode's pinned compiler | Same |
-| An editor | [Visual Studio Code](https://code.visualstudio.com/) autocompletes the API once you have the declarations | Writing code |
+| pnpm 10 | Installs the gamemode's pinned compiler and API declarations | Same |
+| An editor | [Visual Studio Code](https://code.visualstudio.com/) autocompletes the whole API in a TypeScript resource | Writing code |
 
 :::note
 The server does **not** need Node.js to run: it carries its own JavaScript runtime. Node only compiles
@@ -58,79 +58,7 @@ stamped in `client/.mafiahub/channel`, and a hand-copied install has no stamp.
 
 3. Check both: `node --version` should print `v22` or later, `pnpm --version` should print `10.4.1`.
 
-## 3. Fetch the declarations
-
-The gamemode is type-checked against the API's declarations, which a release does not include. Its
-`tsconfig.json` expects them in a `scripting-api/` folder next to the server binary.
-
-1. Save this script as `fetch-declarations.mjs` in your release's `server/` folder, next to
-   `KCDCServer.exe`:
-
-   <!-- check: skip -->
-   ```js title="server/fetch-declarations.mjs"
-   // Downloads the scripting declarations the default gamemode compiles against.
-   // Run it from the server folder: node fetch-declarations.mjs [stable|testing]
-   import { mkdir, writeFile } from "node:fs/promises";
-
-   const api = "https://api.mafiahub.dev/documentation-contracts/kcdc";
-   const channel = process.argv[2] ?? "stable";
-
-   const response = await fetch(`${api}/${channel}/manifest.json`);
-   if (!response.ok) throw new Error(`No '${channel}' channel (HTTP ${response.status})`);
-   const manifest = await response.json();
-
-   const files = {
-     "targets/shared.d.ts": "scripting-api/shared.d.ts",
-     "targets/server/api.d.ts": "scripting-api/generated/server-api.d.ts",
-     "targets/client/api.d.ts": "scripting-api/generated/client-api.d.ts",
-   };
-
-   await mkdir("scripting-api/generated", { recursive: true });
-   for (const [from, to] of Object.entries(files)) {
-     const file = await fetch(`${api}/releases/${manifest.revision}/files/${from}`);
-     if (!file.ok) throw new Error(`Could not download ${from} (HTTP ${file.status})`);
-     await writeFile(to, await file.text());
-   }
-
-   console.log(`Declarations for KCDC ${manifest.version} (${channel}) are in scripting-api/.`);
-   ```
-
-2. Run it from that folder:
-
-   ```sh title="In server/"
-   node fetch-declarations.mjs
-   ```
-
-   ```text
-   Declarations for KCDC 1.3.4 (stable) are in scripting-api/.
-   ```
-
-:::caution[Match the versions]
-The printed version should match your release folder's name (`KCDC-1.3.4`). For a prerelease, fetch
-the `testing` channel: `node fetch-declarations.mjs testing`. Run the script again whenever you update
-the server.
-:::
-
-Your server folder now looks like this:
-
-```text
-server/
-  KCDCServer.exe
-  fetch-declarations.mjs
-  scripting-api/
-    shared.d.ts
-    generated/
-      server-api.d.ts
-      client-api.d.ts
-  resources/
-    kcdc-gamemode/
-      package.json
-      tsconfig.json
-      src/
-      ui/
-```
-
-## 4. Build the gamemode
+## 3. Build the gamemode
 
 A release ships the gamemode as TypeScript source. Until you build it, the server starts but answers no
 commands.
@@ -140,15 +68,32 @@ pnpm install
 pnpm run build
 ```
 
-`pnpm install` fetches the pinned compiler. `pnpm run build` compiles the server and client halves as
-two programs and prints nothing on success. You now have `dist/server/index.js` (what the server runs)
+`pnpm install` fetches the pinned compiler and the API declarations,
+[`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types) at your release's
+version. `pnpm run build` compiles the server and client halves as two programs and prints nothing on
+success. You now have `dist/server/index.js` (what the server runs)
 and `dist/client/index.js` (what every player's game runs). [Use TypeScript](../typescript/) explains
 the setup.
 
 The `mafiahub` block in `package.json` tells the server which files to run and send to players; see
 [Resource manifest and lifecycle](../../core-concepts/resources/).
 
-## 5. Start the server
+<details>
+<summary>Release 1.5.0 or older: <code>Cannot find name 'Player'</code></summary>
+
+Those releases shipped the gamemode before it took its declarations from npm. Point it at the package
+once, then build as above:
+
+1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.5.0` (your
+   release's version).
+2. In `tsconfig.json`, set `"types": ["@kingdomsconnected/types/server"]` and delete the
+   `scripting-api/generated/server-api.d.ts` entry from `include`.
+3. In `src/client/tsconfig.json`, set `"types": ["@kingdomsconnected/types/client"]` and delete the
+   `scripting-api/generated/client-api.d.ts` entry from `include`.
+
+</details>
+
+## 4. Start the server
 
 From the `server/` folder:
 
@@ -171,7 +116,7 @@ lines in the log (the command count varies):
 The server uses UDP 27015 and TCP 27016; a server on your own machine needs nothing opened. See
 [Ports](../../hosting-a-server/run-a-server/#ports).
 
-## 6. Join it
+## 5. Join it
 
 1. Start Steam.
 2. Run `client/KCDCLauncher.exe`. The game starts with the multiplayer menu.
@@ -188,7 +133,7 @@ each with its own nickname:
 ```
 :::
 
-## 7. Try some commands
+## 6. Try some commands
 
 Open chat with **T**:
 
@@ -203,7 +148,7 @@ Open chat with **T**:
 Press **F4** for the debug panel: live stats, the world clock, who is connected and a command box.
 **Esc** hands the keyboard back to the game while the panel stays open.
 
-## 8. Change something and reload
+## 7. Change something and reload
 
 1. Keep the compiler watching the half you edit:
 
@@ -230,17 +175,16 @@ lists the others, such as `stop`, `start` and `refresh`.
 <details>
 <summary><code>error TS2304: Cannot find name 'Player'</code> (and hundreds like it)</summary>
 
-The compiler cannot find the declarations. Check that `server/scripting-api/generated/server-api.d.ts`
-exists (from the gamemode: `../../scripting-api/generated/server-api.d.ts`). Run step 3 from the
-`server/` folder, not the gamemode folder.
+The compiler cannot find the declarations. Run `pnpm install` in the gamemode folder first. On release
+1.5.0 or older, follow the note at the end of [step 3](#3-build-the-gamemode).
 
 </details>
 
 <details>
 <summary>The build fails on a few specific methods</summary>
 
-Your declarations and your release are different versions. Fetch the matching channel (`stable` or
-`testing`) and build again.
+Your declarations and your release are different versions. Check that `@kingdomsconnected/types` in
+the gamemode's `package.json` is your release's version, then `pnpm install` and build again.
 
 </details>
 

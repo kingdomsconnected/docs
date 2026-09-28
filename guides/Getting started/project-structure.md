@@ -20,8 +20,6 @@ resources/my-mode/
       events.ts                 event names both halves use
     server/
       index.ts                  entry point: wires features, no logic
-      log.ts
-      runtime.d.ts
       command.ts                the command registry
       commands/                 one command per file
         heal.ts
@@ -35,7 +33,6 @@ resources/my-mode/
     client/
       tsconfig.json             client program
       index.ts
-      runtime.d.ts
       hud/
         install.ts
   ui/                           web pages, if you have any
@@ -119,35 +116,35 @@ scratch.
 The halves are separate programs (see [Use TypeScript](../typescript/)), but they can share plain code:
 event names, payload types, constants. Widen both programs' root to `src/`:
 
-```json title="tsconfig.json" ins={6-7,11}
+```json title="tsconfig.json" ins={8-9,12}
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "lib": ["ES2022"],
+    "types": ["@kingdomsconnected/types/server"],
     "rootDir": "src",
     "outDir": "dist",
-    "lib": ["ES2022"],
-    "strict": true,
-    "types": []
+    "strict": true
   },
-  "include": ["src/server/**/*.ts", "src/shared/**/*.ts", "../../scripting-api/generated/server-api.d.ts"]
+  "include": ["src/server/**/*.ts", "src/shared/**/*.ts"]
 }
 ```
 
-```json title="src/client/tsconfig.json" ins={6-7,11}
+```json title="src/client/tsconfig.json" ins={8-9,12}
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "lib": ["ES2022"],
+    "types": ["@kingdomsconnected/types/client"],
     "rootDir": "..",
     "outDir": "../../dist",
-    "lib": ["ES2022"],
-    "strict": true,
-    "types": []
+    "strict": true
   },
-  "include": ["**/*.ts", "../shared/**/*.ts", "../../../../scripting-api/generated/client-api.d.ts"]
+  "include": ["**/*.ts", "../shared/**/*.ts"]
 }
 ```
 

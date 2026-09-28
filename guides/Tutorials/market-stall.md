@@ -27,7 +27,6 @@ Difficulty: intermediate. Time: about 40 minutes.
 market-stall/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   src/server/
     index.ts             /stall, npcInteract, cleanup
     place.ts             a spot in front of the player
@@ -50,6 +49,7 @@ It is all server code.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

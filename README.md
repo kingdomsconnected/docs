@@ -20,7 +20,7 @@ The closed-source mod remains authoritative for the generated client and server 
 - `docs.config.json` owns the published site's generator pin, branding, links, navigation inputs, and community-content mapping.
 - `scripts/sync_contract.mjs` downloads and verifies the public scripting contract.
 - `scripts/docs.mjs` is the single local and CI generation entrypoint.
-- `scripts/check_guides.mjs` type-checks every code sample against the contract and lints the prose (`pnpm check`).
+- `scripts/check_guides.mjs` type-checks every code sample against `@kingdomsconnected/types` and lints the prose (`pnpm check`).
 - `src/styles/production.css` is the production theme shared by the standalone site and local preview.
 
 ## Contributing
@@ -41,7 +41,9 @@ Guides document the API as it is, not as it is planned. Every global, function a
 
 ### Code samples are checked
 
-`pnpm check` type-checks every `js` and `ts` block against the contract's own declarations, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
+`pnpm check` type-checks every `js` and `ts` block against [`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types), the package readers install, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
+
+When a release ships, bump the package's exact version in `package.json` (`pnpm add -D -E @kingdomsconnected/types@<version>`) and in the guides that name it (`grep -rn 'types@\|types": "' guides`).
 
 - Blocks on pages under `guides/Client scripting/` and `guides/User interface/` use the client declarations; everything else uses the server's. A block whose first line is `// client` or `// server`, or whose title names a `client/` or `server/` path, picks its side explicitly.
 - Blocks titled with a file path are compiled together, so a tutorial's files can import each other (`./command.js`).

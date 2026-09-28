@@ -27,7 +27,6 @@ Difficulty: advanced. Time: about 45 minutes.
 build-mode/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   src/server/
     index.ts             /build and cleanup
     build.ts             sessions, budget, validation, spawning
@@ -50,6 +49,7 @@ The client script must be in `files` so the server streams it to players.
     "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

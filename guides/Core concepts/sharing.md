@@ -131,7 +131,7 @@ Messages.handle("post", (payload, reply) => {
 a missing resource or handler is ignored. Reply from a `try`/`finally`, and add
 your own timeout when it matters:
 
-```ts title="my-shop/src/server/log.ts"
+```ts title="my-shop/src/server/timeout.ts"
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("timed out")), ms);

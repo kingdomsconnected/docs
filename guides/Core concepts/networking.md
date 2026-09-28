@@ -46,10 +46,6 @@ Events.onClient(`${RESOURCE}:scores.ask`, (sender) => {
 | Server to every client | `Events.emitAllClients(name, payload)` | Any value | client `Events.on(name, (payload) => ...)` |
 | Client to server | `Events.emitServer(name, payload)` | Any value | server `Events.onClient(name, (sender, payload) => ...)` |
 
-`emitAllClients` and `emitServer` exist at runtime but are missing from the
-declarations. A TypeScript resource declares them in `types/runtime.d.ts`; see
-[Use TypeScript](../../getting-started/typescript/).
-
 :::caution
 Server-to-client events land in the `Events.on` table every client resource
 shares. Prefix every name with your resource name.

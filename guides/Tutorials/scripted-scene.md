@@ -27,7 +27,6 @@ Difficulty: intermediate. Time: about 30 minutes.
 scripted-scene/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   src/server/
     index.ts             /scene and cleanup
     place.ts             ground position and facing helpers
@@ -49,6 +48,7 @@ It is all server code.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {
@@ -133,7 +133,7 @@ interface Scene {
   readonly home: Vector3;
   step: number;
   waiting: "walk" | "timer";
-  timer: number;
+  timer: Timeout | undefined;
 }
 
 let scene: Scene | null = null;
@@ -154,7 +154,7 @@ export function startScene(viewer: Player, stage: Vector3): void {
   actor.pin(viewer);
   partner.pin(viewer);
 
-  scene = { viewer: viewer.id, actor: actor.id, partner: partner.id, home: actor.position, step: 0, waiting: "timer", timer: -1 };
+  scene = { viewer: viewer.id, actor: actor.id, partner: partner.id, home: actor.position, step: 0, waiting: "timer", timer: undefined };
   next();
 }
 

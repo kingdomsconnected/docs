@@ -27,7 +27,6 @@ Difficulty: intermediate. Time: about 45 minutes.
 my-panel/
   package.json
   tsconfig.json          from Use TypeScript
-  types/runtime.d.ts     from Use TypeScript
   ui/
     index.html           the page
     app.js               the page's script
@@ -54,6 +53,7 @@ It is the default gamemode's F4 panel (`src/client/index.ts`, `panel.ts`, `snaps
     "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json"
   },
   "devDependencies": {
+    "@kingdomsconnected/types": "1.5.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

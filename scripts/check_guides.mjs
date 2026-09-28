@@ -1,12 +1,14 @@
-// Checks every guide against the scripting contract it documents.
+// Checks every guide against the scripting declarations its readers install.
 //
 //   pnpm check
 //
 // Three things are checked:
 //
-// - Every `js` and `ts` code block is type-checked against the contract's own
-//   declarations, so a sample that calls something the runtime does not have
-//   fails here instead of in a reader's editor.
+// - Every `js` and `ts` code block is type-checked against
+//   @kingdomsconnected/types, the package the TypeScript guide has readers
+//   install, so a sample that calls something the runtime does not have fails
+//   here instead of in a reader's editor. Bump its pinned version in
+//   package.json with every release.
 // - Every `json` code block parses.
 // - Prose uses plain punctuation: no em or en dashes, and no `--` standing in
 //   for one.
@@ -28,9 +30,7 @@
 //
 // A few names are declared for every block so that a short sample can say
 // `player.teleport(...)` without a line of setup first. They are listed in
-// PLACEHOLDERS below; a sample that needs anything else defines it. RUNTIME is
-// the declaration file the TypeScript guide has readers add for what the
-// runtime has and the contract does not declare; keep the two identical.
+// PLACEHOLDERS below; a sample that needs anything else defines it.
 //
 // JavaScript samples are checked the way an editor checks a plain `.js` file:
 // wrong names, arity and property access fail, but a payload of type `unknown`
@@ -44,39 +44,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { syncContract } from "./sync_contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const guidesRoot = path.join(root, "guides");
-
-// Mirrors guides/Getting started/typescript.md. The contract leaves these out, and a
-// TypeScript resource needs them to compile.
-const RUNTIME = {
-  server: `
-interface EventBus {
-  emitAllClients(eventName: string, payload?: unknown): void;
-}
-declare function setTimeout(handler: () => void, milliseconds?: number): number;
-declare function clearTimeout(handle: number): void;
-declare function setInterval(handler: () => void, milliseconds?: number): number;
-declare function clearInterval(handle: number): void;
-`,
-  client: `
-interface EventBus {
-  emitServer(eventName: string, payload?: unknown): void;
-}
-declare function setTimeout(handler: () => void, milliseconds?: number): number;
-declare function clearTimeout(handle: number): void;
-declare function setInterval(handler: () => void, milliseconds?: number): number;
-declare function clearInterval(handle: number): void;
-`,
-};
-
-// The contract types each console method as taking one array rather than any
-// number of values, so `console.log("text")` fails to type-check although
-// it runs. The TypeScript guide shows the wrapper to use; samples keep the
-// plain call, and this one diagnostic is not reported for it.
-const isConsoleArrayQuirk = (message, sourceLine) => (/parameter of type 'unknown\[\]'/.test(message) || /^Expected 0-1 arguments, but got \d+\.$/.test(message)) && /\bconsole\.(log|info|warn|error|debug)\(/.test(sourceLine);
 
 // Codes an editor would not raise for a plain .js file: values of type
 // `unknown`, and parameters or variables with no type annotation.
@@ -241,10 +211,10 @@ const checkLinks = async (report) => {
 };
 
 const main = async () => {
-  const contractRoot = await syncContract();
+  const typesRoot = path.join(root, "node_modules", "@kingdomsconnected", "types");
   const declarations = {
-    server: path.join(contractRoot, "targets", "server", "api.d.ts"),
-    client: path.join(contractRoot, "targets", "client", "api.d.ts"),
+    server: path.join(typesRoot, "server", "index.d.ts"),
+    client: path.join(typesRoot, "client", "index.d.ts"),
   };
   const problems = [];
   const report = (file, line, message) => problems.push(`${file}:${line}: ${message}`);
@@ -311,7 +281,7 @@ const main = async () => {
         if (!files[environment].size) continue;
         const prelude = path.join(pageRoot, environment, "__placeholders.d.ts");
         await mkdir(path.dirname(prelude), { recursive: true });
-        await writeFile(prelude, `${RUNTIME[environment]}\n${PLACEHOLDERS[environment]}`);
+        await writeFile(prelude, PLACEHOLDERS[environment]);
         for (const [file, { source }] of files[environment]) {
           await mkdir(path.dirname(file), { recursive: true });
           await writeFile(file, source);
@@ -327,7 +297,6 @@ const main = async () => {
           const isJs = diagnostic.file.fileName.endsWith(".js");
           if (isJs && JS_TOLERATED.has(diagnostic.code)) continue;
           const { line } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start ?? 0);
-          if (isConsoleArrayQuirk(message, source.block.body[line] ?? "")) continue;
           report(relative, source.block.line + 1 + line, `[${environment}] ${message}`);
         }
       }
@@ -344,7 +313,7 @@ const main = async () => {
     process.exitCode = 1;
     return;
   }
-  console.log(`Guides are clean: ${checkedBlocks} code block(s) checked against the contract.`);
+  console.log(`Guides are clean: ${checkedBlocks} code block(s) checked against @kingdomsconnected/types.`);
 };
 
 await main();
