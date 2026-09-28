@@ -3,17 +3,70 @@
   "schemaVersion": 1,
   "slug": "kcdc",
   "title": "Kingdoms Connected Scripting API",
-  "tagline": "Build multiplayer game modes for Kingdom Come: Deliverance II with the Kingdoms Connected JavaScript runtime.",
+  "tagline": "Script your own Kingdom Come: Deliverance II multiplayer server in JavaScript or TypeScript: spawn points, commands, NPCs, quests, shops, menus and whole game modes.",
   "accentColor": "#c99a4b",
   "links": [
-    { "label": "Kingdoms Connected on GitHub", "url": "https://github.com/kingdomsconnected" },
-    { "label": "MafiaHub Framework", "url": "https://github.com/MafiaHub/Framework" }
+    {
+      "label": "Guides",
+      "url": "https://docs.kingdomsconnected.com/guides/overview/"
+    },
+    {
+      "label": "Get started",
+      "url": "https://docs.kingdomsconnected.com/guides/getting-started/install/"
+    },
+    {
+      "label": "Kingdoms Connected on GitHub",
+      "url": "https://github.com/kingdomsconnected"
+    },
+    {
+      "label": "MafiaHub Framework",
+      "url": "https://github.com/MafiaHub/Framework"
+    }
   ],
   "communityContent": {
     "repository": "https://github.com/kingdomsconnected/docs",
     "authority": "maintainer",
     "navigation": "unified",
-    "documents": ["guides/**/*.md"]
+    "documents": [
+      "guides/**/*.md"
+    ]
   },
-  "theme": "src/styles/production.css"
+  "theme": "src/styles/production.css",
+  "branding": {
+    "eyebrow": "Kingdom Come: Deliverance II multiplayer",
+    "headerSubtitle": "Scripting guides and API",
+    "heroBadges": [
+      "JavaScript and TypeScript",
+      "Server and client scripting",
+      "Up to 512 players",
+      "Types on npm: @kingdomsconnected/types",
+      "Docker image with every release"
+    ],
+    "principles": [
+      {
+        "title": "Running in ten minutes",
+        "description": "Unpack a release, build the default gamemode, join your own server. Getting started walks you through it, then through your first resource."
+      },
+      {
+        "title": "The whole of Bohemia to script",
+        "description": "Players, horses, dogs, NPCs, props, doors, the clock and the weather, quests, dialogue and shops, all from your own code."
+      },
+      {
+        "title": "Two halves, one resource",
+        "description": "The server owns the rules and everything players share. The client half binds keys, draws HUDs and opens HTML menus in each player's game."
+      },
+      {
+        "title": "Hot reload",
+        "description": "Type ensure in the server console and your resource reloads without a restart, pushing new client code to everyone connected."
+      },
+      {
+        "title": "Checked, not guessed",
+        "description": "The API reference is generated from the runtime itself, and every sample in the guides is type-checked against the published declarations."
+      },
+      {
+        "title": "Built to host",
+        "description": "Windows and Linux servers, an official Docker image and a Pterodactyl egg, and a listing in the in-game server browser."
+      }
+    ]
+  }
 }

@@ -91,3 +91,138 @@
 .sl-markdown-content details[open] > summary {
   margin-bottom: 0.75rem;
 }
+
+/*
+ * Home page. The generator owns its markup (hero, API cards, principles) and
+ * its links; this only restyles it. The six `branding.principles` read as what
+ * a newcomer gets, so they come before the API cards, as numbered features.
+ */
+/* Accent-coloured text: the accent itself is too light to read on the light theme. */
+:root {
+  --kc-accent-text: var(--mh-accent-bright);
+}
+
+:root[data-theme="light"] {
+  --kc-accent-text: color-mix(in srgb, var(--mh-accent) 55%, black);
+}
+
+body:has(.mh-home-hero) .sl-markdown-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.mh-home-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.mh-home-hero h1 {
+  max-width: 18ch;
+  font-size: clamp(3rem, 7vw, 6rem);
+}
+
+
+.mh-home-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 10% -20% -30% -10%;
+  background:
+    radial-gradient(40rem 22rem at 20% 40%, var(--mh-accent-soft), transparent 70%),
+    radial-gradient(28rem 18rem at 80% 10%, color-mix(in srgb, var(--mh-accent) 8%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.mh-home-meta span:first-child {
+  border-color: var(--mh-accent);
+  color: var(--kc-accent-text);
+  background: var(--mh-accent-soft);
+}
+
+.mh-home-principles {
+  order: -1;
+  counter-reset: feature;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1rem 0 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.mh-home-principles article {
+  counter-increment: feature;
+  padding: 1.35rem 1.4rem 1.5rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-top: 2px solid var(--mh-accent);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+}
+
+.mh-home-principles article::before {
+  content: counter(feature, decimal-leading-zero);
+  display: block;
+  margin-bottom: 0.9rem;
+  color: var(--kc-accent-text);
+  font: 750 0.7rem/1 var(--sl-font-mono);
+}
+
+.mh-home-principles strong {
+  color: var(--sl-color-white);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.mh-home-principles p {
+  font-size: 0.9rem;
+}
+
+.mh-home-targets {
+  margin: 4.5rem 0 4rem;
+}
+
+@media (min-width: 40rem) {
+  .mh-home-principles { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 64rem) {
+  .mh-home-principles { grid-template-columns: repeat(3, 1fr); }
+}
+
+.mh-eyebrow,
+.mh-card-number,
+.mh-target-card strong {
+  color: var(--kc-accent-text);
+}
+
+/* The first two header links go into the guides; show them as actions. */
+.mh-header-links a:nth-child(-n + 2) {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--mh-accent);
+  border-radius: 999px;
+  color: var(--kc-accent-text);
+}
+
+.mh-header-links a:nth-child(2) {
+  color: color-mix(in srgb, var(--mh-accent) 15%, black);
+  background: var(--mh-accent);
+}
+
+.mh-header-links a:nth-child(-n + 2):hover {
+  color: color-mix(in srgb, var(--mh-accent) 15%, black);
+  background: var(--mh-accent-bright);
+}
+
+/*
+ * The generator hides every header link below 72rem. Keep the two guide
+ * actions from 40rem up, and only "Get started" on a phone, so the home page
+ * always has a way into the guides.
+ */
+@media (max-width: 72rem) {
+  .mh-header-links { display: flex; gap: 0.5rem; }
+  .mh-header-links a:nth-child(n + 3) { display: none; }
+}
+
+@media (max-width: 40rem) {
+  .mh-header-links a:first-child { display: none; }
+  .mh-header-links a:nth-child(2) { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+}
