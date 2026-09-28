@@ -3,7 +3,7 @@ title: List your server in the server browser
 description: Register your server on MafiaHub, put its push key in server.json, and appear in the in-game server browser.
 sidebar:
   label: Server browser listing
-  order: 103
+  order: 104
 ---
 
 The in-game **Server browser** shows the KCDC servers announced on the

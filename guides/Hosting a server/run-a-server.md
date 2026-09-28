@@ -31,6 +31,12 @@ KCDC Server successfully started
 Stop it with **Ctrl+C**, `quit` in the console, or `SIGTERM`. All three run
 the same shutdown, so resources get their `resourceStop` handlers.
 
+:::tip[Prefer Docker?]
+Every release also publishes a ready-to-run image,
+`ghcr.io/kingdomsconnected/kcdc-server:<version>`. See [Docker and
+panels](../containers/).
+:::
+
 :::caution[The gamemode ships as source]
 `resources/kcdc-gamemode` is TypeScript with no `dist/`, so the server skips
 it until you build it. See [Install and run a server](../../getting-started/install/).
@@ -78,22 +84,15 @@ can lower it, but a larger value is clamped to 512 at boot with a warning.
 
 ## Command-line arguments
 
-Arguments override the matching `server.json` key for one run and are not
-written back.
-
-| Argument | Short | Default | Purpose |
-| --- | --- | --- | --- |
-| `--port` | `-p` | `27015` | Game session port (UDP) |
-| `--host` | `-h` | `0.0.0.0` | Address the game session binds to |
-| `--apiport` | `-P` | `27016` | HTTP port (TCP) |
-| `--apihost` | `-H` | `0.0.0.0` | Address the HTTP endpoints bind to |
-| `--config` | `-c` | `server.json` | Configuration file, relative to the working directory. Written with defaults if missing |
-| `--server-token` | `-t` | none | Masterlist token, see [Server browser listing](../server-browser/) |
-| `--help` | | | Print this list and exit |
+Options override the matching `server.json` key for one run and are never
+written back:
 
 ```sh title="Linux, a second server on the same machine"
 ./KCDCServer --port 28015 --apiport 28016 --config second.json
 ```
+
+[Options and overrides](../options-and-overrides/#command-line-options) lists
+every option, which source wins, and how to change common behaviours.
 
 ## Resources and chat commands
 
@@ -160,18 +159,14 @@ In a container the console needs stdin and a terminal attached; see
 
 ## Files the server writes
 
-In the working directory, next to `server.json`:
-
-| Path | What it is |
-| --- | --- |
-| `logs/` | The server log |
-| `.packages/` | Encrypted client packages and their key. Keep it so players do not re-download everything after a restart |
-| crash dumps | Written by `crashpad_handler` and reported to the KCDC developers |
-
-Back up the whole folder, hidden files included.
+Everything lives in the working directory: `server.json`, `resources/`,
+`logs/`, `.packages/` and crash data. Back up the whole folder, hidden files
+included. [Options and overrides](../options-and-overrides/#files-the-server-writes)
+says what each one is.
 
 ## Related
 
+- [Options and overrides](../options-and-overrides/): every option and setting, and which one wins.
 - [server.json settings](../server-json/): every key, the level and required DLCs.
 - [Let players connect](../players-connecting/): port forwarding and what to send players.
 - [Docker and panels](../containers/): the official image.

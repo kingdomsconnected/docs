@@ -54,7 +54,8 @@ Read **Getting started** in order:
 | User interface | Show an HTML menu and talk to it | [Web views](../user-interface/web-views/), [Page data bridge](../user-interface/page-bridge/) |
 | User interface | Show a HUD message, nametag or map blip | [HUD](../user-interface/hud/), [Map and blips](../user-interface/map/) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
-| Hosting a server | Run a dedicated server, change its settings | [Run a server](../hosting-a-server/run-a-server/), [server.json](../hosting-a-server/server-json/) |
+| Hosting a server | Run a dedicated server, change its settings | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
+| Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
 | Hosting a server | Let players connect, list the server publicly | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
 
 ## How the sidebar is organised
@@ -70,7 +71,7 @@ Read **Getting started** in order:
 | Client scripting | Local player, key binds, camera, placement, sound, Discord | Client |
 | User interface | Web views, page bridge, HUD, map, native screens | Client |
 | Tutorials | Multi-file builds of complete features | Both |
-| Hosting a server | Running, configuring, connecting, listing, containers | Server operators |
+| Hosting a server | Running, command-line options and overrides, connecting, listing, the official Docker image | Server operators |
 
 ## A taste
 

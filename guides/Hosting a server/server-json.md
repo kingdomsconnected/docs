@@ -3,7 +3,7 @@ title: server.json settings
 description: Set the ports, player slots, level and required DLCs in server.json.
 sidebar:
   label: server.json
-  order: 101
+  order: 102
 ---
 
 The server reads `server.json` from its working directory (or the file named

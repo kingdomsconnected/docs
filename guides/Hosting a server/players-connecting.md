@@ -3,7 +3,7 @@ title: Let players connect
 description: Send players a short checklist to join your server, and make the server reachable through routers and firewalls.
 sidebar:
   label: Let players connect
-  order: 102
+  order: 103
 ---
 
 A player needs Kingdom Come: Deliverance II on Steam, the `client/` folder of

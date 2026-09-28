@@ -3,7 +3,7 @@ title: Docker, Pterodactyl and Fly.io
 description: Run the official Linux server image with Docker or Compose, give it a built gamemode, and host it on Fly.io or a Pterodactyl panel.
 sidebar:
   label: Docker and panels
-  order: 104
+  order: 105
 ---
 
 Every release publishes a Linux amd64 image,
