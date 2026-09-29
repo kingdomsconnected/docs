@@ -31,7 +31,7 @@ round as the player turns.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `position` | required | World position in metres |
-| `type` | `"GeneralPoi"` | The game's compass icon: `Checkpoint`, `QuestGiver`, `Shop`, `GeneralPoi` and the rest. An unknown name is rejected |
+| `type` | `"GeneralPoi"` | The game's compass icon: `Checkpoint`, `QuestGiver`, `Shop`, `GeneralPoi` and the rest ([Blip icons](../../resources/blip-icons/)). An unknown name is rejected |
 | `state` | `0` | Passed to the compass as-is; 0 is what a fresh mark uses |
 | `label` | none | For your own bookkeeping. Compass marks have no text, so it is not drawn |
 

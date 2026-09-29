@@ -42,7 +42,8 @@ object. Everything has a default; in practice you set `soul` and `position`.
 | `virtualWorld` | Which [virtual world](../../core-concepts/virtual-worlds/) it lives in. |
 
 A role is a real soul from the game's tables, so `guard` already looks like a
-guard. Anything not in `Npc.roles()` is taken as a soul GUID.
+guard. Anything not in `Npc.roles()` is taken as a soul GUID; [Souls](../../resources/souls/)
+lists one for every look the game ships.
 
 ```ts
 console.log(Npc.roles().join(", "));

@@ -8,6 +8,7 @@
     "docs:sync": "node scripts/sync_contract.mjs",
     "dev": "node scripts/docs.mjs dev",
     "build": "node scripts/docs.mjs build",
+    "resources": "node scripts/generate_resources.mjs",
     "check": "node scripts/check_guides.mjs",
     "check:site": "node scripts/check_guides.mjs --dist"
   },

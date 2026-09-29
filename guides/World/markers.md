@@ -27,7 +27,7 @@ draws one of two kinds, chosen by `options.shape`:
 
 | Shape | What it is | Material |
 | --- | --- | --- |
-| `decal` (default) | Projected onto the surface below, like paint. Flat, invisible from below a ridge, ignores `height`, `spin` and `bob`. | A decal material. [`Marker.list(prefix?)`](../../reference/server/classes/Marker.md#list) returns every preloaded one. |
+| `decal` (default) | Projected onto the surface below, like paint. Flat, invisible from below a ridge, ignores `height`, `spin` and `bob`. | A decal material. [`Marker.list(prefix?)`](../../reference/server/classes/Marker.md#list) returns every preloaded one; [Marker materials](../../resources/markers/) lists both kinds. |
 | `cylinder`, `sphere`, `chevron`, `cube`, `plane` | A mesh standing in the world, visible from afar, can spin and bob. `cylinder`, `chevron` and `cube` use `height`. | A plain-coloured material. |
 
 The default gamemode's `src/server/commands/marker.ts` has a palette of ten

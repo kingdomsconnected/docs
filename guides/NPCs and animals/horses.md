@@ -34,7 +34,8 @@ Horse.spawn(
 - **Rotation**: `player.rotation` faces the way the player faces. For "a few
   metres in front", see [Positions and vectors](../../core-concepts/math/).
 - **Soul**: decides the animal and its coat. Omitted spawns the generic riding
-  horse; `Horse.breeds()` lists the named ones.
+  horse; `Horse.breeds()` lists the named ones, and so does
+  [Horse breeds](../../resources/horse-breeds/).
 - **Name**: passing it here, rather than assigning later, means late joiners
   see it named.
 - **Gear**: omitted, it wears the game's own tack. See [Change its gear](#change-its-gear).
@@ -110,7 +111,8 @@ horse.gearLocked = true; // players cannot change it; scripts still can
 ```
 
 `setGear` throws on an item that is not horse gear or sits in the wrong slot.
-Removing the saddle removes the caparison too.
+Removing the saddle removes the caparison too. [Horse gear](../../resources/horse-gear/)
+lists every item by slot and what each preset puts on.
 
 ## Horse events
 

@@ -30,7 +30,8 @@ player.giveItem("3858560f-cf48-436f-8815-4426003288fb");  // the same sword by G
 ```
 
 Names are case-sensitive; GUIDs are not. There is no fuzzy lookup, so check
-the result when a name comes from a player.
+the result when a name comes from a player. [Item classes](../../resources/items/)
+lists every name and GUID.
 
 ## Give an item
 

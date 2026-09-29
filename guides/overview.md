@@ -57,6 +57,7 @@ Read **Getting started** in order:
 | Hosting a server | Run a dedicated server, change its settings | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
 | Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
 | Hosting a server | Let players connect, list the server publicly | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
+| Resources | Look up a face, horse breed, item, buff or effect name | [Game resources and catalogs](../resources/overview/) |
 
 ## How the sidebar is organised
 
@@ -72,6 +73,7 @@ Read **Getting started** in order:
 | User interface | Web views, page bridge, HUD, map, native screens | Client |
 | Tutorials | Multi-file builds of complete features | Both |
 | Hosting a server | Running, command-line options and overrides, connecting, listing, the official Docker image | Server operators |
+| Resources | Every name the catalogs carry: faces, beards, horse breeds and gear, souls, items, buffs, effects, markers, blips, props | Reference |
 
 ## A taste
 

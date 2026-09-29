@@ -14,12 +14,14 @@ The closed-source mod remains authoritative for the generated client and server 
   - `Client scripting/` covers code in each player's game (input, camera, placement, sound, Discord), and `User interface/` covers pages, HUD, map and native screens.
   - `Tutorials/` holds multi-file builds, all in the same shape: before you start, what you will learn, file tree, numbered steps, try it, next steps.
   - `Hosting a server/` is for server operators.
+  - `Resources/` lists the game's data catalogs a script names things from: faces and beards, horse breeds and gear, souls, items, buffs, particle effects, marker materials, blip icons, hand props and emotes. `overview.md` is its index. These pages are reference lists, so they are exempt from the page-length guideline below. Their lists are generated (see [Regenerating the Resources lists](#regenerating-the-resources-lists)); only the prose around them is written by hand.
   - Page titles lead with the task or keyword a reader scans for ("Give and take items", not "Items"). Each page also sets a short `sidebar.label`, because the sidebar is narrow and always open.
-- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains. Each group owns a range (Getting started 10s, Core concepts 20s, Players 30s, World 40s, NPCs and animals 50s, Quests 60s, Client scripting 70s, User interface 80s, Tutorials 90s, Hosting 100s), so give a new guide an order inside its group's range.
+- `docs.config.json` selects the published guides with the `communityContent.documents` globs; a guide outside those globs is silently excluded from navigation. Each page's frontmatter `sidebar.order` sets its position within its group, and a group is placed by the lowest order it contains. Each group owns a range (Getting started 10s, Core concepts 20s, Players 30s, World 40s, NPCs and animals 50s, Quests 60s, Client scripting 70s, User interface 80s, Tutorials 90s, Hosting 100s, Resources 110s), so give a new guide an order inside its group's range.
 - Image directories live beside the Markdown document that references them.
 - `docs.config.json` owns the published site's generator pin, branding, links, navigation inputs, and community-content mapping.
 - `scripts/sync_contract.mjs` downloads and verifies the public scripting contract.
 - `scripts/docs.mjs` is the single local and CI generation entrypoint.
+- `scripts/generate_resources.mjs` rewrites the lists on the `Resources/` pages from a mod checkout.
 - `scripts/check_guides.mjs` type-checks every code sample against `@kingdomsconnected/types` and lints the prose (`pnpm check`).
 - `src/styles/production.css` is the production theme shared by the standalone site and local preview.
 
@@ -51,6 +53,21 @@ When a release ships, bump the package's exact version in `package.json` (`pnpm 
 - `<!-- check: skip -->` on the line before a fence skips a block that is not meant to compile on its own (a fragment, or browser code). Use it rarely.
 
 `pnpm check:site` additionally checks every link and anchor in the built `dist/`, so run it after `pnpm build`.
+
+### Regenerating the Resources lists
+
+The lists on the `Resources/` pages come from the mod's own generated catalog tables, so they need
+a mod checkout, which CI does not have. Regenerate them when a release ships, alongside the types bump,
+from that release's tag:
+
+```sh
+KCDC_MOD_ROOT=/path/to/KCD2MP KCDC_MOD_REF=v1.5.2 pnpm resources
+```
+
+Without `KCDC_MOD_REF` it reads the working tree. Each list sits between
+`<!-- generated:<name> -->` and `<!-- /generated:<name> -->`, and only those regions are rewritten, so edit
+the prose around them freely and never the lists themselves. A new list needs a region on the page and an
+entry in the script's `regions` table.
 
 ### Local preview
 

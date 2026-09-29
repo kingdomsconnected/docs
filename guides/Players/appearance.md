@@ -64,6 +64,9 @@ Appearances.beards("m_head_012");                     // beards that face can gr
 Appearances.random("female");                         // a complete Appearance
 ```
 
+Every name is also listed in [Faces, hair and skins](../../resources/appearance/) and
+[Beards](../../resources/beards/).
+
 | Tree | Faces | Hairstyles | Beards | Skins |
 | --- | --- | --- | --- | --- |
 | male | 212 | 262 | 51 | 47 |

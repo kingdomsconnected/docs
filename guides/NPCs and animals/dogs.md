@@ -32,6 +32,8 @@ Dog.spawn(
 );
 ```
 
+[Dog souls](../../resources/souls/#dog-souls) lists every soul GUID the game has for a dog.
+
 A player has one dog, as in the game. `player.dog` is their dog or `null`, so
 check it first; the default gamemode's `/dog` command
 (`src/server/commands/dog.ts`) refuses a second one. The owner can whistle,

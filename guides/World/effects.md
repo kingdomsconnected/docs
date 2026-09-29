@@ -25,8 +25,8 @@ them.
 
 A name is `library.group.effect`.
 [`Vfx.list(prefix?)`](../../reference/server/classes/Vfx.md#list) returns the
-whole vocabulary (about 600 names, the same list clients have), or those
-starting with a prefix:
+whole vocabulary (about 600 names, the same list clients have, and listed in
+[Particle effects](../../resources/effects/)), or those starting with a prefix:
 
 ```ts
 for (const name of Vfx.list("WH_Particels.fires")) console.log(name);

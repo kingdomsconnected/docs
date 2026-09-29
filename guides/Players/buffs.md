@@ -23,8 +23,9 @@ Events.on("playerBuffAdded", (player, buff, source) => {
 ## Name a buff
 
 Every buff verb takes the exact name from the game's buff tables or the buff's
-GUID. [`Buffs.find`](../../reference/server/variables/Buffs.md#find) resolves
-either, or returns `null`:
+GUID ([Buffs and status effects](../../resources/buffs/) lists them all).
+[`Buffs.find`](../../reference/server/variables/Buffs.md#find) resolves either, or
+returns `null`:
 
 ```ts
 const info = Buffs.find("hangover");
