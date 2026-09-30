@@ -212,9 +212,12 @@ const checkLinks = async (report) => {
 
 const main = async () => {
   const typesRoot = path.join(root, "node_modules", "@kingdomsconnected", "types");
+  // Resolved through the package's own `exports`, the way a reader's editor
+  // finds them, so a change in the package layout does not break the check.
+  const { exports } = JSON.parse(await readFile(path.join(typesRoot, "package.json"), "utf8"));
   const declarations = {
-    server: path.join(typesRoot, "server", "index.d.ts"),
-    client: path.join(typesRoot, "client", "index.d.ts"),
+    server: path.join(typesRoot, exports["./server"].types),
+    client: path.join(typesRoot, exports["./client"].types),
   };
   const problems = [];
   const report = (file, line, message) => problems.push(`${file}:${line}: ${message}`);
