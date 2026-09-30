@@ -20,7 +20,7 @@ Difficulty: intermediate. Time: about 30 minutes.
 
 - Routing every `/` line from one [`playerCommand`](../../players/chat/) handler to a command object.
 - Rebuilding "quoted arguments", which the server splits on spaces.
-- Writing an async command around [`takeItem`](../../players/items/), and catching what it throws.
+- Writing an async command around [`takeItem`](../../players/items/)'s promise, and catching what it throws.
 - Generating `/help` from the registry so it never falls out of date.
 
 ```text
@@ -179,7 +179,7 @@ export function readAmount(raw: string | undefined, max = 10000): number | null 
 
 ## 4. Write the commands
 
-One file per command. `/give` is synchronous: [`giveItem`](../../reference/server/classes/Player.md#giveitem) sends an instruction to the player's client and returns straight away.
+One file per command. `/give` is synchronous: [`giveItem`](../../reference/server/classes/Player.md#giveitem) adds to the inventory the server holds and returns whether it worked.
 
 ```ts title="src/server/commands/give.ts"
 import { readAmount, readQuoted } from "../args.js";
@@ -206,7 +206,7 @@ export const giveCommand: Command = {
 };
 ```
 
-`/take` has to wait: the server keeps no inventory, so [`takeItem`](../../reference/server/classes/Player.md#takeitem) asks the client and resolves when it answers. An async `run` is all it takes, because the registry already catches what it throws.
+`/take` is async: [`takeItem`](../../reference/server/classes/Player.md#takeitem) returns a promise, settled by the time you get it, and takes every unit or none. An async `run` is all it takes, because the registry already catches what it throws and rejects.
 
 ```ts title="src/server/commands/take.ts"
 import { readAmount, readQuoted } from "../args.js";
@@ -226,8 +226,8 @@ export const takeCommand: Command = {
     if (amount === null) return reply.line("The amount must be a whole number from 1 to 10000.");
 
     const result = await player.takeItem(item.value, amount);
-    if (result.reason !== "") return reply.line(`Could not take it: ${result.reason}.`);
-    if (!result.ok) return reply.line(`You only had ${result.removed} of the ${result.requested} asked for; those are gone.`);
+    if (result.reason === "insufficientItems") return reply.line(`You do not have ${amount} x ${item.value}.`);
+    if (!result.ok) return reply.line(`Could not take it: ${result.reason}`);
     reply.line(`Took ${result.removed} x ${item.value}.`);
   },
 };
@@ -297,7 +297,7 @@ Build the resource, then run `stop kcdc-gamemode` and `ensure my-commands` in th
 
 1. `/help` lists three commands, and `/help take` shows the usage of one.
 2. `/give bread 3` puts three loaves in your inventory.
-3. `/take bread 5` takes the three you have and says it could not find the other two.
+3. `/take bread 5` says you do not have five and leaves your three loaves alone; `/take bread 3` takes them.
 4. `/give bread lots` answers with the amount rule and does nothing.
 
 `start kcdc-gamemode` brings the default commands back.

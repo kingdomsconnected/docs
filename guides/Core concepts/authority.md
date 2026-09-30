@@ -6,10 +6,10 @@ sidebar:
   order: 20
 ---
 
-Each player's own client owns their body: health, stamina, skills, inventory,
-clothes, buffs and where they stand. The server owns everything shared between
-players. So reading a player gives you their last report, and every verb on a
-player is a request to their client.
+Each player's own client owns their body: health, stamina, clothes, buffs and
+where they stand. The server owns everything shared between players, and each
+player's inventory. So reading a player's body gives you their last report,
+and most verbs on a player are requests to their client.
 
 ```ts
 // server
@@ -30,7 +30,9 @@ Events.on("playerCommand", (player, command) => {
 
 | Thing | Owner | What you can do |
 | --- | --- | --- |
-| A player's body: pose, health, stamina, stats, skills, inventory, appearance, buffs | That player's client | Read its last report; send it requests. |
+| A player's body: pose, health, stamina, stats, appearance, buffs | That player's client | Read its last report; send it requests. |
+| A player's inventory | The server | Read and change it directly; their game only shows it. See [Inventories](../../players/inventory/). |
+| A player's skills, XP and perks | The server rules, their client applies | Every gain is asked for and granted as an order. See [Progression](../../players/progression/). |
 | A horse standing idle | The server | Spawn, move and change it directly. |
 | A horse with a rider | The rider's client | Handed over on `horseMount`, back on `horseDismount`. |
 | An NPC | The server; a nearby client runs the body | Identity, orders and health are the server's. Writes apply at once. |
@@ -67,11 +69,14 @@ already there, or a beard the face was never modelled with.
 | --- | --- | --- |
 | `teleport`, `spawn` | `true` when sent | `player.position` changes on a later update. |
 | `setAppearance` | `true` when sent | `player.appearance` reads back the new look. |
-| `giveItem` | `true` when sent | The item appears in their inventory. |
 | `addBuff`, `removeBuff` | `true` when sent | `playerBuffAdded` or `playerBuffRemoved` fires. `hasBuff` straight after `addBuff` is still `false`. |
 | `heal` | `true` when sent | `player.health` rises; `playerInjuryHealed` fires per limb. |
 | `revive` | `true` when sent | The player stands up and `player.alive` turns true. |
-| `takeItem` | A `Promise` | The one verb that waits: it resolves with `removed`, the count really taken. |
+| `addXp`, `setLevel`, `addPerk` | `true` when sent | `playerXpGained`, `playerLevelUp` or `playerPerkAdded` fires. |
+
+Item verbs are the exception. `giveItem`, `takeItem` and the `Inventory` calls
+change the inventory the server holds, so their result is final: the player's
+game shows it on the next tick.
 
 <details>
 <summary>Why is there no setter for health or position?</summary>

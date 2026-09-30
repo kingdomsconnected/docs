@@ -1,16 +1,16 @@
 ---
 title: "Items: give, take and drop"
-description: Give items to a player, take them back with an awaited round trip, read what they wear and hold, and lay item stacks on the ground.
+description: Give items to a player by name, take them back, read what they wear and hold, and lay item stacks on the ground.
 sidebar:
   label: Items
-  order: 33
+  order: 34
 ---
 
 Give items with [`giveItem`](../../reference/server/classes/Player.md#giveitem),
 take them with [`takeItem`](../../reference/server/classes/Player.md#takeitem),
 and lay stacks in the world with [`GroundItem`](../../reference/server/classes/GroundItem.md).
-The server has no inventory of its own, so `giveItem` is a request and
-`takeItem` awaits the player's client ([why](../../core-concepts/authority/)).
+The server holds every player's inventory, so both happen at once and the
+player's game shows the change a moment later.
 
 ```ts
 Events.on("playerSpawned", (player) => {
@@ -35,29 +35,23 @@ lists every name and GUID.
 
 ## Give an item
 
-`player.giveItem(item, amount?)` grants `amount` (default 1, at most 10000). It
-returns `false` for an unknown item or an amount outside 1 to 10000, and `true`
-once the grant went out. A sent grant always lands, a moment later, but the
-server records nothing: if you need to know what a player owns, keep that
-record yourself.
+`player.giveItem(item, amount?)` adds `amount` (default 1, at most 10000) at
+quality 1 and full condition. It returns `true` once the items are in the
+inventory, and `false` for an unknown item, an amount outside 1 to 10000, or a
+player who is not connected. To choose quality or condition, or to read what a
+player owns, use [Inventories](../inventory/).
 
 ## Take an item
 
-`player.takeItem(item, amount?)` asks their client to remove items, across
-stacks, oldest first, counting one held in the hand. The promise always
-resolves (never rejects, never hangs), so read `reason` instead of using `try`:
+`player.takeItem(item, amount?)` takes units of a class across the player's
+rows: every one of them, or none. It returns a promise, which is already
+settled when you get it, so `await` it and read the result:
 
 ```ts
 async function charge(player: Player, item: string, amount: number): Promise<boolean> {
   const result = await player.takeItem(item, amount);
-
-  if (result.reason !== "") {
-    Chat.sendToPlayer(player, `Could not take ${item}: ${result.reason}`);
-    return false;
-  }
   if (!result.ok) {
-    player.giveItem(item, result.removed); // partial take: put it back
-    Chat.sendToPlayer(player, `You need ${amount} ${item}, you had ${result.removed}.`);
+    Chat.sendToPlayer(player, `You need ${amount} ${item}.`); // result.reason says why
     return false;
   }
   return true;
@@ -66,17 +60,14 @@ async function charge(player: Player, item: string, amount: number): Promise<boo
 
 | Field | Meaning |
 | --- | --- |
-| `removed` | Units that actually went. |
+| `ok` | `true` when every unit was taken. Nothing is taken otherwise. |
+| `removed` | `amount` when it worked, otherwise 0. |
 | `requested` | What you asked for. |
-| `ok` | `true` only when the client answered **and** removed every unit. |
-| `reason` | `""` when the client answered. Otherwise set for an unknown item, an amount outside 1 to 10000 (zero is refused, not "all"), no inventory loaded, no answer within five seconds, or a player who left. |
+| `reason` | `""` on success. Otherwise `insufficientItems` when they do not have enough, another [inventory code](../inventory/#change-an-inventory), or a sentence for an unknown item or a player who is not connected. |
 
-:::caution
-A partial take is still a take: asked for 3 with 1 in the bag comes back
-`removed: 1, ok: false`, and that one is gone. Read `ok` before crediting the
-other side of a trade. The default gamemode's `src/server/commands/take.ts` is
-a complete `/take`.
-:::
+An amount of zero is refused, not read as "all of them". To move items from
+one player to another, use `Inventory.transfer`, which cannot lose them half
+way. The default gamemode's `src/server/commands/take.ts` is a complete `/take`.
 
 ## Read what they wear and hold
 
@@ -87,8 +78,8 @@ player.leftHandItem;   // a shield, a torch, or ""
 ```
 
 These report what the body actually has on, so a bare body reads as `[]`.
-There is no verb to equip anything: clothing is inventory, so give the garment
-and let them put it on.
+To dress someone, give the garment and let them put it on, or restore their
+inventory with `equipped` counts, as [Inventories](../inventory/#dress-a-body) shows.
 
 These values, and a ground item's `itemClass`, are **item classes**: 32
 lowercase hex digits naming what something is, never which one. They compare
@@ -197,7 +188,7 @@ track the ids you spawned and destroy them in `resourceStop`, as
 | Call | Fails when | Result |
 | --- | --- | --- |
 | `giveItem` | Unknown item, amount outside 1 to 10000, no connection | `false` |
-| `takeItem` | See `reason` above | Resolves with `reason` set |
+| `takeItem` | Not enough items, unknown item, bad amount, no connection | Resolves with `ok: false` and `reason` set |
 | `GroundItem.spawn` | Unknown item, or a stack no client could build (an arrow with an impossible quality) | **Throws**: catch it for player input |
 
 The default gamemode's `/drop <item> [amount]` (with `list`, `remove <id>` and
@@ -205,6 +196,7 @@ The default gamemode's `/drop <item> [amount]` (with `list`, `remove <id>` and
 
 ## Related
 
+- [Inventories](../inventory/): rows, item quality, transfers, saving between sessions
 - [Shops](../../quests-dialogue-and-shops/vendors/), which move items and money in one deal
 - [Build a /command system](../../tutorials/command-system/), for async commands like `/take`
 - [Player appearance](../appearance/), the body under the clothes

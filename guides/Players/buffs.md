@@ -3,7 +3,7 @@ title: Buffs and status effects
 description: Put status effects on players, clear them by family, watch them come and go, and take over whole kinds of effect such as alcohol.
 sidebar:
   label: Buffs
-  order: 35
+  order: 38
 ---
 
 A buff is one of the game's named status effects: a potion, a poison, an

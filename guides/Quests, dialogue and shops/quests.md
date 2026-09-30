@@ -1,6 +1,6 @@
 ---
 title: Quests in the journal
-description: Write quests into the game's own journal, update their objectives, complete them, and hear when players track them.
+description: Write quests into the game's own journal, update their objectives, and complete, fail or remove them.
 sidebar:
   label: Quests
   order: 60
@@ -44,6 +44,7 @@ const errand = Quest.give(
     objectives: ["Find Hans at the mill"],
     player: target.id,    // only this player gets it; omit for everyone
     announce: true,       // raise the toast; false writes it silently
+    track: false,         // true: its recipients start following it
   },
   0,                      // virtual world; omitted means the global one
 );
@@ -102,7 +103,9 @@ quest.setObjective(0, { text: "Find Hans at the mill", progress: "done" });
 quest.setObjective(0, "Find Hans at the watermill", false); // false: no notification
 ```
 
-- A plain string is an active, non-optional line.
+- A plain string is an active, non-optional line with no map marker.
+- A write replaces the whole line: whatever you leave out, a `position`
+  included, is gone.
 - An index past the end is ignored; entries past eight are dropped.
 - Every write raises the quest-updated notification unless the last argument
   is `false`.
@@ -116,6 +119,7 @@ const lines = quest.objectives().map((line) => ({
   text: line.text,
   optional: line.optional,
   progress: line.progress === "none" ? ("active" as const) : line.progress,
+  position: line.position, // keep its map marker
 }));
 quest.setObjectives([...lines, "Return for your pay"]);
 ```
@@ -150,26 +154,24 @@ Quest.all(0);                        // every quest in world 0
 Without a player id, `find` returns the first quest under that key, which suits
 a world-wide quest.
 
-## Hear when a player tracks a quest
+## Track a quest and mark it on the map
 
-The player controls tracking, and the game tracks and untracks quests on its
-own, so there is no `quest.track()`. You hear about it instead:
-
-```ts
-Events.on("questTrackingChanged", (quest, player, tracked) => {
-  console.log(`${player.nickname} ${tracked ? "follows" : "dropped"} ${quest.key}`);
-});
-```
+An objective can carry a world `position`, and a quest can be followed for
+the player, which lists it in the HUD tracker and puts its objectives on the
+map and compass:
 
 ```ts
-// client
-Events.on("questTrackingChanged", (questKey, tracked) => {
-  // Raised on this machine before the server has heard anything.
+const errand = Quest.give("errand", "The Miller's Errand", {
+  objectives: [{ text: "Find Hans at the mill", position: new Vector3(-1420, 2870, 118) }],
+  player: target.id,
+  track: true,
 });
+
+errand.untrack(target.id); // markers off; errand.track(target.id) puts them back
 ```
 
-Both fire only on an actual change, and the server only hears about quests that
-player was given.
+[Track quests and mark objectives](../quest-tracking/) covers markers,
+`track` and `untrack`, and the `questTrackingChanged` event.
 
 ## What the player sees
 
@@ -180,10 +182,12 @@ player was given.
 | `quest.progress = "done"` | The row moves to completed, with the completed toast. |
 | `quest.remove()` | The row disappears, silently. |
 
-Quests carry no position: they reach everyone in their virtual world.
+A quest reaches everyone in its virtual world (or its one player) wherever
+they are. An objective's `position` only decides where its map marker goes.
 
 ## Related
 
+- [Track quests and mark objectives](../quest-tracking/): the tracker, map markers and `questTrackingChanged`.
 - [Dialogue choices](../dialogue/): offer a quest from a conversation.
 - [NPC damage, death and interaction](../../npcs-and-animals/npc-events/): the talk key that starts an errand.
 - [Virtual worlds](../../core-concepts/virtual-worlds/): the world argument.

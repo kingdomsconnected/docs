@@ -54,6 +54,7 @@ horse.alive;              // false once dead; the body stays until revive or des
 horse.stamina;            // read-only, the game runs it
 horse.inventoryCapacity;  // 0 until a client has reported it
 horse.gear;               // { saddle, head, torso, shoe }, item class names or null
+horse.owner;              // the Player it belongs to, or null
 ```
 
 `health`, `maxHealth`, `stamina`, `maxStamina` and `inventoryCapacity` come from
@@ -92,7 +93,9 @@ The first two play the game's own animation on every client and return `false`
 when nobody is riding. `player.dismount()` does the same as `dismountRider()`
 from the rider's end and returns the horse, or `null`.
 
-To decide who may ride, return `false` from `horseMounting`. The player's game
+A horse can also belong to a player, who need not be its rider: see
+[Give a horse an owner](../horse-owners/). To decide who may ride, return
+`false` from `horseMounting`. The player's game
 has already started the mount, so a refusal plays the get-off:
 
 ```ts
@@ -119,7 +122,8 @@ lists every item by slot and what each preset puts on.
 | Event | Arguments | When |
 | --- | --- | --- |
 | `horseSpawn` | `horse` | Right after a horse is created, by any script. |
-| `horseDestroy` | `horse` | While it is being removed. The handle still reads. |
+| `horseDestroy` | `horse` | While it is being removed, including with its owner. The handle still reads. |
+| `horseOwnerChanged` | `horse`, `player` | After `giveTo`, or when its owner left it behind. `player` is `null` for no owner. |
 | `horseMounting` | `horse`, `player` | A player climbed on; return `false` to refuse. Synchronous. |
 | `horseMount` | `horse`, `player` | The player is in the saddle and their client owns the horse. |
 | `horseDismount` | `horse`, `player` | A rider left, including on disconnect, death, or the horse's death or removal. |
@@ -146,17 +150,10 @@ Store the id, not the handle.
 
 ## Example: one horse per player
 
-Give each player one horse on `/stable`, replace it if they ask again, and
-remove it when they leave.
+Give each player one horse on `/stable` and replace it if they ask again. The
+horse is theirs, so it goes when they leave without any cleanup code.
 
 ```ts title="src/server/stable.ts"
-const owned = new Map<number, number>(); // player id -> horse id
-
-function horseOf(playerId: number): Horse | null {
-  const horseId = owned.get(playerId);
-  return horseId === undefined ? null : Horse.getById(horseId);
-}
-
 Events.on("playerCommand", (player, command) => {
   if (command !== "stable") return;
   if (!player.ready) {
@@ -164,22 +161,20 @@ Events.on("playerCommand", (player, command) => {
     return;
   }
 
-  horseOf(player.id)?.destroy();
+  for (const old of Horse.all()) {
+    if (old.ownerId === player.id) old.destroy();
+  }
   const horse = Horse.spawn(player.position, player.rotation, undefined, `${player.nickname}'s horse`);
-  owned.set(player.id, horse.id);
-});
-
-Events.on("playerDisconnect", (player) => {
-  horseOf(player.id)?.destroy();
-  owned.delete(player.id);
+  horse.giveTo(player); // destroyWithOwner is on by default
 });
 ```
 
-The map holds ids because something else may destroy a horse in the meantime;
-`getById` then returns `null` and the `?.` skips it.
+[Give a horse an owner](../horse-owners/#example-a-stable-that-remembers) has
+a stable that keeps the horse for a player who comes back.
 
 ## Related
 
+- [Give a horse an owner](../horse-owners/): ownership, who may ride, and what happens when the owner leaves.
 - [Dog companions](../dogs/): the other animal a player can own.
 - [Carts and wagons](../../world/carts/): the game's wagons, driven from the bench with the same keys.
 - [Server vs client authority](../../core-concepts/authority/): why a ridden horse belongs to its rider.

@@ -3,7 +3,7 @@ title: Chat and /commands
 description: Send chat lines, own how chat is relayed and answer slash commands on the server, and read, send, intercept or replace chat on the client.
 sidebar:
   label: Chat and /commands
-  order: 36
+  order: 39
 ---
 
 The server sends lines with [`Chat`](../../reference/server/variables/Chat.md)

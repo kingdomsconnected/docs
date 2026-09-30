@@ -3,7 +3,7 @@ title: Dialogue choices
 description: Open conversations in the game's own dialogue list, move them page by page, and handle what the player picks.
 sidebar:
   label: Dialogue
-  order: 61
+  order: 62
 ---
 
 A conversation you open is drawn in the game's own dialogue list, walked with
@@ -145,9 +145,8 @@ your `dialogueChoice` handler, when it is picked:
 Events.on("dialogueChoice", async (session, player, optionId) => {
   if (optionId !== "bribe") return;
 
-  const paid = await player.takeItem("money", 100);
+  const paid = await player.takeItem("money", 100); // all of it or nothing
   if (!paid.ok) {
-    if (paid.removed > 0) player.giveItem("money", paid.removed); // hand back a partial take
     Dialogue.close(session);
     return;
   }

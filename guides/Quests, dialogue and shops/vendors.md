@@ -3,7 +3,7 @@ title: Shops (vendors)
 description: Sell and buy items on the game's own trade screen, at prices and with a purse the server controls.
 sidebar:
   label: Shops
-  order: 62
+  order: 63
 ---
 
 A vendor is a price list and a purse the server owns, traded on the game's own

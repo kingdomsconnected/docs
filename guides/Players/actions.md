@@ -3,7 +3,7 @@ title: Teleport, kick and other player actions
 description: Move, revive, dismount, slow down, kick, relabel and message a player from the server.
 sidebar:
   label: Teleport, kick, revive
-  order: 32
+  order: 33
 ---
 
 The verbs on [`Player`](../../reference/server/classes/Player.md) move a
@@ -22,10 +22,11 @@ Events.on("playerCommand", (player, command) => {
 
 :::note
 Verbs about the body (`teleport`, `spawn`, `revive`, `setMovementMode`,
-`setAppearance`, `giveItem`, `takeItem`, `addBuff`) are requests to the
+`setAppearance`, `addBuff`, `addXp`) are requests to the
 player's own client: `true` means sent, `false` means refused before sending
 (no connection, or bad arguments), and reads right after still show the old
-value. Connection verbs (`kick`, nametags, `emit`) act at once. See
+value. Connection verbs (`kick`, nametags, `emit`) and item verbs
+(`giveItem`, `takeItem`) act at once. See
 [Server vs client authority](../../core-concepts/authority/).
 :::
 

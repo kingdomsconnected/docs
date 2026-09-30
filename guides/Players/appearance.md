@@ -3,7 +3,7 @@ title: Player appearance (face, hair, body)
 description: Give players their own face, hair, beard and skin from the game's catalog, and handle gender and per-face beards.
 sidebar:
   label: Appearance
-  order: 34
+  order: 37
 ---
 
 On a fresh server everyone is Henry. [`player.setAppearance`](../../reference/server/classes/Player.md#setappearance)

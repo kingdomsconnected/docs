@@ -12,7 +12,7 @@ that makes a server yours lives in **resources**: folders of JavaScript or TypeS
 | | Server half | Client half |
 | --- | --- | --- |
 | Runs on | The dedicated server | Every connected player's game |
-| Owns | Everything shared: players, horses, NPCs, props, quests, the clock | Nothing shared. It reads what this machine sees and draws UI |
+| Owns | Everything shared: players' inventories and progression, horses, NPCs, props, quests, the clock | Nothing shared. It reads what this machine sees and draws UI |
 | Typical jobs | Spawns, commands, game rules, economy, persistence | Menus, HUD, key binds, placement previews |
 | Reference | [Server API](../reference/server/index.md) | [Client API](../reference/client/index.md) |
 
@@ -32,12 +32,15 @@ Read **Getting started** in order:
 | --- | --- | --- |
 | Players | Greet players, choose where they spawn and respawn | [Join, spawn and respawn](../players/join-and-spawn/) |
 | Players | Read health, stamina, stats or skills | [Read health, stats and skills](../players/stats/) |
+| Players | Grant XP, levels and perks, slow down levelling, keep a character | [Skills, XP and perks](../players/progression/) |
 | Players | Teleport, kick, revive or rename a player | [Teleport, kick and other actions](../players/actions/) |
 | Players | Give, take or drop items, read equipment | [Items](../players/items/) |
+| Players | Read, move or save a player's inventory, set item quality | [Inventories](../players/inventory/) |
+| Players | Let players brew potions, refuse or reward a batch | [Alchemy](../players/alchemy/) |
 | Players | Change a face, hair or body; add a buff | [Appearance](../players/appearance/), [Buffs](../players/buffs/) |
 | Players | Add `/commands` or send chat messages | [Chat and /commands](../players/chat/) |
 | World | Change the time or the weather | [Time of day and weather](../world/clock-and-weather/) |
-| World | Place objects, stashes or particle effects | [Props](../world/props/), [Stashes](../world/stashes/), [Effects](../world/effects/) |
+| World | Place objects, fill chests, or play particle effects | [Props](../world/props/), [Stashes](../world/stashes/), [Effects](../world/effects/) |
 | World | Lock a door, open a castle gate | [Lock doors, open gates](../world/doors-and-gates/) |
 | World | Mark a spot, detect players entering an area | [Markers and trigger zones](../world/markers/) |
 | World | Trace a ray, find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
@@ -45,7 +48,9 @@ Read **Getting started** in order:
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
+| NPCs and animals | Give a player their own horse, keep it when they leave | [Horse owners](../npcs-and-animals/horse-owners/) |
 | Quests, dialogue and shops | Add a quest, show dialogue choices, open a shop | [Quests](../quests-dialogue-and-shops/quests/), [Dialogue](../quests-dialogue-and-shops/dialogue/), [Shops](../quests-dialogue-and-shops/vendors/) |
+| Quests, dialogue and shops | Track a quest for a player, mark objectives on the map | [Quest tracking](../quests-dialogue-and-shops/quest-tracking/) |
 | Core concepts | React to any game event | [Events and handlers](../core-concepts/events/) |
 | Core concepts | Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
 | Core concepts | Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
@@ -66,10 +71,10 @@ Read **Getting started** in order:
 | --- | --- | --- |
 | Getting started | Install, first resource, TypeScript, layout, debugging | Both |
 | Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing | Both |
-| Players | Join and spawn, stats, actions, items, appearance, buffs, chat | Server |
+| Players | Join and spawn, stats, progression, actions, items, inventories, alchemy, appearance, buffs, chat | Server |
 | World | Clock and weather, props, stashes, doors, markers, effects, raycasts | Server (raycasts: both) |
-| NPCs and animals | NPCs, their orders and events, horses, dogs | Server |
-| Quests, dialogue and shops | Journal quests, dialogue choices, vendors | Server |
+| NPCs and animals | NPCs, their orders and events, horses and their owners, dogs | Server |
+| Quests, dialogue and shops | Journal quests and tracking, dialogue choices, vendors | Server |
 | Client scripting | Local player, key binds, camera, placement, sound, Discord | Client |
 | User interface | Web views, page bridge, HUD, map, native screens | Client |
 | Tutorials | Multi-file builds of complete features | Both |
@@ -104,8 +109,8 @@ Key.bind("f8", "down", () => {
 
 ## One rule explains most of the API
 
-Each player's own game keeps their state (health, skills, clothing, position) and is the authority for
-it; the server is the authority for everything shared. So `player.teleport(...)` sends that game a request, and most
+Each player's own game keeps their body's state (health, clothing, position) and is the authority for
+it; the server is the authority for everything shared, and for each player's inventory and progression. So `player.teleport(...)` sends that game a request, and most
 verbs return whether the request went out, not whether it worked. See [Server vs client
 authority](../core-concepts/authority/).
 

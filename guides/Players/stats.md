@@ -9,7 +9,8 @@ sidebar:
 Everything you read off a [`Player`](../../reference/server/classes/Player.md)
 is the latest snapshot their own client published, in the game's units, a few
 frames old. There are no setters: change these indirectly, with a
-[buff](../buffs/) or an [item](../items/).
+[buff](../buffs/) or an [item](../items/). Levels, XP and perks are on
+[Skills, XP and perks](../progression/), which can grant them.
 
 ```ts
 Events.on("playerCommand", (player, command) => {
@@ -73,6 +74,11 @@ function bestWeaponSkill(player: Player): string {
   return ranked[0]?.[0] ?? "none";
 }
 ```
+
+These are the live values combat uses, perks and buffs included. For the
+level of every skill and stat as the character sheet shows it, read
+`player.levels` (`player.levels.weapon_sword`), described on
+[Skills, XP and perks](../progression/#read-a-players-progress).
 
 ## Position and movement
 
@@ -146,6 +152,7 @@ From [`BasePlayer`](../../reference/server/classes/BasePlayer.md):
 ## Related
 
 - [Join, spawn and respawn](../join-and-spawn/), for when reads become valid
+- [Skills, XP and perks](../progression/), for levels, XP and perks
 - [Buffs and status effects](../buffs/), for named effects
 - [Teleport, kick and other player actions](../actions/), for changing a player
 - [Entity state bags](../../core-concepts/state/), for your own per-player data

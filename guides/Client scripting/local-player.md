@@ -55,6 +55,7 @@ reference lists every one.
 | Stamina and needs | `stamina`, `maxStamina`, `healthyStamina`, `exhaust`, `maxExhaust`, `hunger`, `maxHunger` |
 | Conditions | `bleeding`, `sleeping`, `consciousness`, `drunkenness`, `poisoning` |
 | Attributes and skills | `strength`, `agility`, `vitality`, `relativeStats`, `skills`, `relativeSkills` |
+| Progression | `level`, `levels`, `perks`, and `getTrack(track)` for XP and perk points |
 | Movement | `position`, `rotation`, `velocity`, `lookDirection`, `inAir`, `crouched`, `moveSpeedTag`, `moveDirTag`, `stanceTag`, `physicsProfile` |
 | Combat | `fistsUp`, `guard`, `combatZone`, `rightHandItem`, `leftHandItem`, `equipment` |
 
@@ -62,6 +63,8 @@ reference lists every one.
   maximum. `healthPercent` is the exception: it is what the nametag bar draws.
 - `skills` is one object with the nine skills (`me.skills.sword`,
   `me.skills.defense`).
+- Progression is read-only here; the server grants it. [Skills, XP and
+  perks](../../players/progression/#on-the-client) has the client events.
 
 ## Client-only fields
 

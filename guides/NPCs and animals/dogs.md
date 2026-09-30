@@ -3,7 +3,7 @@ title: Dog companions
 description: Give a player a dog companion, set its mode, read what it is doing, and hand it to someone else.
 sidebar:
   label: Dogs
-  order: 54
+  order: 55
 ---
 
 A dog belongs to a player from the moment it exists, like Mutt in the
