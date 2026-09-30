@@ -53,7 +53,7 @@ It is the default gamemode's F4 panel (`src/client/index.ts`, `panel.ts`, `snaps
     "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.5.0",
+    "@kingdomsconnected/types": "1.5.3",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

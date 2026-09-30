@@ -181,5 +181,6 @@ The map holds ids because something else may destroy a horse in the meantime;
 ## Related
 
 - [Dog companions](../dogs/): the other animal a player can own.
+- [Carts and wagons](../../world/carts/): the game's wagons, driven from the bench with the same keys.
 - [Server vs client authority](../../core-concepts/authority/): why a ridden horse belongs to its rider.
 - [Chat and /commands](../../players/chat/): the `playerCommand` event used above.

@@ -84,7 +84,7 @@ The `mafiahub` block in `package.json` tells the server which files to run and s
 Those releases shipped the gamemode before it took its declarations from npm. Point it at the package
 once, then build as above:
 
-1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.5.0` (your
+1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.5.3` (your
    release's version).
 2. In `tsconfig.json`, set `"types": ["@kingdomsconnected/types/server"]` and delete the
    `scripting-api/generated/server-api.d.ts` entry from `include`.

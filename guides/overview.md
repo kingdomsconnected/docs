@@ -41,6 +41,7 @@ Read **Getting started** in order:
 | World | Lock a door, open a castle gate | [Lock doors, open gates](../world/doors-and-gates/) |
 | World | Mark a spot, detect players entering an area | [Markers and trigger zones](../world/markers/) |
 | World | Trace a ray, find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
+| World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
