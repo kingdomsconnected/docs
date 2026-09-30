@@ -45,6 +45,7 @@ Read **Getting started** in order:
 | World | Mark a spot, detect players entering an area | [Markers and trigger zones](../world/markers/) |
 | World | Trace a ray, find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
+| World | Remove or move the level's own walls and gates, publish a World Builder map | [Level edits](../world/level-edits/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
@@ -72,7 +73,7 @@ Read **Getting started** in order:
 | Getting started | Install, first resource, TypeScript, layout, debugging | Both |
 | Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing | Both |
 | Players | Join and spawn, stats, progression, actions, items, inventories, alchemy, appearance, buffs, chat | Server |
-| World | Clock and weather, props, stashes, doors, markers, effects, raycasts | Server (raycasts: both) |
+| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, level edits | Server (raycasts: both) |
 | NPCs and animals | NPCs, their orders and events, horses and their owners, dogs | Server |
 | Quests, dialogue and shops | Journal quests and tracking, dialogue choices, vendors | Server |
 | Client scripting | Local player, key binds, camera, placement, sound, Discord | Client |
