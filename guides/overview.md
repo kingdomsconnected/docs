@@ -6,7 +6,7 @@ sidebar:
   order: 1
 ---
 
-Kingdoms Connected (KCDC) puts other players into Kingdom Come: Deliverance II's own world. Everything
+[Kingdoms Connected](https://kingdomsconnected.com/) (KCDC) puts other players into Kingdom Come: Deliverance II's own world. Everything
 that makes a server yours lives in **resources**: folders of JavaScript or TypeScript the server loads.
 
 | | Server half | Client half |
