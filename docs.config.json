@@ -7,6 +7,10 @@
   "accentColor": "#c99a4b",
   "links": [
     {
+      "label": "kingdomsconnected.com",
+      "url": "https://kingdomsconnected.com/"
+    },
+    {
       "label": "Guides",
       "url": "https://docs.kingdomsconnected.com/guides/overview/"
     },
