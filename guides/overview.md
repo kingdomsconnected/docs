@@ -39,6 +39,7 @@ Read **Getting started** in order:
 | Players | Let players brew potions, refuse or reward a batch | [Alchemy](../players/alchemy/) |
 | Players | Change a face, hair or body; add a buff | [Appearance](../players/appearance/), [Buffs](../players/buffs/) |
 | Players | Add `/commands` or send chat messages | [Chat and /commands](../players/chat/) |
+| Players | Seat two players at a dice table and settle what they played for | [Dice matches](../players/dice/) |
 | World | Change the time or the weather | [Time of day and weather](../world/clock-and-weather/) |
 | World | Place objects, fill chests, or play particle effects | [Props](../world/props/), [Stashes](../world/stashes/), [Effects](../world/effects/) |
 | World | Lock a door, open a castle gate | [Lock doors, open gates](../world/doors-and-gates/) |
@@ -46,7 +47,9 @@ Read **Getting started** in order:
 | World | Trace a ray, find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
 | World | Remove or move the level's own walls and gates, publish a World Builder map | [Level edits](../world/level-edits/) |
+| World | Let players pick herbs, refuse a pick, or change how fast plants regrow | [Herb gathering](../world/gathering/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
+| NPCs and animals | Route NPCs around walls, plan paths, find the floor or a random walkable spot | [Navigation mesh](../npcs-and-animals/navigation/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
 | NPCs and animals | Give a player their own horse, keep it when they leave | [Horse owners](../npcs-and-animals/horse-owners/) |
@@ -58,8 +61,10 @@ Read **Getting started** in order:
 | Client scripting | Read the local player, bind a key | [Local player](../client-scripting/local-player/), [Key binds](../client-scripting/input/) |
 | Client scripting | Move the camera, fly a free camera | [Camera and noclip](../client-scripting/camera/) |
 | Client scripting | Play sounds, use voice chat, set Discord status | [Sound and voice](../client-scripting/sound-and-voice/), [Discord presence](../client-scripting/discord-presence/) |
+| Client scripting | Make the screen look drunk, hurt or dreamlike | [Screen effects](../client-scripting/screen-effects/) |
 | User interface | Show an HTML menu and talk to it | [Web views](../user-interface/web-views/), [Page data bridge](../user-interface/page-bridge/) |
 | User interface | Show a HUD message, nametag or map blip | [HUD](../user-interface/hud/), [Map and blips](../user-interface/map/) |
+| User interface | Show a "Press [key] to ..." hint, let a player design their look | [Action hints](../user-interface/action-hints/), [Character creator](../user-interface/character-creator/) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
 | Hosting a server | Run a dedicated server, change its settings | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
 | Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
@@ -72,12 +77,12 @@ Read **Getting started** in order:
 | --- | --- | --- |
 | Getting started | Install, first resource, TypeScript, layout, debugging | Both |
 | Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing | Both |
-| Players | Join and spawn, stats, progression, actions, items, inventories, alchemy, appearance, buffs, chat | Server |
-| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, level edits | Server (raycasts: both) |
-| NPCs and animals | NPCs, their orders and events, horses and their owners, dogs | Server |
+| Players | Join and spawn, stats, progression, actions, items, inventories, alchemy, appearance, buffs, chat, dice | Server |
+| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, level edits, herb gathering | Server (raycasts: both) |
+| NPCs and animals | NPCs, their orders and events, horses and their owners, dogs, the navigation mesh | Server |
 | Quests, dialogue and shops | Journal quests and tracking, dialogue choices, vendors | Server |
-| Client scripting | Local player, key binds, camera, placement, sound, Discord | Client |
-| User interface | Web views, page bridge, HUD, map, native screens | Client |
+| Client scripting | Local player, key binds, camera, placement, sound, Discord, screen effects | Client |
+| User interface | Web views, page bridge, HUD, map, native screens, action hints, character creator | Client |
 | Tutorials | Multi-file builds of complete features | Both |
 | Hosting a server | Running, command-line options and overrides, connecting, listing, the official Docker image | Server operators |
 | Resources | Every name the catalogs carry: faces, beards, horse breeds and gear, souls, items, buffs, effects, markers, blips, props | Reference |
