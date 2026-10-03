@@ -129,6 +129,35 @@ Nametag colours are `0xAARRGGBB`, alpha first. Chat colours are `0xRRGGBBAA`,
 alpha last. Write the alpha byte out (`0xff...`) so the intent is visible.
 :::
 
+## Hide parts of the HUD
+
+`Hud.setElementVisible` hides one element of the game's HUD for this player,
+by the game's own name for it:
+
+```ts
+Hud.setElementVisible("Stats", false);    // the health, stamina and nourishment bars
+Hud.setElementVisible("Subtitles", false);
+Hud.isElementVisible("Stats");            // false: your resource is hiding it
+Hud.setElementVisible("Stats", true);     // lets the game show it again
+```
+
+- **Names:** `Compass`, `Stats`, `QAMWeapon`, `QAMFood`, `Subtitles`,
+  `InfoText`, `GameLog`, `Hints`, `DialogLeft`, `DialogRight`, `Cursor`,
+  `Crime`, `Wanted`, `PopUpBackground`, `TutorialMessage`, `FancyEvent`,
+  `SkillCheck`, `ItemTransfer`, `Buffs`, `CommonEvent`, `DiceCursor`,
+  `Trespassing`, `RatioStrips`, `ShootingContest`, `Bubbles`,
+  `TutorialInDialog`, `DiceContainer`, `Vignette`. They are compared exactly.
+- **Any time:** you can call it before the HUD has loaded. The request is
+  kept and applied whenever the HUD loads, across level loads too.
+- **Showing is not forcing:** `true` only lifts your hiding. The game still
+  hides the element where it would anyway, in dialogue or a menu, say, and
+  `isElementVisible` says whether you allow it, not whether it is on screen.
+- **Released for you:** the element comes back when your resource stops or
+  the session ends. The player's own settings are left alone.
+
+Full-screen tints and blurs are not HUD elements: see
+[Screen effects](../../client-scripting/screen-effects/).
+
 ## Hide the compass
 
 KCD2 has no minimap; the compass strip is the closest thing.

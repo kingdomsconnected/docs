@@ -12,7 +12,8 @@ reliably and in order while the connection holds.
 
 A client asks for the scoreboard when its script starts, and the server
 answers that player. Asking from the client avoids a race: at `playerConnect`
-the client scripts may not be running yet.
+the client scripts may not be running yet. This is your gamemode's own
+scoreboard: the built-in **Tab** player list is a server setting, [`mod.scoreboard`](../../hosting-a-server/server-json/#modscoreboard).
 
 ```ts title="src/client/scores.ts"
 const RESOURCE = "my-mode";

@@ -72,7 +72,7 @@ Inventory.transfer(player, target, { units: [{ id: "row-id", amount: 1 }] });
 
 | Call | What it does |
 | --- | --- |
-| `add` | Gives 1 to 10000 units of a class, by GUID or table name. They join the row that already holds that class with the same properties. |
+| `add` | Gives 1 to 10000 units of a class, by GUID or table name. `metadata.quality` asks for a higher tier, up to the best the class is made in. They join the row that already holds that class with the same properties. |
 | `remove` | Takes exact units from named rows. |
 | `setProperties` | Replaces one row's properties. It replaces, not merges: carry over what you want to keep. |
 | `set` | Replaces the whole inventory: a restore. Rows keep the `id` you give them and get a new one otherwise. `items: []` empties it. |
@@ -90,7 +90,8 @@ else console.log(`landed in row ${result.items[0]?.id}`); // the target's row
 revision after the call, and `code` is empty on success. The common codes are
 `inventoryUnavailable` (not connected), `unknownItem` (no such row),
 `invalidItem` (no such item class), `insufficientItems`, `invalidAmount`,
-`staleRevision` and `inventoryCapacity`. The
+`staleRevision`, `inventoryCapacity`, `invalidQuality` (a tier the class is
+not made in) and `questItem` (only its quest hands it out). The
 [reference](../../reference/server/interfaces/InventoryResult.md) lists the rest.
 
 ### Refuse a change if the inventory moved

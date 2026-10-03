@@ -35,7 +35,7 @@ object. Everything has a default; in practice you set `soul` and `position`.
 | `appearance` | Face, hair, beard and skin, as for a [player](../../players/appearance/). |
 | `health`, `maxHealth` | The health ledger. `maxHealth` defaults to 100. |
 | `faction` | Faction row for relationship and crime decisions; 0 is none. |
-| `locomotion` | `kinematic` or `native`; see [how it walks](../npc-orders/#choose-how-it-walks). |
+| `locomotion` | `native` (the default) or `kinematic`; see [how it walks](../npc-orders/#choose-how-it-walks). |
 | `invulnerable`, `frozen` | Refuse damage; hold the pose whatever the orders say. |
 | `interactable`, `nametag` | Raise `npcInteract` on the talk key; draw the name. Both on by default. |
 | `lootable` | Whether the corpse keeps its inventory for whoever searches it. |

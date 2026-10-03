@@ -1,6 +1,6 @@
 ---
 title: Spawn and drive carts and wagons
-description: Spawn the game's own carts and wagons with their horses in the shafts, seat players as driver or passenger, and react when they climb in and out.
+description: Spawn the game's own carts and wagons with their horses in the shafts, seat up to six players as driver or passengers, and react when they climb in and out.
 sidebar:
   label: Carts and wagons
   order: 47
@@ -8,8 +8,8 @@ sidebar:
 
 A cart is one of the game's own cart or wagon prefabs, built on every client
 with its horses already hitched. A player climbs onto the bench and drives it
-with the same keys they ride a horse with; a second player can ride in the
-back.
+with the same keys they ride a horse with, and up to five more ride beside
+them and on the rails.
 
 ```ts
 const cart = Cart.spawn("wagon_b_covered", player.position, player.rotation);
@@ -47,23 +47,27 @@ a script can read. The `/cart` chat command comes from the default gamemode
 
 ## Seats
 
-A cart has two seats, the two the game animates a player's body in:
+A wagon seats six and the two-wheeled `cart_b` three. `cart.seats` lists a
+cart's seat names, the reins first:
 
-| Seat | Where | Who |
+| Seat | Where | On |
 | --- | --- | --- |
-| `driver` | The front bench | Holds the reins. Their client runs the cart. |
-| `back` | The right rail of the bed | A passenger. |
+| `driver` | The left of the front bench, holding the reins. Their client runs the cart. | Wagon, two-wheeler |
+| `bench` | The front bench, beside the driver. | Wagon |
+| `rightFront`, `leftFront` | The front of the right and left rails. | Wagon |
+| `rightBack`, `leftBack` | The back of the right and left rails. | Wagon, two-wheeler |
 
-A player gets in through the game's own prompt on the cart (the bench asks for
-`driver`, the rail for `back`) or through a script:
+A player gets in through the game's own prompt on the bench or a rail, or
+through a script:
 
 ```ts
 const cart = Cart.spawn("wagon_b_covered", player.position, player.rotation);
-cart.putPlayer(player, "back");    // false when it is taken or a handler refused it
-cart.getOccupant("driver");        // the Player in a seat, or null
-cart.seatOf(player);               // "driver", "back" or null
-cart.driver;                       // the Player at the reins, or null
-cart.removePlayer(player);         // they climb down; false when they are not in it
+cart.seats;                          // ["driver", "bench", ...]
+cart.putPlayer(player, "rightBack"); // false when it is taken or a handler refused it
+cart.getOccupant("driver");          // the Player in a seat, or null
+cart.seatOf(player);                 // "rightBack", or null when they are not in it
+cart.driver;                         // the Player at the reins, or null
+cart.removePlayer(player);           // they climb down; false when they are not in it
 ```
 
 `putPlayer` takes a player out of any cart they were in first. Their own game
@@ -83,26 +87,28 @@ Events.on("cartEntering", (cart, player, seat) => {
 ## Driving
 
 The driver steers with their horse-riding controls: forward and back to drive
-on or back up, left and right to steer, and sprint to trot. They are whatever
+on or back up, left and right to steer, and sprint to urge the team on. They are whatever
 the player has bound in the controls menu, so Z Q S D on an AZERTY keyboard and
 the arrow keys work as they do on horseback. `cart.pace` reads what the driver
 last asked for: `stand`, `walk`, `trot` or `reverse`.
 
-The cart goes where a cart can go. It will not climb a step higher than about
-half a metre or drive into a wall, and it pulls up at the end of the ground it
-has. When the driver lets go it rolls on a couple of metres and stops, as the
-game's own wagons do.
+The team walks at up to 3.6 m/s and backs up at 1.5 m/s. Urged on, it goes
+as fast as `cart.maxSpeed`, 7 m/s by default:
+
+```ts
+const cart = Cart.spawn("cart_b", player.position, player.rotation);
+cart.maxSpeed = 10; // metres a second, 0 to 15; anything else is ignored
+```
+
+Below 3.6, `maxSpeed` caps the unhurried pace too. Steering tightens as the
+cart slows, and works in reverse.
 
 ## How it works
 
-The game only ever moves a cart along a path. So the driver's game lays a road
-a metre at a time in front of the cart as the reins pull, and the cart's own
-movement follows it: the game poses the wagon, turns its wheels, swings its
-back half and walks its horses. The server checks every point of that road (a
-step the reins could have made, no jumps) and hands it on to everyone who can
-see the cart, and each of their games follows the same road at the same pace.
-They are put back in step if they drift, and each comes to rest where the
-driver's did.
+The driver's game moves the cart as a wagon: the reins swing the front, the
+back axle trails a wheelbase behind, and the horses are posed on the pole and
+step through their gait as it rolls. The driver's client sends the cart's pose
+as it goes, and every other client draws it from that stream.
 
 | Who | Runs the cart |
 | --- | --- |
@@ -116,7 +122,7 @@ driver's own client runs it.
 
 ```ts
 const cart = Cart.spawn("cart_b", player.position, player.rotation);
-cart.teleport(new Vector3(120, 340, 30));   // everyone in it goes too; false for a bad pose
+cart.teleport(new Vector3(120, 340, 30));   // standing, everyone in it too; false for a bad pose
 Cart.getById(cart.id);                      // the same cart; null once it is gone
 cart.destroy();                             // everyone in it climbs down first
 Cart.destroyAll(player.virtualWorld);       // returns how many were removed

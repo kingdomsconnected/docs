@@ -48,7 +48,7 @@ It is all server code.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.5.3",
+    "@kingdomsconnected/types": "1.5.7",
     "typescript": "^5.9.2"
   },
   "mafiahub": {
@@ -228,7 +228,7 @@ export function installSceneHandlers(): void {
 - Without `pin`, the server gives each NPC to the nearest client, and a player walking past could take Vendel over mid-sentence. Pinned, he stays with the viewer's client, going dormant if the viewer walks out of range. `pin(null)` hands him back.
 
 :::caution
-The default `kinematic` locomotion walks in straight lines and does not path around anything. Stage a scene on open, flat ground, or Vendel walks into a fence and reports `blocked`.
+Without the navigation mesh on the server, Vendel walks straight at each mark and does not path around anything. Stage a scene on open, flat ground, or install the mesh ([`mod.navmesh`](../../hosting-a-server/server-json/#modnavmesh)); otherwise he walks into a fence and reports `blocked`.
 :::
 
 ## 5. Add the command

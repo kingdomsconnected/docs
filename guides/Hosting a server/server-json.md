@@ -1,6 +1,6 @@
 ---
 title: server.json settings
-description: Set the ports, player slots, join password, level and required DLCs in server.json.
+description: Set the ports, player slots, join password, level, required DLCs, player list and navigation mesh in server.json.
 sidebar:
   label: server.json
   order: 102
@@ -19,7 +19,9 @@ file is missing, the server writes one with every key and its default:
     "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
-        "required_dlc": []
+        "navmesh": "",
+        "required_dlc": [],
+        "scoreboard": true
     },
     "password": "",
     "port": 27015,
@@ -97,9 +99,10 @@ The server refuses to start on invalid JSON, a key of the wrong type, or a
 server.json: 'mod.something' is not a key this build understands; keeping it
 ```
 
-Both `mod` keys are replicated: a client receives them in the connection
-handshake, before it downloads or runs anything. The status document at
-`http://<host>:<apiport>/` also lists them under `mod_config`.
+`level`, `required_dlc` and `scoreboard` are replicated: a client receives
+them in the connection handshake, before it downloads or runs anything. The
+status document at `http://<host>:<apiport>/` also lists them under
+`mod_config`. `navmesh` stays on the server.
 
 ## `mod.level`
 
@@ -170,6 +173,64 @@ game's own names, such as ForgeTycoon or MysteriaEcclesiae.
   ship in the base game's tables and work for everyone. A missing DLC only
   removes the quests, dialogue and activities the game gates on it, so
   require one when your gamemode is built around that content.
+
+## `mod.scoreboard`
+
+Whether players see the player list while they hold **Tab**. `true`, the
+default, shows it. Set it to `false` when your gamemode draws its own:
+
+```json title="server.json"
+{
+    "mod": {
+        "level": "kutnohorsko",
+        "scoreboard": false
+    }
+}
+```
+
+With it off, no client asks for the list and **Tab** goes back to the game's
+own use. It needs KCDC 1.5.6 or later; a client treats an older server as on.
+
+## `mod.navmesh`
+
+The game's navigation mesh lets the server plan routes around walls and
+through buildings: NPCs walk around obstacles, and scripts can query paths
+with [`Navigation`](../../npcs-and-animals/navigation/). It is the game's own
+data, so it does not ship with the server. Copy it in from your installation:
+
+1. Find `Data/Levels/<level>/recast.pak` in the game's folder, for the level
+   `mod.level` names.
+2. Copy it to `files/<level>/recast.pak` beside the server, keeping the name:
+
+```text
+server/
+  KCDCServer.exe
+  server.json
+  files/
+    kutnohorsko/
+      recast.pak
+```
+
+3. Restart the server. Do it again after a game update.
+
+The server searches `files/` for `recast.pak` at startup, so `navmesh` can stay
+`""`. A copy under the level's own folder wins; a bare `files/recast.pak` is
+tried last. To read the game's files in place during development, set
+`navmesh` to the game folder, its `Data/Levels` folder, the level folder or
+the pak itself. That location is checked first:
+
+```json title="server.json"
+{
+    "mod": {
+        "level": "kutnohorsko",
+        "navmesh": "C:/Games/KingdomComeDeliverance2"
+    }
+}
+```
+
+Relative paths start at the server's working directory. Without a mesh the
+server still runs: it logs a warning with the places it searched, NPCs walk
+straight at their goals, and `Navigation.ready` is `false`.
 
 ## Related
 

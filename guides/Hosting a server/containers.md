@@ -23,6 +23,10 @@ Everything the server writes (`server.json`, logs, crash data, `.packages/`,
 upgrades: recreate the container with the new tag. The server runs as UID and
 GID `10001`, so a bind-mounted directory must be writable by that user.
 
+The game's navigation mesh goes in the volume too, at
+`/home/container/files/<level>/recast.pak`; see
+[`mod.navmesh`](../server-json/#modnavmesh). The image does not include it.
+
 Publishing the ports is not enough on its own: open them in the host or cloud
 firewall too ([Let players connect](../players-connecting/#make-your-server-reachable)).
 

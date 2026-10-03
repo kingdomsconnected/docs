@@ -68,6 +68,8 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `password` | `""` | `--password` | [Join password](../server-json/#password), 63 bytes at most |
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
+| `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |
+| `mod.navmesh` | `""` | none | [Navigation mesh](../server-json/#modnavmesh) |
 | `map` | `""` | none | Not used by KCDC |
 
 A value of the wrong type, an unknown level or an unknown DLC stops the server
@@ -84,6 +86,8 @@ has the full rules.
 | Hold fewer players | `maxplayers` below 512 |
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
+| Turn off the Tab player list | `mod.scoreboard`: `false` |
+| Let NPCs walk around walls and through buildings | Copy the game's `recast.pak` into `files/<level>/`, see [`mod.navmesh`](../server-json/#modnavmesh) |
 | Make a private server | `password`, see [Password](../server-json/#password). Share it with your players |
 | Appear in the in-game server browser | `server-token`, see [Server browser listing](../server-browser/) |
 | Keep the token or password out of process lists | Put it in `server.json`, not on the command line or in an egg variable |

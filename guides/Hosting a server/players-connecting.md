@@ -69,6 +69,12 @@ KCDCLauncher.exe "kcdc://play.example.com?nickname=Hana"
    level and spawns. Your scripts see `playerConnect`, then the spawn events
    ([Join, spawn and respawn](../../players/join-and-spawn/)).
 
+The game's own loading screen stays up through all of this and lifts once
+the player is in. A server that admits the player but then stops answering
+for 10 seconds at any step is given up on, and the player is back in the main
+menu with the reason. The usual cause is a client and server on different
+KCDC versions.
+
 A full server (512 players, or your lower `maxplayers`) turns the next player
 away.
 
@@ -96,7 +102,8 @@ UDP forward.
 ### A player cannot connect
 
 - Is Steam running on the player's machine?
-- Do the player and the server run the same KCDC version?
+- Do the player and the server run the same KCDC version? A mismatch often shows as a
+  join that hangs on the loading screen for 10 seconds, then fails.
 - Is the address right, and the port the game port, not the HTTP one?
 - Is the game port forwarded as UDP, not TCP?
 - Does the player have every DLC in `mod.required_dlc` installed?
