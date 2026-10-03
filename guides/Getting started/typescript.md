@@ -61,7 +61,7 @@ because a client split across several files needs all of them.
 Install the compiler and the declarations for the version your server runs (here 1.5.0):
 
 ```sh title="In resources/hello/"
-pnpm add -D typescript @kingdomsconnected/types@1.5.3
+pnpm add -D typescript @kingdomsconnected/types@1.5.7
 ```
 
 :::caution[Match the server's version]
@@ -201,7 +201,7 @@ Move the package to the server's new version and rebuild. Removed or renamed met
 errors instead of surprises in production:
 
 ```sh title="In resources/hello/"
-pnpm add -D @kingdomsconnected/types@1.5.3
+pnpm add -D @kingdomsconnected/types@1.5.7
 pnpm run build
 ```
 

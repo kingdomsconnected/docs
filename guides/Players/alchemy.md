@@ -124,7 +124,9 @@ Events.on("playerInventoryReady", (player) => {
   }
 });
 
-Events.on("craftingCompleted", (player, event) => books.set(player.nickname, event.knowledge));
+Events.on("craftingCompleted", (player, event) => {
+  if (event.knowledge) books.set(player.nickname, event.knowledge); // alchemy only
+});
 Events.on("playerDisconnect", (player) => books.set(player.nickname, Crafting.knowledge(player)));
 ```
 

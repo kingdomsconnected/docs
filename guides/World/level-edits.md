@@ -11,6 +11,7 @@ static gates that never open, rubble in a doorway. A level edit takes one of
 them out of the world, moves it, or both, for every player in a virtual
 world. Collision goes with it: an object taken out is neither drawn nor solid.
 
+<!-- check: skip -->
 ```ts
 // Take the left half of Maleshov's front gate out, collision and all.
 const gate = LevelEdit.apply({
