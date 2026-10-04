@@ -53,7 +53,7 @@ It is the default gamemode's F4 panel (`src/client/index.ts`, `panel.ts`, `snaps
     "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.5.7",
+    "@kingdomsconnected/types": "1.6.0",
     "typescript": "^5.9.2"
   },
   "mafiahub": {
@@ -296,7 +296,7 @@ const handlers: view.PageHandlers = {
   },
 };
 
-// F4 is the default gamemode's panel; F5 to F7 and F9 belong to the client itself.
+// F4 is the default gamemode's panel; F9 and T belong to the client itself.
 Key.bind("f8", "down", () => {
   if (view.show(handlers)) refresh();
 });

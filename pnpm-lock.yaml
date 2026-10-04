@@ -9,16 +9,16 @@ importers:
   .:
     devDependencies:
       '@kingdomsconnected/types':
-        specifier: 1.5.7
-        version: 1.5.7
+        specifier: 1.6.0
+        version: 1.6.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
 
 packages:
 
-  '@kingdomsconnected/types@1.5.7':
-    resolution: {integrity: sha512-nmMR1BMrHJmI0qeicZw2ok1JNOYBjkpgGHqJy2w0NTrq5b2lAVXiSy/MzOC43SuYEGkzh2N52NxCk6gOMIqcVA==}
+  '@kingdomsconnected/types@1.6.0':
+    resolution: {integrity: sha512-j1UrNME4UhUaOIIy1MG471SttO/s5uDb467TfENPx5iRkQTRa8pctov+0ztOsOENR2ho+uzm5PZVZl68r8n6ZQ==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -27,6 +27,6 @@ packages:
 
 snapshots:
 
-  '@kingdomsconnected/types@1.5.7': {}
+  '@kingdomsconnected/types@1.6.0': {}
 
   typescript@5.9.3: {}
