@@ -35,6 +35,12 @@ for (const name of Vfx.list("WH_Particels.fires")) console.log(name);
 A placed effect reads back as `effect`, `library` (`WH_Particels`) and `group`
 (`fires`).
 
+A resource can ship particle libraries of its own, as
+`stream/libs/particles/kcdc_<resource>_<name>.xml`. Their effects are named
+the same way, `kcdc_<resource>_<name>.<group>.<effect>`, work in every call
+on this page and on the client, and are not in `Vfx.list`. See
+[Custom assets](../../core-concepts/custom-assets/).
+
 ## Place a lasting effect
 
 Use `Vfx.spawn` for a campfire, a torch, smoke over a burning house. It is a
@@ -115,7 +121,7 @@ resource, so destroy yours in `resourceStop` (see
 
 | Call | Fails when | Result |
 | --- | --- | --- |
-| `Vfx.spawn`, `Vfx.burst` | The name is not an effect. | **Throws.** Catch it when the name came from a player. |
+| `Vfx.spawn`, `Vfx.burst` | The name is not an effect, nor one from a library a running resource streams. | **Throws.** Catch it when the name came from a player. |
 | Any numeric option | Out of range. | Clamped. |
 | Any effect | A client already plays 192 effects (placed, bursts and client-side, combined). | New ones do not appear. Go easy on long bursts and large `countScale`. |
 
@@ -145,5 +151,6 @@ The default gamemode's `/vfx <effect> [scale]` places a primed effect ahead,
 
 - [Vfx reference](../../reference/server/classes/Vfx.md), every option
 - [Props](../props/), to pair a fire with a model
+- [Custom assets](../../core-concepts/custom-assets/), to ship effects of your own
 - [Virtual worlds](../../core-concepts/virtual-worlds/), per-world effects
 - [Server vs client authority](../../core-concepts/authority/), what client-only means

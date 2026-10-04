@@ -35,7 +35,7 @@ commands, `resourceStart`, `Exports` and web view URLs all use it.
 | `mafiahub.serverScripts` | `[]` | Run on the server, in the order written. Never sent to players. |
 | `mafiahub.clientScripts` | `[]` | Run on every client, in the order written. Sent to players. |
 | `mafiahub.sharedScripts` | `[]` | Run on both sides, **before** that side's own scripts. Sent to players. |
-| `mafiahub.files` | `[]` | Sent to clients but not run: pages, styles, images, fonts. Globs allowed. Empty means the folder of your client scripts. |
+| `mafiahub.files` | `[]` | Sent to clients but not run: pages, styles, images, fonts. Globs allowed. Empty means the folder of your client scripts. Models, textures, clips and sounds for the game itself go in `stream/` and `replace/` instead; see [Custom assets](../custom-assets/). |
 | `mafiahub.resourceDependencies` | `[]` | Resources that must start first. See below. |
 | `mafiahub.exports` | `[]` | Names this resource may `Exports.register`. See [Share code between resources](../sharing/). |
 | `mafiahub.errorBehavior` | `"stop"` | After an uncaught server error: `"stop"`, `"restart"` or `"continue"`. |
@@ -159,7 +159,9 @@ fire-and-forget promise chains.
 
 A restart re-reads `package.json` and scripts from disk, and restarts the
 dependents it stopped. Connected clients download only changed files and
-restart their half in place. There is no file watcher: rebuild, then
+restart their half in place, and a changed model, material or texture in the
+resource's [asset folders](../custom-assets/#edit-and-reload) updates on
+screen. There is no file watcher: rebuild, then
 `ensure my-mode`.
 
 :::note
@@ -180,4 +182,5 @@ keep things off `globalThis`.
 - [Write your first resource](../../getting-started/first-resource/): a manifest in practice
 - [Events](../events/): `resourceStart`, `resourceStop` and handler errors
 - [Share code between resources](../sharing/): `exports` and dependencies
+- [Custom assets](../custom-assets/): models, textures, clips and sounds a resource ships
 - [Console commands](../../hosting-a-server/run-a-server/#console-commands): the full console list

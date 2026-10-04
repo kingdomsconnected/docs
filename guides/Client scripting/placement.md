@@ -52,7 +52,9 @@ const started = PropPlacer.begin({
 
 `model` takes a full catalog path or a file stem: `barrel_a` and its
 `objects/.../barrel_a.cgf` path name the same mesh, and the same string works
-for `Prop.spawn` on the server.
+for `Prop.spawn` on the server. A mesh the server streams works too, by its
+full `objects/kcdc/<resource>/...cgf` path, once this player has it
+(`Assets.has`); see [Custom assets](../../core-concepts/custom-assets/).
 
 ## When `begin` fails
 

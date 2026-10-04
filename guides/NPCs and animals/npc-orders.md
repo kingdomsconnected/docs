@@ -169,9 +169,20 @@ npc.playAnimation(12);            // a gesture from the game's emote catalog, by
 npc.teleport(player.position);    // moves the body outright; the server's position wins
 ```
 
-`say` and `playAnimation` reach clients that see the NPC now; late arrivals do
-not get a replay. `npc.frozen = true` holds the body whatever the order says and
-reports nothing; set it back to `false` to carry on.
+`say` reaches clients that see the NPC now; late arrivals do not get a
+replay. A `playAnimation` is state instead: a client that streams the NPC in
+later plays it too, until `stopAnimation` or the next `playAnimation`.
+
+`playAnimation("", { clip })` plays an animation clip a resource ships in its
+`stream/` folder ([Custom assets](../../core-concepts/custom-assets/)). Leave
+the fragment empty; `loop` and `props` work as usual:
+
+```ts
+npc.playAnimation("", { clip: "animations/kcdc/my-assets/wave.caf", loop: true });
+```
+
+`npc.frozen = true` holds the body whatever the order says and reports
+nothing; set it back to `false` to carry on.
 
 ## Related
 
