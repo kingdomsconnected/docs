@@ -91,7 +91,9 @@ revision after the call, and `code` is empty on success. The common codes are
 `inventoryUnavailable` (not connected), `unknownItem` (no such row),
 `invalidItem` (no such item class), `insufficientItems`, `invalidAmount`,
 `staleRevision`, `inventoryCapacity`, `invalidQuality` (a tier the class is
-not made in) and `questItem` (only its quest hands it out). The
+not made in), `questItem` (only its quest hands it out) and, from `set`,
+`invalidEquipment` (a row worn more times than its amount, a worn item that
+cannot be equipped, or too many worn rows). The
 [reference](../../reference/server/interfaces/InventoryResult.md) lists the rest.
 
 ### Refuse a change if the inventory moved
@@ -121,7 +123,10 @@ if (state && coins && coins.amount >= 50) {
 
 A new item with no properties is quality 1 at full condition. The game can
 wear an item down (a blade blunted in a fight), which arrives as a `wear`
-change; a repair it tries on its own is put back.
+change. A player who repairs gear with repair kits gets a `repair` change:
+the kits' loss and the equipment's gain arrive together, or not at all. One
+repair may use up to 16 kits; a longer one, or any other improvement their
+game makes on its own (a blade sharpened at a grindstone), is put back.
 
 ## Dress a body
 
@@ -150,9 +155,10 @@ Inventory.set(player, {
 `change.items` lists only the rows that changed, each with `before` and
 `after`: `before: null` is a new row, `after: null` an emptied one.
 `change.reason` says what did it: `add`, `remove`, `properties`, `set` and
-`transfer` for your calls; `use`, `shot` and `wear` for the player's game;
-`trade`, `pickpocket`, `drop`, and the ground, container and herb-picking reasons
-for the other systems.
+`transfer` for your calls; `use`, `shot`, `wear` and `repair` for the player's
+game; `deposit` and `withdraw` for moves into and out of a
+[container](../../world/stashes/); `trade`, `pickpocket`, `drop`, and the
+ground and herb-picking reasons for the other systems.
 
 Save from here if a server crash must not lose a session:
 

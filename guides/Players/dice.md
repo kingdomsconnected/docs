@@ -46,6 +46,25 @@ Both players sit down at the table nearest them. Who throws first is drawn at
 random, and `diceMatchStart` fires with the match, both players and the target
 score.
 
+## Find the tables
+
+[`Dice.tables()`](../../reference/server/variables/Dice.md#tables) lists the
+level's dice tables, in GUID order. The same tables stand in every virtual
+world; who is waiting at one is your script's to track.
+
+```ts
+for (const table of Dice.tables()) {
+  // table.id: the level GUID; table.position: between the two seats; table.seats: the two chairs
+  Area.create({ id: `dice:${table.id}`, type: "sphere", position: table.position, radius: 3, labels: ["dice"] });
+}
+```
+
+`seats` holds the two chairs' GUIDs in the table's own seat order, which is
+the order `Dice.start` takes its players in. Some quest layers place the same
+table twice under another id, so treat entries within a metre of each other as
+one table. The list includes tables on quest layers a client may not have
+loaded.
+
 ## Fair play
 
 The server deals every throw and scores every move by the game's own rules.
@@ -114,8 +133,11 @@ Money is the game's `money` item, so `takeItem` and `giveItem` move it (see
 [Give and take items](../items/)). Check both players can pay before you call
 `Dice.start`, since `takeItem` removes only what they have.
 
-The default gamemode's `/dice <player> [target score]`, `/dice accept` and
-`/dice decline` (`src/server/commands/dice.ts`) show a challenge flow.
+The default gamemode's `src/server/dice.ts` shows a full lobby: a join hint
+at each table from `Dice.tables()`, then a conversation in which the two
+players agree a target score before `Dice.start`. `/dice <player> [score]`,
+`/dice accept`, `/dice decline` and `/dice cancel` drive the same flow from
+chat.
 
 ## Related
 

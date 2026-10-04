@@ -29,8 +29,8 @@ holds, the potion goes back in, and the alchemy XP it earns is granted
 through your progression rules.
 
 :::note
-Only alchemy is synchronized. Smithing appears in the catalogs but its
-stations are not usable yet: `Crafting.isAvailable("smithing")` is `false`.
+Smithing at the game's smitheries goes through the same `Crafting` API and
+events, with `kind` set to `smithing`; see [Smithing](../smithing/).
 :::
 
 ## How a batch goes
@@ -74,17 +74,55 @@ potion is granted then. `product` is the item class GUID of the potion, and
 | `craftingStarted` | `player`, `event` | A batch is brewing. |
 | `craftingCompleting` | `player`, `proposal` | A batch's result is computed. Return `false` to fail it. |
 | `craftingCompleted` | `player`, `event` | The result is in their inventory; `event.outputs` names the rows. |
+| `craftingRefunding` | `player`, `proposal`, `refund` | A batch is ending without a result. Call `refund()` to give everything back. |
 | `craftingEnded` | `player`, `event` | A batch is over, for any reason. |
 
 `craftingEnded` carries `outcome` (`success`, `failed` or `cancelled`) and a
 `reason`: empty for a completed batch, otherwise `craftingCompletingRejected`,
-`cancelled`, `disconnected`, `timeout` (a batch has 30 minutes) or
-`contextInvalidated` (they walked away, died or changed world). `refunded`
+`cancelled`, `interrupted`, `clientError`, `disconnected`, `timeout` (a batch
+has 30 minutes) or `contextInvalidated` (they walked away, died or changed
+world). `refunded`
 names the inventory rows that got ingredients back: whole ingredients nobody
-ground or mixed yet go back, everything else is spent.
+ground or mixed yet go back, everything else is spent, unless a
+[refund policy](#refund-an-unfinished-batch) asks for all of it.
 
 Crafting events fire after the `playerInventoryChanged` they caused, so the
 rows they name are already there. Do not grant `outputs` again.
+
+## Refund an unfinished batch
+
+A batch that ends without a result keeps the game's own losses unless a
+script asks otherwise. `craftingRefunding` runs once before it settles, and
+calling `refund()` in it gives back every original ingredient still held,
+ground and mixed ones included. The default gamemode installs no policy.
+
+```ts
+Events.on("craftingRefunding", (player, proposal, refund) => {
+  if (proposal.reason === "contextInvalidated" || proposal.reason === "timeout") refund();
+});
+```
+
+- Call `refund()` before the handler returns. A call after an `await` or from
+  a timer does nothing, and calling it twice refunds once. The return value is
+  ignored.
+- Do not grant `proposal.materials` yourself. `craftingEnded` follows with the
+  rows actually credited in `refunded`.
+- A batch that granted a result, the failed potion included, is never asked.
+- `Crafting.cancel(player)` runs this event before it returns.
+
+| `reason` | When | Reported by |
+| --- | --- | --- |
+| `cancelled` | The player left the table normally, or a script called `Crafting.cancel` | Their client, unless a script cancelled |
+| `interrupted` | Another action replaced the brewing, or their game tore it down | Their client |
+| `clientError` | Their game could not carry on with the batch | Their client |
+| `contextInvalidated`, `disconnected`, `timeout` | The server ended it | The server |
+| `craftingCompletingRejected` | A `craftingCompleting` handler refused the result | Your script |
+
+:::caution
+A modified client can report `cancelled`, `interrupted` or `clientError` for
+any exit. Refunding on one of them lets that client keep its ingredients
+whenever it walks away, so choose such a policy only where that is fine.
+:::
 
 ## Find tables and read sessions
 
@@ -144,4 +182,5 @@ gives you the ingredients for one batch of every recipe.
 - [Inventories](../inventory/): where ingredients come from and potions go
 - [Skills, XP and perks](../progression/): alchemy XP and the perks that improve brewing
 - [Buffs](../buffs/): what a potion does once drunk
+- [Smithing](../smithing/): the same API at the smithery
 - [Crafting reference](../../reference/server/variables/Crafting.md)

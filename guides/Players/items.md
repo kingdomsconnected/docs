@@ -145,6 +145,7 @@ const stack = GroundItem.spawn(
 | `quality`, `health`, `condition` | As spawned, or `0` / `-1` / `-1` when left to the class. |
 | `resting` | Settled. A thrown stack is `false` and its `position` moves until it lands; a spawned one is always `true`. |
 | `droppedById`, `droppedBy` | Who threw it (id, and handle or `null`). `0` / `null` when the server spawned it. |
+| `carryable` | A prop carried in the arms rather than stock: spawned with `carryable: true`, or put down from a [carry](../carrying/). It never goes into an inventory. |
 
 All read-only: to change a stack, destroy it and spawn another.
 
@@ -197,6 +198,7 @@ The default gamemode's `/drop <item> [amount]` (with `list`, `remove <id>` and
 ## Related
 
 - [Inventories](../inventory/): rows, item quality, transfers, saving between sessions
+- [Carrying](../carrying/): baskets, sacks and buckets carried in the arms
 - [Shops](../../quests-dialogue-and-shops/vendors/), which move items and money in one deal
 - [Build a /command system](../../tutorials/command-system/), for async commands like `/take`
 - [Player appearance](../appearance/), the body under the clothes
