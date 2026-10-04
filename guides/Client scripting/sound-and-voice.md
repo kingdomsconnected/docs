@@ -25,7 +25,9 @@ if (Audio.hasTrigger(TRIGGER)) {
 
 A trigger is a name from the game's audio data, not display text. A patch or
 another mod can change which exist, so `Audio.hasTrigger` lets you fail early.
-It also answers `false` while the audio system is not up.
+It also answers `false` while the audio system is not up. Triggers a server
+ships in a resource's `stream/` folder work like the game's own once they
+arrive; see [Custom assets](../../core-concepts/custom-assets/).
 
 | Call | Heard | Can stop it? |
 | --- | --- | --- |
@@ -60,6 +62,28 @@ Nothing here is replicated. For a sound everyone near a spot should hear, the
 server sends the position to every client (for example with
 `Events.emitAllClients`) and each calls `playAt`.
 :::
+
+## Play a sound file
+
+`Audio.playFile(file, entityId, purpose?)` plays an `.ogg` on an entity, with
+no trigger needed. It is placed and faded like the game's own spoken lines and
+follows the same volume settings. The path is from the game's root, with or
+without `.ogg`; for a file a server streams, it is `sounds/kcdc/<resource>/<name>`.
+It returns `false` when the entity is not there to take it.
+
+```ts
+const LINE = "sounds/kcdc/my-assets/greeting";
+const me = LocalPlayer;
+
+if (me && Assets.has(`${LINE}.ogg`)) {
+  Audio.playFile(LINE, me.entityId, "20"); // heard up to about 20 m
+}
+```
+
+`purpose` picks which of the game's voice channels carries it: `10`, `20`,
+`35`, `50` (the default), `100` or `200` for a line heard up to that many
+metres, or `inner`, `sfp_dialog`, `sfp_cutscene` or `sfp_music`. An entity takes one
+file every 0.1 seconds.
 
 ## Voice chat settings (client)
 
@@ -158,5 +182,6 @@ arguments arrive as `unknown` in TypeScript. Cast the player as above.
 
 - [Discord Rich Presence](../discord-presence/), for the player's Discord status
 - [Particle effects](../../world/effects/), for the visual half
+- [Custom assets](../../core-concepts/custom-assets/), to ship sounds, triggers and FMOD banks
 - [Send data between server and client](../../core-concepts/networking/)
 - [Entity state bags](../../core-concepts/state/)

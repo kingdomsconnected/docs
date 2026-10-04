@@ -132,7 +132,7 @@ player sees, bind keys and draw UI.
 press rather than once at the top of the file.
 
 :::caution[Keys already in use]
-F4 is the default gamemode's panel; F5, F6, F7 and F9 belong to the client. Pick other keys.
+F4 is the default gamemode's panel, F9 disconnects and T opens chat. Pick other keys.
 [Key binds and controls](../../client-scripting/input/) lists every key name.
 :::
 

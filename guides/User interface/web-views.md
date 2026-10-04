@@ -43,7 +43,7 @@ Key.bind("f3", "down", () => {
 ```
 
 F3 toggles a card in the top-left corner. The view starts visible and
-unfocused, so the player keeps walking while it is up. F5 to F7 and F9 already
+unfocused, so the player keeps walking while it is up. F9 and T already
 belong to the client, so pick other keys.
 
 Give `html` and `body` a `background: transparent` in the page's stylesheet so

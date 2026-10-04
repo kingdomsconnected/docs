@@ -71,15 +71,25 @@ reference lists every one.
 | Property | Meaning |
 | --- | --- |
 | `local` | `true` for the player at this machine |
-| `entityId` | the engine entity the body was spawned as, or 0 |
+| `entityId` | the engine entity of the body, or 0; on `LocalPlayer`, the game's own player entity |
 | `horseId` | network id of the horse being ridden, or 0 on foot |
 | `mounted` | whether they are in a saddle |
 | `buffs` | the status effects on the body (local player only) |
 
-`entityId` is what [Audio](../sound-and-voice/) and client `Vfx.attach` take,
-but it is not stable: it reads 0 across a level load and before the body
-exists, and the engine reuses ids. Use `id`, the network id, for anything you
-want to remember.
+`entityId` is what [Audio](../sound-and-voice/) and client `Vfx.attach` take.
+For the player at this machine it is the game's own player entity, the body
+you walk around in, so a sound played on it follows you:
+
+```ts
+const me = LocalPlayer;
+if (me && me.entityId !== 0) {
+  Audio.playFile("sounds/kcdc/my-assets/heartbeat", me.entityId, "inner");
+}
+```
+
+It is not stable: it reads 0 across a level load and before the body exists,
+and the engine reuses ids. Read it when you need it, and use `id`, the network
+id, for anything you want to remember.
 
 ## List the local player's buffs
 

@@ -1,6 +1,6 @@
 ---
 title: Game-native UI screens
-description: Compose screens inside the game's Scaleform movies with NativeUI, and drive the game's own UI elements from a client script.
+description: Compose screens inside the game's Scaleform movies with NativeUI, drive the game's own UI elements and turn off its menus from a client script.
 sidebar:
   label: Native UI screens
   order: 84
@@ -18,6 +18,8 @@ resource can use both.
 - [`NativeUI.element`](../../reference/client/variables/NativeUI.md#element)
   gives a [`NativeElement`](../../reference/client/classes/NativeElement.md), a
   handle on one of the game's existing screens.
+- [`NativeUI.setMenuEnabled`](../../reference/client/variables/NativeUI.md#setmenuenabled)
+  keeps one of the game's menus, such as the inventory or the map, from opening.
 
 ## Build a first screen
 
@@ -83,7 +85,7 @@ Everything on a screen is a clip under `screen.root`:
 | `setMember(name, value)`, `get(name)` | Writes or reads one ActionScript property |
 | `goto(frameOrLabel, play?)` | Moves the clip's timeline |
 | `setMask(clip)`, `setHitArea(clip)` | Masks this clip, or gives it a different click shape |
-| `load(url)` | Loads an `img://` image into the clip |
+| `load(url)` | Loads an `img://` or `imgps://` image, or a movie path in the game's archives, into the clip |
 | `remove()` | Takes it off the screen with its handlers |
 
 Only numbers, strings, booleans and `null` cross into ActionScript; objects and
@@ -143,6 +145,8 @@ for (const library of NativeUI.libraries()) {
 - `clip.on("press", handler)` needs something to hit: draw or attach into an
   empty clip first. Other mouse events: `release`, `releaseOutside`,
   `rollOver`, `rollOut`, `dragOver`, `dragOut`.
+- `screen.on("event", (name, args) => ...)` receives the events a movie
+  declares, with their arguments as a list.
 - Focus does not pause the game; the world and other players keep moving.
 
 ## Drive the game's own screens
@@ -174,6 +178,38 @@ menu.on("OnButton", (args) => {
 - Reading from an element the game has not loaded answers `null` rather than
   loading it.
 
+## Turn off the game's own menus
+
+`NativeUI.setMenuEnabled(menu, false)` stops one of the game's menu screens
+from opening, by its key, a controller or a tab inside another menu. Use it
+when your resource replaces that screen:
+
+```ts
+NativeUI.setMenuEnabled("map", false);
+Key.bind("m", () => Hud.showNotification("Our own map opens here"));
+NativeUI.isMenuEnabled("map");       // false
+NativeUI.setMenuEnabled("map", true); // gives back this resource's hold
+```
+
+| Menu | Covers |
+| --- | --- |
+| `inventory` | inventory and item details |
+| `player` | the player, skills and player details |
+| `map` | map and legend |
+| `codex` | codex |
+| `journal` | quest log and diary |
+| `crafting` | crafting |
+
+- An open menu you disable closes on the next tick. Its tab stays visible in
+  the game's menu but does nothing. Key assignments are left alone.
+- Holds are per resource: the menu stays off while any resource disables it,
+  `true` releases only yours, and stopping the resource or ending the session
+  releases them. `isMenuEnabled` says whether no resource disables it, not
+  whether the game would open it now.
+- The escape menu, dialogue, shops and the HUD are not among these; for HUD
+  parts see [HUD](../hud/#hide-parts-of-the-hud).
+- An unknown menu name throws, and so does `setMenuEnabled` outside a resource.
+
 ## Ship your own movie
 
 List the movie in `mafiahub.files` like any client file, then open a screen in
@@ -200,9 +236,8 @@ navigation: it suits art with named clips you drive from script.
   `ready`.
 - A closed screen or removed clip reports `valid: false`, and every call on it
   fails quietly.
-- At most 16 screens per resource, 512 mouse handlers per screen and 16
-  arguments per ActionScript call.
-- One string into ActionScript is at most 64 KiB.
+- At most 16 screens per resource, 512 mouse handlers per screen, 16
+  arguments per ActionScript call and 64 KiB per string.
 - A shipped movie is at most 32 MiB, with at most 64 extra files beside it.
 - There is no layout engine: no flexbox, no reflow, no text measurement beyond
   what a field reports. If you need those, use a [web view](../web-views/).

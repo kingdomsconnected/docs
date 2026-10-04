@@ -58,7 +58,7 @@ load, when there is no active view.
 With the defaults, the player flies with the photo mode keys (forward, back,
 left, right, jump to rise, crouch to sink, fast movement to boost), holds Alt to
 crawl and turns with the mouse. The keys follow the Controls menu and the
-keyboard layout. It is the same camera the F7 map editor flies.
+keyboard layout. It is the same camera the World Builder flies.
 
 | `mode` | What happens to the body |
 | --- | --- |
@@ -81,7 +81,11 @@ it may enable it, and see [Server vs client authority](../../core-concepts/autho
 | `enabled` | the flight started |
 | `alreadyActive` | one was already running; the new options are not applied |
 | `noCamera` | there is no level to put the camera in |
-| `cameraBusy` | the F7 map editor holds the camera |
+| `cameraBusy` | the World Builder (`MapEditor`) is open and holds the camera |
+
+No key opens the World Builder: a resource calls `MapEditor.open()` on a server
+that allows it (see [Open the World Builder](../../world/level-edits/#open-the-world-builder)),
+and `MapEditor.isOpen()` says whether it is open now.
 
 | Option | Meaning |
 | --- | --- |
@@ -113,7 +117,7 @@ Events.on("noclipChanged", (active, reason) => {
 | `reason` | Cause |
 | --- | --- |
 | `script` | a resource started or ended it |
-| `mapEditor` | F7 took the camera |
+| `mapEditor` | the World Builder opened and took the camera |
 | `viewLost` | the level went away |
 | `sessionOver` | the session ended |
 

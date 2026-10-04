@@ -91,12 +91,34 @@ Nothing stops you binding these, but both actions will happen:
 
 | Key | Used by |
 | --- | --- |
-| `f5`, `f6`, `f7`, `f9` | the client itself (`f7` opens the map editor) |
+| `f9` | the client itself: it disconnects from the server |
+| `t` | opens the chat box |
 | `f4` | the default gamemode's panel |
 | `v` | voice push-to-talk, unless the player moved it |
 
-There is no rebinding menu for resource binds yet. If players need a choice,
+There is no rebinding menu for resource binds. If players need a choice,
 store it yourself and bind what they picked.
+
+## Show the key's label
+
+Key names are physical positions, named after a US keyboard: `"z"` is the key
+left of `x` whatever is printed on it. `Key.getLabel(key)` gives what the
+player's own layout prints there, so a prompt shows the right letter:
+
+```ts
+const KEY = "z";
+
+Key.bind(KEY, () => {
+  Events.emitServer("my-mode:ready");
+});
+
+Hud.showInfoText(`Press ${Key.getLabel(KEY)} when you are ready`, 5000);
+```
+
+On a French AZERTY keyboard that reads `Press W`. Printable keys come back in
+upper case, others as an English name (`Enter`, `Left Shift`, `Mouse 1`,
+`Numpad 4`). It works while a menu or page holds input, and an unknown name
+throws. Ask again when you redraw a prompt, since the player can switch layout.
 
 ## When binds fire
 
