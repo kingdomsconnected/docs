@@ -6,8 +6,8 @@ sidebar:
   order: 103
 ---
 
-A player needs Kingdom Come: Deliverance II on Steam, the `client/` folder of
-a KCDC release, and your server's address. The first part of this page is
+A player needs Kingdom Come: Deliverance II (Steam, GOG or any other copy),
+the `client/` folder of a KCDC release, and your server's address. The first part of this page is
 the checklist to send them; the second is your side: making the server
 reachable.
 
@@ -15,11 +15,14 @@ reachable.
 
 1. **Install.** Unpack a KCDC release anywhere. Nothing goes into the game
    folder and no game file is modified.
-2. **Start Steam.** The launcher asks Steam where the game is, so Steam must
-   be running.
+2. **Start Steam**, if the game is on Steam. The launcher asks Steam where
+   the game is. For any other copy, or when Steam cannot answer, it asks for
+   `Bin\Win64MasterMasterSteamPGO\KingdomCome.exe` under the game folder
+   the first time instead.
 3. **Launch.** Run `client\KCDCLauncher.exe`.
 4. **Connect.** On the KCDC menu, set your nickname, then pick a server:
-   - **Server browser**: servers listed on the masterlist.
+   - **Server browser**: servers listed on the masterlist. A padlock marks
+     one that asks for a password, typed in before joining.
    - **Connect directly**: host, port (usually 27015) and password. Leave the
      password empty unless the host gave you one.
    - **Quick connect**: `127.0.0.1:27015`, a server on the same machine.
@@ -34,8 +37,9 @@ The launcher updates itself using the channel stamped in
 that stamp behind, and the launcher cannot update.
 :::
 
-If the game is not found, delete `KCDC_launcher.json` next to the launcher to
-detect it again. Launcher logs are in `logs\` beside it. It needs the
+The launcher remembers the game it found or was given in
+`KCDC_launcher.json` next to it. If the game moved, or the wrong copy was
+picked, delete that file to choose again. Launcher logs are in `logs\` beside it. It needs the
 Microsoft Visual C++ 2015-2022 x64 redistributable, which the game installs.
 
 ### Join with a link
@@ -65,8 +69,12 @@ KCDCLauncher.exe "kcdc://play.example.com?nickname=Hana"
    [server.json](../server-json/).
 2. A player missing a required DLC is refused before any download:
    `This server requires Legacy of the Forge, Mysteria Ecclesiae.`
-3. The client downloads every running resource's client half, loads the
-   level and spawns. Your scripts see `playerConnect`, then the spawn events
+3. The client downloads every running resource's client half and the
+   [custom assets](../../core-concepts/custom-assets/) it ships, loads the
+   level and spawns. A first download larger than the player allows in the
+   game's **Game** settings (**Ask before server downloads**, 500 MB by
+   default) waits on the joining screen for them to choose Download or
+   Leave. Your scripts see `playerConnect`, then the spawn events
    ([Join, spawn and respawn](../../players/join-and-spawn/)).
 
 The game's own loading screen stays up through all of this and lifts once
@@ -101,7 +109,7 @@ UDP forward.
 
 ### A player cannot connect
 
-- Is Steam running on the player's machine?
+- With a Steam copy, is Steam running on the player's machine?
 - Do the player and the server run the same KCDC version? A mismatch often shows as a
   join that hangs on the loading screen for 10 seconds, then fails.
 - Is the address right, and the port the game port, not the HTTP one?

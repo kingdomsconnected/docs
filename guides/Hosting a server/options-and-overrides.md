@@ -13,7 +13,7 @@ server does without touching its code.
 :::tip[An official Docker image for every release]
 Every KCDC release publishes a public, ready-to-run Linux server image:
 `ghcr.io/kingdomsconnected/kcdc-server:<version>`, for example
-`ghcr.io/kingdomsconnected/kcdc-server:1.5.0`. No login is needed to pull it,
+`ghcr.io/kingdomsconnected/kcdc-server:1.6.0`. No login is needed to pull it,
 and the Pterodactyl egg ships inside it. Tags are exact versions only, with no
 `latest`, so a host always runs the version it chose. See [Docker and
 panels](../containers/).
@@ -69,6 +69,7 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |
+| `mod.map_editor` | `false` | none | [World builder](../server-json/#modmap_editor) |
 | `mod.navmesh` | `""` | none | [Navigation mesh](../server-json/#modnavmesh) |
 | `map` | `""` | none | Not used by KCDC |
 
@@ -87,6 +88,7 @@ has the full rules.
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
 | Turn off the Tab player list | `mod.scoreboard`: `false` |
+| Let players build with the world builder | `mod.map_editor`: `true`, plus a client resource that calls `MapEditor.open()`, see [`mod.map_editor`](../server-json/#modmap_editor) |
 | Let NPCs walk around walls and through buildings | Copy the game's `recast.pak` into `files/<level>/`, see [`mod.navmesh`](../server-json/#modnavmesh) |
 | Make a private server | `password`, see [Password](../server-json/#password). Share it with your players |
 | Appear in the in-game server browser | `server-token`, see [Server browser listing](../server-browser/) |
@@ -140,13 +142,13 @@ for health checks and server lists:
 
 ```json title="GET http://127.0.0.1:27016/"
 {
-  "framework_version": "28.0.1",
+  "framework_version": "32.0.0",
   "host": "0.0.0.0",
   "max_players": 512,
-  "mod_config": { "level": "kutnohorsko", "required_dlc": [] },
+  "mod_config": { "level": "kutnohorsko", "map_editor": false, "required_dlc": [], "scoreboard": true },
   "mod_name": "KCDC",
   "mod_slug": "kcdc",
-  "mod_version": "1.5.0",
+  "mod_version": "1.6.0",
   "password_required": false,
   "port": 27015
 }
@@ -172,7 +174,7 @@ All in the working directory. Back up the whole folder, hidden files included.
 | `server.json` | Configuration, written with defaults on first start |
 | `resources/` | Your resources |
 | `logs/` | The server log |
-| `.packages/` | Encrypted client packages and their key. Keep it, or players re-download everything after a restart |
+| `.packages/` | Encrypted client packages and their key, and the archives of each resource's custom assets. Keep it, or players re-download everything after a restart |
 | `cache/sentry/` | Crash-reporting data. Crashes are reported to the KCDC developers |
 
 ## Related

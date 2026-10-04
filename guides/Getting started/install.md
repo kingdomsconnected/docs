@@ -13,7 +13,7 @@ standing in it. It takes about ten minutes the first time.
 
 | What | Why | Needed to |
 | --- | --- | --- |
-| Kingdom Come: Deliverance II on Steam | The client runs inside the game, and Steam tells the launcher where it is | Join a server |
+| Kingdom Come: Deliverance II | The client runs inside the game. A Steam, GOG or any other copy works | Join a server |
 | A KCDC release | The launcher, the client and the dedicated server for Windows and Linux | Run anything |
 | Node.js 22 or newer | Runs the TypeScript compiler | Build the default gamemode or any TypeScript resource |
 | pnpm 10 | Installs the gamemode's pinned compiler and API declarations | Same |
@@ -29,7 +29,7 @@ TypeScript, so you can build on your own machine and upload the result.
 A release is one archive. Unpack it anywhere, not inside the game folder (nothing is ever copied there):
 
 ```text
-KCDC-1.3.4/
+KCDC-1.6.0/
   client/            KCDCLauncher.exe and the mod itself
   server/            KCDCServer.exe for Windows, with its own resources/
   server-linux/      KCDCServer for Linux, with its own resources/
@@ -84,7 +84,7 @@ The `mafiahub` block in `package.json` tells the server which files to run and s
 Those releases shipped the gamemode before it took its declarations from npm. Point it at the package
 once, then build as above:
 
-1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.5.7` (your
+1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.6.0` (your
    release's version).
 2. In `tsconfig.json`, set `"types": ["@kingdomsconnected/types/server"]` and delete the
    `scripting-api/generated/server-api.d.ts` entry from `include`.
@@ -118,9 +118,19 @@ The server uses UDP 27015 and TCP 27016; a server on your own machine needs noth
 
 ## 5. Join it
 
-1. Start Steam.
+1. If your copy of the game is on Steam, start Steam.
 2. Run `client/KCDCLauncher.exe`. The game starts with the multiplayer menu.
 3. Choose **Quick connect**. It connects to `127.0.0.1` on port 27015, where your server listens.
+
+The launcher finds the game on its own the first time:
+
+| Your copy | What the launcher does |
+| --- | --- |
+| Steam, with Steam running | Asks Steam where the game is installed. Nothing to pick |
+| GOG, any other copy, or Steam not running | Opens a file dialog. Pick `Bin\Win64MasterMasterSteamPGO\KingdomCome.exe` inside the game folder |
+
+Either way it remembers the answer in `client/KCDC_launcher.json`, so later launches skip the
+question. A picked executable keeps winning over Steam from then on. Delete that file to choose again.
 
 The game loads the level named in `server.json`, and the gamemode greets you in chat.
 
@@ -207,8 +217,12 @@ Corepack is not enabled in this terminal. Run `corepack enable` again, then open
 <details>
 <summary>The launcher cannot find the game</summary>
 
-Start Steam before the launcher, which asks Steam where the game is installed. If the game moved,
-delete `KCDC_launcher.json` next to the launcher and it will look again.
+With a Steam copy, start Steam before the launcher, which asks Steam where the game is installed.
+Otherwise pick `KingdomCome.exe` in the dialog: it lives in `Bin\Win64MasterMasterSteamPGO\` under
+the game folder, and the launcher refuses any other file. Cancelling the dialog closes the launcher.
+
+If the game moved, or you picked the wrong copy, delete `KCDC_launcher.json` next to the launcher and
+it will ask again.
 
 </details>
 

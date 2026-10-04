@@ -8,13 +8,13 @@ sidebar:
 
 Every release publishes a Linux amd64 image,
 `ghcr.io/kingdomsconnected/kcdc-server:<version>`, where `<version>` is the
-release number without the `v` (for example `1.3.4`). There is no `latest`
+release number without the `v` (for example `1.6.0`). There is no `latest`
 tag. One command runs it:
 
 ```sh title="Host"
 docker run -d --name kcdc --init --restart unless-stopped \
   -p 27015:27015/udp -p 27016:27016/tcp \
-  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.3.4'
+  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.6.0'
 docker logs -f kcdc
 ```
 
@@ -58,7 +58,7 @@ the [console](#use-the-console).
 ## Compose
 
 Save this as `compose.yaml`, with a `.env` beside it holding
-`KCDC_VERSION=1.3.4`:
+`KCDC_VERSION=1.6.0`:
 
 ```yaml title="compose.yaml"
 services:
@@ -106,7 +106,7 @@ unchanged. Change a port and its mapping together:
 ```sh title="Host"
 docker run -d --name kcdc --init --restart unless-stopped \
   -p 28015:28015/udp -p 28016:28016/tcp \
-  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.3.4' \
+  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.6.0' \
   --port 28015 --apiport 28016
 ```
 
@@ -128,7 +128,7 @@ commands](../run-a-server/#console-commands) go nowhere. Start it with
 ```sh title="Host"
 docker run -dit --name kcdc --init --restart unless-stopped \
   -p 27015:27015/udp -p 27016:27016/tcp \
-  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.3.4'
+  -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:1.6.0'
 docker attach kcdc
 ```
 
@@ -144,7 +144,7 @@ passes Fly's UDP bind address as `--host`. UDP on Fly needs a dedicated IPv4:
 
 ```sh title="Host"
 fly ips allocate-v4
-fly deploy --image ghcr.io/kingdomsconnected/kcdc-server:1.3.4
+fly deploy --image ghcr.io/kingdomsconnected/kcdc-server:1.6.0
 ```
 
 That `fly.toml` mounts no volume, so `/home/container` starts empty whenever
@@ -153,7 +153,7 @@ image that carries your built gamemode (with `dist/` and `ui/`) in place of
 the seeded source:
 
 ```dockerfile title="Dockerfile"
-FROM ghcr.io/kingdomsconnected/kcdc-server:1.3.4
+FROM ghcr.io/kingdomsconnected/kcdc-server:1.6.0
 COPY kcdc-gamemode/ /opt/kcdc/default-resources/kcdc-gamemode/
 ```
 
@@ -167,7 +167,7 @@ The image follows Pterodactyl's conventions (user `container`, home
 matching egg. Extract it:
 
 ```sh title="Host with Docker"
-IMAGE='ghcr.io/kingdomsconnected/kcdc-server:1.3.4'
+IMAGE='ghcr.io/kingdomsconnected/kcdc-server:1.6.0'
 docker pull "$IMAGE"
 CONTAINER=$(docker create "$IMAGE")
 docker cp "$CONTAINER:/usr/share/kcdc/egg-kcdc.json" ./egg-kcdc.json
@@ -187,9 +187,10 @@ docker rm -v "$CONTAINER"
    then restart.
 
 The egg's startup command sets bind addresses and ports, overriding those
-keys in `server.json`. Everything else, including `mod` and `server-token`,
-is yours to edit; keep the token in the file, not the egg, since eggs get
-shared. The console tab writes to stdin, so console commands work as typed.
+keys in `server.json`. Everything else, including `maxplayers` (up to 512),
+`password`, `server-token` and the `mod` keys, is yours to edit in the file
+manager; keep the token and password in the file, not the egg, since eggs
+get shared. The console tab writes to stdin, so console commands work as typed.
 
 To upgrade: stop the server, back up its files (hidden ones included),
 import the new release's egg, select the new image tag on the server, and

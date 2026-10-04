@@ -1,6 +1,6 @@
 ---
 title: List your server in the server browser
-description: Register your server on MafiaHub, put its push key in server.json, and appear in the in-game server browser.
+description: Register your server on MafiaHub, put its push key in server.json, and appear in the in-game server browser with your logo.
 sidebar:
   label: Server browser listing
   order: 104
@@ -25,11 +25,25 @@ in-game Server browser <──(list of live KCDC servers)───────�
 
 - The server sends a heartbeat every 5 seconds with its player count,
   version and game port, signed with your **push key**.
-- The **name**, **address** and **region** come from your MafiaHub
-  registration, not from the server. Edit them there; changes show on the
-  next heartbeat.
+- The **name**, **address**, **region** and **logo** come from your
+  MafiaHub registration, not from the server. Edit them there; changes show
+  on the next heartbeat.
 - A listing disappears about two minutes after the last heartbeat, so a
   stopped or crashed server drops out by itself.
+
+## What players see
+
+The browser fetches the list when it opens and again every 15 seconds while
+it stays open; **Refresh** fetches it at once. Busy servers sort first, then
+by name.
+
+| On a row | Comes from |
+| --- | --- |
+| Logo | The logo URL in your registration. Only an `http` or `https` image is shown. With none, or when the image fails to load, the row shows the server name's first letter |
+| Name, region and address | Your registration |
+| Players | The heartbeat: player count and your `maxplayers`. A full server shows **Full** and cannot be joined |
+| Version | The heartbeat: the KCDC version your server runs |
+| Padlock | A [`password`](../server-json/#password) in `server.json`. Selecting the server puts the cursor in a password field, and **Join realm** stays disabled until the player types the password |
 
 ## 1. Register the server
 
@@ -45,6 +59,7 @@ in-game Server browser <──(list of live KCDC servers)───────�
    | IP address | Your **public** IP. Not `0.0.0.0`, `127.0.0.1` or a LAN address |
    | Port | The game port, `27015` unless you changed it |
    | Location | The machine's region |
+   | Logo URL | Optional. An `http` or `https` link to an image, shown on your row |
 
 4. Save, and copy the **push key** from the server's page.
 
@@ -116,6 +131,7 @@ refresh **Server browser** in the game.
 | In `/servers` but not in the game | You registered under another mod. Delete the listing and register again as KCDC |
 | Listed, but joining fails | The registered IP must be the public one, and the game port must be forwarded as UDP ([Let players connect](../players-connecting/#make-your-server-reachable)) |
 | Wrong name or region | Edit the registration on mafiahub.dev; no restart needed |
+| No logo, only a letter | The logo URL is empty, not `http` or `https`, or the image does not load. Open the URL in a browser to check it |
 
 ## Related
 

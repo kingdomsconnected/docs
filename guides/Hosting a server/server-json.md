@@ -1,6 +1,6 @@
 ---
 title: server.json settings
-description: Set the ports, player slots, join password, level, required DLCs, player list and navigation mesh in server.json.
+description: Set the ports, player slots, join password, level, required DLCs, player list, world builder and navigation mesh in server.json.
 sidebar:
   label: server.json
   order: 102
@@ -19,6 +19,7 @@ file is missing, the server writes one with every key and its default:
     "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
+        "map_editor": false,
         "navmesh": "",
         "required_dlc": [],
         "scoreboard": true
@@ -99,7 +100,7 @@ The server refuses to start on invalid JSON, a key of the wrong type, or a
 server.json: 'mod.something' is not a key this build understands; keeping it
 ```
 
-`level`, `required_dlc` and `scoreboard` are replicated: a client receives
+`level`, `required_dlc`, `scoreboard` and `map_editor` are replicated: a client receives
 them in the connection handshake, before it downloads or runs anything. The
 status document at `http://<host>:<apiport>/` also lists them under
 `mod_config`. `navmesh` stays on the server.
@@ -188,8 +189,61 @@ default, shows it. Set it to `false` when your gamemode draws its own:
 }
 ```
 
+The list has three columns:
+
+| Column | What it shows |
+| --- | --- |
+| ID | The player's connection slot, the same number as `player.playerIndex` in a server script |
+| Name | The player's nickname. Your own row is highlighted |
+| Ping | The player's ping to the server |
+
+The ID is what commands take when a name is awkward to type: the default
+gamemode's `/tp 3` puts you next to the player in slot 3, and `/mute`,
+`/unmute` and `/lookalike` accept a slot the same way. A slot stays with a
+player for the whole session and is handed to someone else after they leave.
+
 With it off, no client asks for the list and **Tab** goes back to the game's
 own use. It needs KCDC 1.5.6 or later; a client treats an older server as on.
+
+## `mod.map_editor`
+
+Whether client scripts may open the world builder: a free camera, the game's
+mesh catalog as an asset library, a placement brush, a gizmo that moves
+anything, and maps saved to and loaded from files. `false`, the default,
+keeps it shut. Turn it on for a building server:
+
+```json title="server.json"
+{
+    "mod": {
+        "level": "kutnohorsko",
+        "map_editor": true
+    }
+}
+```
+
+No key opens the editor, and the default gamemode never does. A client
+resource of yours decides when, with
+[`MapEditor.open()`](../../reference/client/variables/MapEditor.md):
+
+```ts
+// client
+Key.bind("f6", () => {
+  if (MapEditor.open() === "disabled") {
+    Hud.showInfoText("This server does not allow the world builder.");
+  }
+});
+```
+
+| Call | Answers |
+| --- | --- |
+| `MapEditor.open()` | `"opened"`, `"alreadyOpen"`, or `"disabled"` when the server has `map_editor` off (or there is no session) |
+| `MapEditor.isEnabled()` | Whether the connected server allows the editor |
+| `MapEditor.isOpen()` | Whether it is open on this client |
+| `MapEditor.close()` | Closes it. Does nothing when it is already closed |
+
+The flag is the only gate: with it on, every player that runs your resource
+can open the editor, so run your own permission check before calling `open`
+if only some players should build. Leaving the session closes the editor.
 
 ## `mod.navmesh`
 

@@ -61,7 +61,7 @@ server.
 
 | Port | Protocol | What it carries |
 | --- | --- | --- |
-| 27015 | UDP | The game session: connection, replication, resource download, voice |
+| 27015 | UDP | The game session: connection, replication, resource and [custom asset](../../core-concepts/custom-assets/) downloads, voice |
 | 27016 | TCP | HTTP endpoints, including a status document at `/` |
 
 Nothing listens on TCP 27015. Change the ports with `--port` and `--apiport`,
