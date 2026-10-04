@@ -1,6 +1,6 @@
 ---
 title: Raycasts and nearby entities
-description: Trace rays, find the ground under a point and list nearby entities, from the server by asking a client, or directly in a client script.
+description: Trace rays, tell what they hit down to a tree or a rock, find the ground under a point and list nearby entities, from the server by asking a client or directly in a client script.
 sidebar:
   label: Raycasts
   order: 46
@@ -30,14 +30,37 @@ A [`WorldRayHit`](../../reference/server/interfaces/WorldRayHit.md) has:
 | Field | What it is |
 | --- | --- |
 | `position`, `normal`, `distance` | Where it hit, the surface normal, metres along the ray. |
-| `surface` | The material: `mat_wood`, `mat_stone`, `mat_water`. |
-| `terrain` | Whether it hit the ground itself. Nothing lies behind terrain. |
+| `kind` | What it stopped on: `terrain`, `entity` (doors, props, NPCs, players), `vegetation` (trees, bushes, plants the level paints), `brush` (walls, houses, rocks, cliffs placed one by one) or `static` (anything else). |
+| `terrain` | Whether it hit the ground itself, the same as `kind` being `terrain`. Nothing lies behind terrain. |
+| `model` | The mesh of a `vegetation` or `brush` hit, by its path. `null` otherwise. |
+| `category` | `tree`, `bush`, `plant` or `rock`, from the folder `model` lives in. `null` for anything else, man-made included. |
+| `surface` | The surface type, which is how it sounds underfoot: `mat_wood`, `mat_rock`, `mat_soil`, `mat_water`. Empty only before the game's tables load. |
+| `material` | The material drawn where it hit, by its path (a trunk's bark, not the whole tree). `null` for terrain and when nothing names one. |
 | `entityGuid` | The level's id for what was hit, the same on every machine. `null` for terrain, static geometry and anything the session spawned. |
-| `entityName`, `entityClass` | The level's name and engine class (`AnimDoor`, `NPC_NAI`, `GeomEntity`). |
+| `entityName`, `entityClass` | The level's name and engine class (`AnimDoor`, `NPC_NAI`, `GeomEntity`). `null` when nothing named was hit. |
 | `entityId` | Client only: that machine's own handle. Not a network id; never send it to the server. |
+| `player` | Client only: the player whose body it was, or `null`. |
 
 `entityGuid` is what [`Door.find`](../doors-and-gates/) and `Gate.find` take,
 so an `anything` ray that hits an `AnimDoor` tells you which door it was.
+
+### Tell a tree or a rock apart
+
+Trees and rocks are not entities and have no GUID. Read `kind`, `category` and
+`model` instead, and use `model` with `position` as the key: the pair is the
+same on every client on the same level, so a server can keep a felled tree or
+a mined rock by it.
+
+```ts
+function resourceKey(hit: WorldRayHit): string | null {
+  if (hit.category !== "tree" && hit.category !== "rock") return null;
+  const p = hit.position;
+  return `${hit.model}@${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)}`;
+}
+```
+
+`surface` says what something is made of, not what it is: a plank wall is
+`mat_wood` as much as a trunk is, so tell a tree by `category`.
 
 Rays are at most 4096 m long, and a zero-length ray is refused. `raycastAll`
 reports every solid hit along the ray (up to `maxHits`, 8 at most), nearest
@@ -68,8 +91,18 @@ async function canSee(player: Player, from: Vector3, to: Vector3): Promise<boole
 }
 ```
 
-`hit` is the nearest hit. `hits` lists them all, nearest first: one entry at
-most unless `raycastAll` asked for more with `maxHits`.
+Every server trace settles with a
+[`WorldTraceResult`](../../reference/server/interfaces/WorldTraceResult.md):
+
+| Field | What it is |
+| --- | --- |
+| `answered` | Whether the client ran it. |
+| `reason` | Why it did not; empty when it did. |
+| `hit` | The nearest hit, or `null` when the ray met nothing or nobody answered. |
+| `hits` | Every hit, nearest first: one at most unless `raycastAll` asked for more with `maxHits`. |
+
+Server hits carry every field above except the client-only `entityId` and
+`player`.
 
 ### Find the ground
 

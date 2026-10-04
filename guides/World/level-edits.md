@@ -1,6 +1,6 @@
 ---
 title: Remove or move the level's own objects
-description: Take the game's own walls, gates and props out of the world or move them for every player, from a World Builder map or from script.
+description: Take the game's own walls, gates and props out of the world or move them for every player, from script or from a map made in the World Builder a client script opens.
 sidebar:
   label: Level edits
   order: 48
@@ -27,10 +27,47 @@ away they are. The server keeps nothing past a restart, so apply edits on
 every boot. Edits usually come from a map made in the World Builder rather
 than typed out by hand.
 
+## Open the World Builder
+
+The World Builder is the client's map editor: a free camera, the game's mesh
+catalog, a gizmo, and maps saved to files. No key opens it. It opens only on a
+server whose [`server.json`](../../hosting-a-server/server-json/) turns it on:
+
+```json
+{
+  "mod": {
+    "map_editor": true
+  }
+}
+```
+
+and only when a client script calls
+[`MapEditor.open()`](../../reference/client/variables/MapEditor.md). The
+default gamemode never does, so a building server ships a small resource of
+its own:
+
+```ts
+// client
+Key.bind("f7", () => {
+  if (MapEditor.open() === "disabled") console.log("This server has the World Builder turned off.");
+});
+```
+
+| Call | Returns |
+| --- | --- |
+| `MapEditor.open()` | `opened`, `alreadyOpen`, or `disabled` when the server has not set `mod.map_editor` (or there is no session). |
+| `MapEditor.close()` | Nothing. Closing a closed editor is not an error. |
+| `MapEditor.isOpen()` | Whether it is open on this client. |
+| `MapEditor.isEnabled()` | Whether the connected server allows it. |
+
+The player closes it from its own window. While it is open it holds
+the free camera, so a [`NoClip`](../../client-scripting/camera/) flight ends
+and `NoClip.enable` refuses.
+
 ## From the World Builder to every player
 
-The client's World Builder (F7) edits the level only on that player's
-machine. To make its edits everyone's:
+The World Builder edits the level only on that player's machine. To make its
+edits everyone's:
 
 1. Open the World Builder, click the object, press **Del**. It is taken out;
    **Del** again puts it back. The gizmo (1 to move, 2 to rotate, 3 to scale)
@@ -54,7 +91,15 @@ console.log(`applied ${edits.length} level edits`);
 `applyMap` also takes the map's JSON text instead of the parsed object.
 
 `applyMap` reads only the map's `world` array. Its placed `objects` are
-[props](../props/) for `Prop.spawn`, and its `areas` are for `Area.create`.
+[props](../props/) for `Prop.spawn`. Its `areas` are the boxes, shapes and
+spheres drawn in the editor's Areas tab, already in the form
+[`Area.create`](../../reference/server/classes/Area.md#create) takes:
+
+```ts
+function createAreas(map: { areas?: AreaDefinition[] }): Area[] {
+  return (map.areas ?? []).map((definition) => Area.create(definition));
+}
+```
 
 ## What an edit looks like
 

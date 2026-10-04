@@ -38,7 +38,13 @@ const crate = Prop.spawn(
 - **Model.** A full catalog path or its file stem (`barrel_a`). A stem shared
   by several meshes resolves to the first, so use the full path when it
   matters. The catalog has about 8,500 meshes and the server cannot list them;
-  the client's map editor (F7) browses it and shows each path.
+  the client's [World Builder](../level-edits/#open-the-world-builder)
+  browses it and shows each path.
+- **Your own mesh.** A `.cgf` a resource ships in its
+  `stream/objects/kcdc/<resource>/` folder is named by its full path,
+  `objects/kcdc/<resource>/chair.cgf`. A player whose
+  game does not have the file yet sees the prop as soon as it arrives. See
+  [Custom assets](../../core-concepts/custom-assets/).
 - **Rotation.** A `Vector3` is Euler angles in **degrees**, but
   `Quaternion.fromEuler` and `Quaternion.fromAxisAngle` take **radians**.
   Mixing the two is the usual cause of a strange angle. See
@@ -47,7 +53,8 @@ const crate = Prop.spawn(
   `inFrontOf` helper returning a position and a yaw-only quaternion.
 
 After spawning, `prop.model` is the full path, `prop.modelName` the stem and
-`prop.modelGroup` its browsing bucket (`manmade/structures`).
+`prop.modelGroup` its browsing bucket (`manmade/structures`, or
+`kcdc/<resource>` for a streamed mesh).
 
 | Physics | Behaviour |
 | --- | --- |
@@ -127,7 +134,7 @@ Events.on("resourceStop", (name) => {
 
 | Call | Fails when | Result |
 | --- | --- | --- |
-| `Prop.spawn` | The model is not in the catalog. | **Throws.** Catch it when the name came from a player. |
+| `Prop.spawn` | The model is not in the catalog, and no running resource streams it. | **Throws.** Catch it when the name came from a player. |
 | `Prop.spawn` | The physics word is not one of the three. | Check the word yourself before calling, as the gamemode does. |
 | `Prop.spawn`, `prop.scale` | Scale outside `0.01` to `100`. | Clamped, not refused. |
 
@@ -146,4 +153,5 @@ prop five metres ahead (`src/server/commands/prop.ts`). `/prop list`,
 - [Build a placement mode](../../tutorials/build-mode/), the full build-mode tutorial
 - [Virtual worlds](../../core-concepts/virtual-worlds/), how worlds partition what players see
 - [Raycasts and nearby entities](../raycasts/), to find the ground before placing
+- [Custom assets](../../core-concepts/custom-assets/), to ship meshes of your own
 - [Prop reference](../../reference/server/classes/Prop.md)
