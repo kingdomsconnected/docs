@@ -69,7 +69,7 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |
-| `mod.map_editor` | `false` | none | [World builder](../server-json/#modmap_editor) |
+| `mod.world_resources` | `[]` | none | [World exports](../server-json/#modworld_resources) |
 | `mod.navmesh` | `""` | none | [Navigation mesh](../server-json/#modnavmesh) |
 | `map` | `""` | none | Not used by KCDC |
 
@@ -88,7 +88,8 @@ has the full rules.
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
 | Turn off the Tab player list | `mod.scoreboard`: `false` |
-| Let players build with the world builder | `mod.map_editor`: `true`, plus a client resource that calls `MapEditor.open()`, see [`mod.map_editor`](../server-json/#modmap_editor) |
+| Load a World Builder export | Add its `.world.json` path to [`mod.world_resources`](../server-json/#modworld_resources) and restart |
+| Let players use World Builder in multiplayer | Grant access from a server script with `player.setWorldBuilderEnabled(true)`, see [World Builder](../../world/world-builder/#allow-building-in-multiplayer) |
 | Let NPCs walk around walls and through buildings | Copy the game's `recast.pak` into `files/<level>/`, see [`mod.navmesh`](../server-json/#modnavmesh) |
 | Make a private server | `password`, see [Password](../server-json/#password). Share it with your players |
 | Appear in the in-game server browser | `server-token`, see [Server browser listing](../server-browser/) |
@@ -145,7 +146,7 @@ for health checks and server lists:
   "framework_version": "32.0.0",
   "host": "0.0.0.0",
   "max_players": 512,
-  "mod_config": { "level": "kutnohorsko", "map_editor": false, "required_dlc": [], "scoreboard": true },
+  "mod_config": { "level": "kutnohorsko", "required_dlc": [], "scoreboard": true },
   "mod_name": "KCDC",
   "mod_slug": "kcdc",
   "mod_version": "1.6.0",

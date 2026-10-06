@@ -1,6 +1,6 @@
 ---
 title: Remove or move the level's own objects
-description: Take the game's own walls, gates and props out of the world or move them for every player, from script or from a map made in the World Builder a client script opens.
+description: Take the game's own walls, gates and props out of the world or move them for every player, from a script or a World Builder export.
 sidebar:
   label: Level edits
   order: 48
@@ -29,77 +29,31 @@ than typed out by hand.
 
 ## Open the World Builder
 
-The World Builder is the client's map editor: a free camera, the game's mesh
-catalog, a gizmo, and maps saved to files. No key opens it. It opens only on a
-server whose [`server.json`](../../hosting-a-server/server-json/) turns it on:
+Open **World Builder** from the main menu to edit offline. **F7** switches
+between editing and player control. On a multiplayer server, a server script
+must grant access to each player with `player.setWorldBuilderEnabled(true)`.
 
-```json
-{
-  "mod": {
-    "map_editor": true
-  }
-}
-```
-
-and only when a client script calls
-[`MapEditor.open()`](../../reference/client/variables/MapEditor.md). The
-default gamemode never does, so a building server ships a small resource of
-its own:
-
-```ts
-// client
-Key.bind("f7", () => {
-  if (MapEditor.open() === "disabled") console.log("This server has the World Builder turned off.");
-});
-```
-
-| Call | Returns |
-| --- | --- |
-| `MapEditor.open()` | `opened`, `alreadyOpen`, or `disabled` when the server has not set `mod.map_editor` (or there is no session). |
-| `MapEditor.close()` | Nothing. Closing a closed editor is not an error. |
-| `MapEditor.isOpen()` | Whether it is open on this client. |
-| `MapEditor.isEnabled()` | Whether the connected server allows it. |
-
-The player closes it from its own window. While it is open it holds
-the free camera, so a [`NoClip`](../../client-scripting/camera/) flight ends
-and `NoClip.enable` refuses.
+See [Create maps with World Builder](../world-builder/) for placing objects,
+saving projects, blueprints and multiplayer access.
 
 ## From the World Builder to every player
 
-The World Builder edits the level only on that player's machine. To make its
-edits everyone's:
+Select a level object and press **Del** to remove it; press **Del** again to
+put it back. Use the gizmo to move, rotate or scale it.
 
-1. Open the World Builder, click the object, press **Del**. It is taken out;
-   **Del** again puts it back. The gizmo (1 to move, 2 to rotate, 3 to scale)
-   moves it instead.
-2. In the **Scene** tab, save the map. It is written to `maps/<name>.json`
-   beside `KCDCClient.dll`.
-3. Copy that file into your resource, for example `maps/maleshov.json`.
-4. Apply it on boot with `LevelEdit.applyMap`:
+Save the editable `.project.json`, then choose **Export world resource** in
+the **Project** tab. Add the exported `.world.json` to `mod.world_resources`
+in `server.json` and restart the server. It loads the props, effects, level
+edits and areas automatically. Follow the
+[export steps](../world-builder/#export-to-a-multiplayer-server).
 
-<!-- check: skip -->
-```ts title="src/server/index.ts"
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+For individual scripted edits, select the objects and use **Copy selection
+as API calls** to copy server `LevelEdit.apply` calls. Apply them from your
+server resource each time it starts.
 
-// Compiled to dist/server/, so the resource folder is two levels up.
-const map = JSON.parse(readFileSync(join(__dirname, "..", "..", "maps", "maleshov.json"), "utf8"));
-const edits = LevelEdit.applyMap(map);
-console.log(`applied ${edits.length} level edits`);
-```
-
-`applyMap` also takes the map's JSON text instead of the parsed object.
-
-`applyMap` reads only the map's `world` array. Its placed `objects` are
-[props](../props/) for `Prop.spawn`. Its `areas` are the boxes, shapes and
-spheres drawn in the editor's Areas tab, already in the form
-[`Area.create`](../../reference/server/classes/Area.md#create) takes:
-
-```ts
-function createAreas(map: { areas?: AreaDefinition[] }): Area[] {
-  return (map.areas ?? []).map((definition) => Area.create(definition));
-}
-```
+`LevelEdit.applyMap` remains useful for scripts reading older maps. It takes
+a parsed map or JSON text and reads only its `world` array; it does not load
+a whole world resource or an editable project.
 
 ## What an edit looks like
 

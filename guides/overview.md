@@ -49,7 +49,8 @@ Read **Getting started** in order:
 | World | Trace a ray, tell what it hit (door, tree, rock), find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
 | World | Build a trebuchet or cannon, fire it, let players work it | [Siege engines](../world/siege-engines/) |
-| World | Open the World Builder, remove or move the level's own walls and gates, publish a map | [Level edits](../world/level-edits/) |
+| World | Create a map offline, save blueprints and export it to a server | [World Builder](../world/world-builder/) |
+| World | Remove or move the level's own walls and gates from scripts | [Level edits](../world/level-edits/) |
 | World | Let players pick herbs, refuse a pick, or change how fast plants regrow | [Herb gathering](../world/gathering/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | Route NPCs around walls, plan paths, find the floor or a random walkable spot | [Navigation mesh](../npcs-and-animals/navigation/) |
@@ -72,7 +73,7 @@ Read **Getting started** in order:
 | User interface | Show a "Press [key] to ..." hint, let a player design their look | [Action hints](../user-interface/action-hints/), [Character creator](../user-interface/character-creator/) |
 | User interface | Turn off the game's own inventory, map or journal | [Native UI screens](../user-interface/native-ui/#turn-off-the-games-own-menus) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
-| Hosting a server | Run a dedicated server, change its settings, turn on the World Builder | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
+| Hosting a server | Run a dedicated server, change its settings, load world exports | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
 | Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
 | Hosting a server | Let players connect, list the server publicly with a logo | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
 | Resources | Look up a face, horse breed, item, buff or effect name | [Game resources and catalogs](../resources/overview/) |

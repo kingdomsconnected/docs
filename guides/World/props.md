@@ -38,7 +38,7 @@ const crate = Prop.spawn(
 - **Model.** A full catalog path or its file stem (`barrel_a`). A stem shared
   by several meshes resolves to the first, so use the full path when it
   matters. The catalog has about 8,500 meshes and the server cannot list them;
-  the client's [World Builder](../level-edits/#open-the-world-builder)
+  the client's [World Builder](../world-builder/)
   browses it and shows each path.
 - **Your own mesh.** A `.cgf` a resource ships in its
   `stream/objects/kcdc/<resource>/` folder is named by its full path,

@@ -83,9 +83,10 @@ it may enable it, and see [Server vs client authority](../../core-concepts/autho
 | `noCamera` | there is no level to put the camera in |
 | `cameraBusy` | the World Builder (`MapEditor`) is open and holds the camera |
 
-No key opens the World Builder: a resource calls `MapEditor.open()` on a server
-that allows it (see [Open the World Builder](../../world/level-edits/#open-the-world-builder)),
-and `MapEditor.isOpen()` says whether it is open now.
+**F7** opens World Builder when this player has access; a client resource can
+also call `MapEditor.open()`. See
+[Allow building in multiplayer](../../world/world-builder/#allow-building-in-multiplayer).
+`MapEditor.isOpen()` says whether it is open now.
 
 | Option | Meaning |
 | --- | --- |

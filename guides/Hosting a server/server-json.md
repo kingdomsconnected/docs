@@ -1,6 +1,6 @@
 ---
 title: server.json settings
-description: Set the ports, player slots, join password, level, required DLCs, player list, world builder and navigation mesh in server.json.
+description: Set the ports, player slots, join password, level, required DLCs, player list, world resources and navigation mesh in server.json.
 sidebar:
   label: server.json
   order: 102
@@ -19,10 +19,10 @@ file is missing, the server writes one with every key and its default:
     "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
-        "map_editor": false,
         "navmesh": "",
         "required_dlc": [],
-        "scoreboard": true
+        "scoreboard": true,
+        "world_resources": []
     },
     "password": "",
     "port": 27015,
@@ -100,10 +100,10 @@ The server refuses to start on invalid JSON, a key of the wrong type, or a
 server.json: 'mod.something' is not a key this build understands; keeping it
 ```
 
-`level`, `required_dlc`, `scoreboard` and `map_editor` are replicated: a client receives
+`level`, `required_dlc` and `scoreboard` are replicated: a client receives
 them in the connection handshake, before it downloads or runs anything. The
 status document at `http://<host>:<apiport>/` also lists them under
-`mod_config`. `navmesh` stays on the server.
+`mod_config`. `navmesh` and `world_resources` stay on the server.
 
 ## `mod.level`
 
@@ -205,45 +205,47 @@ player for the whole session and is handed to someone else after they leave.
 With it off, no client asks for the list and **Tab** goes back to the game's
 own use. It needs KCDC 1.5.6 or later; a client treats an older server as on.
 
-## `mod.map_editor`
+## `mod.world_resources`
 
-Whether client scripts may open the world builder: a free camera, the game's
-mesh catalog as an asset library, a placement brush, a gizmo that moves
-anything, and maps saved to and loaded from files. `false`, the default,
-keeps it shut. Turn it on for a building server:
+World Builder exports to load at startup. The default is `[]`.
+Each entry is a path to an exported
+`.world.json`; paths are relative to the server's working directory.
 
 ```json title="server.json"
 {
     "mod": {
         "level": "kutnohorsko",
-        "map_editor": true
+        "world_resources": [
+            "worlds/market.world.json",
+            { "name": "village-market", "path": "village/market.world.json" }
+        ]
     }
 }
 ```
 
-No key opens the editor, and the default gamemode never does. A client
-resource of yours decides when, with
-[`MapEditor.open()`](../../reference/client/variables/MapEditor.md):
+Merge these settings into your existing config. The server creates each
+export's props, effects, level edits and areas automatically. No loader
+script is needed. Keep editable `.project.json` files on your editing machine;
+copy the exported `.world.json` files to the server.
 
-```ts
-// client
-Key.bind("f6", () => {
-  if (MapEditor.open() === "disabled") {
-    Hud.showInfoText("This server does not allow the world builder.");
-  }
-});
-```
+A resource's default name is its filename without `.world.json`. Use a
+`{ "name": "...", "path": "..." }` entry to name it explicitly. Names are
+case-sensitive and must be unique; listing the same file twice is rejected.
+All exports must match `mod.level`. A missing, malformed or wrong-level file
+stops startup with an error identifying the file.
 
-| Call | Answers |
-| --- | --- |
-| `MapEditor.open()` | `"opened"`, `"alreadyOpen"`, or `"disabled"` when the server has `map_editor` off (or there is no session) |
-| `MapEditor.isEnabled()` | Whether the connected server allows the editor |
-| `MapEditor.isOpen()` | Whether it is open on this client |
-| `MapEditor.close()` | Closes it. Does nothing when it is already closed |
+Restart the server after changing the list or replacing an export. See
+[Create maps with World Builder](../../world/world-builder/) for editing,
+saving and exporting.
 
-The flag is the only gate: with it on, every player that runs your resource
-can open the editor, so run your own permission check before calling `open`
-if only some players should build. Leaving the session closes the editor.
+## `mod.map_editor`
+
+This older server-wide setting is no longer used in the World Builder
+workflow above. Multiplayer access is granted per player by a server script
+with `player.setWorldBuilderEnabled(true)` and revoked with
+`player.setWorldBuilderEnabled(false)`. Offline access is always available.
+See [Allow building in multiplayer](../../world/world-builder/#allow-building-in-multiplayer)
+for F7 and the sample game mode's commands.
 
 ## `mod.navmesh`
 
