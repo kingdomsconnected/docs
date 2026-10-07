@@ -117,6 +117,16 @@ UDP forward.
 - Does the player have every DLC in `mod.required_dlc` installed?
 - Is the server full?
 
+## Slow resource downloads
+
+The loading screen reports the server resource download's bytes and percentage.
+A download that keeps receiving data is allowed to continue even on a slow
+connection. Sixty seconds without new data ends the join with a message
+asking the player to check their connection and try again.
+
+If this happens repeatedly, check the server's resource delivery and the
+connection between it and the player. A large download alone is not a stall.
+
 ## Related
 
 - [Run a dedicated server](../run-a-server/): ports and the status endpoint.

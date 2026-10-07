@@ -224,7 +224,8 @@ Each entry is a path to an exported
 ```
 
 Merge these settings into your existing config. The server creates each
-export's props, effects, level edits and areas automatically. No loader
+export's props, effects, level edits and areas, and registers its patrol
+routes. Routes do not spawn NPCs. No loader
 script is needed. Keep editable `.project.json` files on your editing machine;
 copy the exported `.world.json` files to the server.
 
@@ -236,7 +237,9 @@ stops startup with an error identifying the file.
 
 Restart the server after changing the list or replacing an export. See
 [Create maps with World Builder](../../world/world-builder/) for editing,
-saving and exporting.
+saving and exporting. [World exports in scripts](../../world/world-resources/)
+explains `WorldResource.ready`, stable names and reading the loaded objects.
+Route IDs must be unique across exports and script-created routes.
 
 ## `mod.map_editor`
 

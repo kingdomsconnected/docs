@@ -176,6 +176,22 @@ Events.onClient("my-mode:horse.request", (sender) => {
 });
 ```
 
+## Read stats by enum
+
+```ts
+const me = LocalPlayer;
+if (me?.ready) {
+  console.log(me.getStat(PlayerStat.Stamina));
+  console.log(me.getDerivedStat(DerivedPlayerStat.Dirtiness));
+}
+```
+
+Both getters read the latest snapshot and return zero without one. Client
+scripts cannot set these values. See [Set and restore player stats](../../players/restoring-stats/)
+for server setters and the difference between writable and derived stats.
+
+To move the local player alongside someone, see [Following players and NPCs](../following/).
+
 ## Related
 
 - [Read health, stats and skills](../../players/stats/), the server side

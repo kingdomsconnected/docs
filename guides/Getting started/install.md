@@ -29,7 +29,7 @@ TypeScript, so you can build on your own machine and upload the result.
 A release is one archive. Unpack it anywhere, not inside the game folder (nothing is ever copied there):
 
 ```text
-KCDC-1.6.0/
+KCDC-1.6.2/
   client/            KCDCLauncher.exe and the mod itself
   server/            KCDCServer.exe for Windows, with its own resources/
   server-linux/      KCDCServer for Linux, with its own resources/
@@ -84,7 +84,7 @@ The `mafiahub` block in `package.json` tells the server which files to run and s
 Those releases shipped the gamemode before it took its declarations from npm. Point it at the package
 once, then build as above:
 
-1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.6.0` (your
+1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.6.2` (your
    release's version).
 2. In `tsconfig.json`, set `"types": ["@kingdomsconnected/types/server"]` and delete the
    `scripting-api/generated/server-api.d.ts` entry from `include`.

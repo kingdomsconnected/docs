@@ -1,5 +1,5 @@
 ---
-title: Read health, stats and skills
+title: Read and set health, stats and skills
 description: Read a player's health, conditions, attributes, skills, movement, combat stance, gear and connection details.
 sidebar:
   label: Health, stats, skills
@@ -8,8 +8,10 @@ sidebar:
 
 Everything you read off a [`Player`](../../reference/server/classes/Player.md)
 is the latest snapshot their own client published, in the game's units, a few
-frames old. There are no setters: change these indirectly, with a
-[buff](../buffs/) or an [item](../items/). Levels, XP and perks are on
+frames old. Server scripts can set health, stamina, energy and nourishment
+with `setStat`; see [Set and restore player stats](../restoring-stats/).
+Derived stats are read-only and change with equipment, buffs and native
+gameplay. Levels, XP and perks are on
 [Skills, XP and perks](../progression/), which can grant them.
 
 ```ts
@@ -46,16 +48,31 @@ in anything that does not run from `playerSpawned` or later. See [Wait for
 | `healthPercent` | 0 to 100, what the nametag bar draws. Survives a changing maximum. |
 | `stamina`, `maxStamina` | Current stamina and capacity. `maxStamina` really drops to 0 for a tick around death. |
 | `healthyStamina` | The stamina ceiling current injuries allow, at or below `maxStamina`. |
-| `exhaust`, `maxExhaust` | Tiredness and its capacity. |
+| `exhaust`, `maxExhaust` | Remaining energy and its capacity. Higher means better rested. |
 | `hunger`, `maxHunger` | Nourishment and its capacity. Higher is better fed. |
 | `bleeding` | How heavily the body bleeds; 0 when not. |
 | `consciousness` | 0 is knocked out. |
 | `sleeping` | Above 0 means asleep. |
 | `drunkenness` | 0 is sober. |
-| `poisoning` | 0 is clean. |
+| `poisoning` | Native poisoning value. A named poison can be active while this remains zero; use `hasBuff` to check that effect. |
 
 These answer "how drunk is he" without knowing any effect's name. The named
 effects are `player.buffs`, in [Buffs](../buffs/).
+
+## Query a stat by name
+
+```ts
+if (player.ready) {
+  console.log(player.getStat(PlayerStat.Stamina));
+  console.log(player.getDerivedStat(DerivedPlayerStat.Dirtiness));
+}
+```
+
+`PlayerStat` names `Health`, `Stamina`, `Exhaust` and `Hunger`.
+`DerivedPlayerStat` covers conditions, hygiene, social and stealth values,
+carrying, alcohol, combat and movement. These native units are not all
+percentages. The [stat-setting guide](../restoring-stats/) explains timing,
+writable values and restoring a character.
 
 ## Attributes and skills
 
@@ -88,7 +105,7 @@ On a player treat them as read-only and move with `spawn` or `teleport`
 
 | Property | What it is |
 | --- | --- |
-| `velocity` | The velocity driving the body's animation this frame, not what physics settled on. |
+| `velocity` | Measured from successive replicated positions on the server. On the owning client, the velocity driving the body's animation. |
 | `lookDirection` | World-space direction the head and eyes face. Zero until reported. |
 | `inAir` | Fallen or mid-jump, debounced past stair steps. |
 | `crouched` | Crouched, as their own crouch action reports it. |

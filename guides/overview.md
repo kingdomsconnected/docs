@@ -31,7 +31,8 @@ Read **Getting started** in order:
 | Section | I want to... | Page |
 | --- | --- | --- |
 | Players | Greet players, choose where they spawn and respawn | [Join, spawn and respawn](../players/join-and-spawn/) |
-| Players | Read health, stamina, stats or skills | [Read health, stats and skills](../players/stats/) |
+| Players | Read health, stamina, stats or skills | [Read and set stats](../players/stats/) |
+| Players | Set health, energy or nourishment and restore living characters | [Set and restore stats](../players/restoring-stats/) |
 | Players | Grant XP, levels and perks, slow down levelling, keep a character | [Skills, XP and perks](../players/progression/) |
 | Players | Teleport, kick, revive or rename a player | [Teleport, kick and other actions](../players/actions/) |
 | Players | Give, take or drop items, read equipment | [Items](../players/items/) |
@@ -50,10 +51,16 @@ Read **Getting started** in order:
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
 | World | Build a trebuchet or cannon, fire it, let players work it | [Siege engines](../world/siege-engines/) |
 | World | Create a map offline, save blueprints and export it to a server | [World Builder](../world/world-builder/) |
+| World | Draw and group areas for gameplay rules | [World Builder areas](../world/world-builder-areas/) |
+| World | Find exported objects, areas and routes in a server script | [World exports in scripts](../world/world-resources/) |
+| World | Refill or disable a shared stew pot | [Shared stew pots](../world/cook-pots/) |
 | World | Remove or move the level's own walls and gates from scripts | [Level edits](../world/level-edits/) |
 | World | Let players pick herbs, refuse a pick, or change how fast plants regrow | [Herb gathering](../world/gathering/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | Route NPCs around walls, plan paths, find the floor or a random walkable spot | [Navigation mesh](../npcs-and-animals/navigation/) |
+| NPCs and animals | Draw, preview and run named NPC patrols | [Named patrol routes](../npcs-and-animals/patrol-routes/) |
+| NPCs and animals | Order melee and bow combat | [NPC combat](../npcs-and-animals/npc-combat/) |
+| NPCs and animals | Spawn predators and prey, choose population and respawn rules | [Animal populations](../npcs-and-animals/animals/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
 | NPCs and animals | Give a player their own horse, keep it when they leave | [Horse owners](../npcs-and-animals/horse-owners/) |
@@ -64,6 +71,7 @@ Read **Getting started** in order:
 | Core concepts | Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
 | Core concepts | Ship my own models, textures, animations, sounds or effects, or replace the game's | [Custom assets](../core-concepts/custom-assets/) |
 | Client scripting | Read the local player, bind a key | [Local player](../client-scripting/local-player/), [Key binds](../client-scripting/input/) |
+| Client scripting | Let a player follow another player or an NPC guide | [Following](../client-scripting/following/) |
 | Client scripting | Move the camera, fly a free camera | [Camera and noclip](../client-scripting/camera/) |
 | Client scripting | Play sounds, use voice chat, set Discord status | [Sound and voice](../client-scripting/sound-and-voice/), [Discord presence](../client-scripting/discord-presence/) |
 | Client scripting | Make the screen look drunk, hurt or dreamlike | [Screen effects](../client-scripting/screen-effects/) |
@@ -73,6 +81,9 @@ Read **Getting started** in order:
 | User interface | Show a "Press [key] to ..." hint, let a player design their look | [Action hints](../user-interface/action-hints/), [Character creator](../user-interface/character-creator/) |
 | User interface | Turn off the game's own inventory, map or journal | [Native UI screens](../user-interface/native-ui/#turn-off-the-games-own-menus) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
+| Tutorials | Connect a World Builder route to a guard | [Village patrol](../tutorials/world-builder-patrol/) |
+| Tutorials | Defend a yard drawn in World Builder | [Guarded yard](../tutorials/world-builder-sentry/) |
+| Tutorials | Lead a player on an authored NPC route | [Walking tour](../tutorials/world-builder-tour/) |
 | Hosting a server | Run a dedicated server, change its settings, load world exports | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
 | Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
 | Hosting a server | Let players connect, list the server publicly with a logo | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
@@ -85,10 +96,10 @@ Read **Getting started** in order:
 | Getting started | Install, first resource, TypeScript, layout, debugging | Both |
 | Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing, custom assets | Both |
 | Players | Join and spawn, stats, progression, actions, items, carrying, inventories, alchemy, smithing, appearance, buffs, chat, dice | Server |
-| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, siege engines, level edits, herb gathering | Server (raycasts: both) |
-| NPCs and animals | NPCs, their orders and events, horses and their owners, dogs, the navigation mesh | Server |
+| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, siege engines, level edits, herb gathering, World Builder exports, stew pots | Server (raycasts: both) |
+| NPCs and animals | NPCs, combat, named patrols, animal populations, horses and their owners, dogs, navigation | Server |
 | Quests, dialogue and shops | Journal quests and tracking, dialogue choices, vendors | Server |
-| Client scripting | Local player, key binds, camera, placement, sound, Discord, screen effects, debug gizmos | Client |
+| Client scripting | Local player, key binds, camera, placement, sound, Discord, following, screen effects, debug gizmos | Client |
 | User interface | Web views, page bridge, HUD, map, native screens and menus, action hints, character creator | Client |
 | Tutorials | Multi-file builds of complete features | Both |
 | Hosting a server | Running, command-line options and overrides, connecting, listing, the official Docker image | Server operators |

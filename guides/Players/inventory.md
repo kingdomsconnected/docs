@@ -128,6 +128,26 @@ the kits' loss and the equipment's gain arrive together, or not at all. One
 repair may use up to 16 kits; a longer one, or any other improvement their
 game makes on its own (a blade sharpened at a grindstone), is put back.
 
+### Change condition without losing metadata
+
+`setProperties` replaces metadata. Copy what you want to keep, remove an
+old absolute `health` when supplying `condition`, and use the revision you read:
+
+```ts
+const snapshot = Inventory.get(player);
+const row = snapshot?.items.find(item => item.equipped > 0);
+if (snapshot && row) {
+  const metadata = { ...row.metadata };
+  delete metadata.health;
+  metadata.condition = 0.75;
+  Inventory.setProperties(player, { id: row.id, metadata, revision: snapshot.revision });
+}
+```
+
+Native repair kits also support selecting several pieces of equipment in one
+repair operation. The server receives the repaired items and kit consumption
+together; a script does not need to repair each selected item a second time.
+
 ## Dress a body
 
 `Inventory.set` takes an `equipped` count on each row: how many of those units

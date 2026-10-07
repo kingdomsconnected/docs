@@ -215,7 +215,10 @@ const main = async () => {
   // Resolved through the package's own `exports`, the way a reader's editor
   // finds them, so a change in the package layout does not break the check.
   const { exports } = JSON.parse(await readFile(path.join(typesRoot, "package.json"), "utf8"));
-  const declarations = {
+  const declarations = process.env.KCDC_CONTRACT_ROOT ? {
+    server: path.resolve(process.env.KCDC_CONTRACT_ROOT, "targets/server/api.d.ts"),
+    client: path.resolve(process.env.KCDC_CONTRACT_ROOT, "targets/client/api.d.ts"),
+  } : {
     server: path.join(typesRoot, exports["./server"].types),
     client: path.join(typesRoot, exports["./client"].types),
   };
@@ -316,7 +319,10 @@ const main = async () => {
     process.exitCode = 1;
     return;
   }
-  console.log(`Guides are clean: ${checkedBlocks} code block(s) checked against @kingdomsconnected/types.`);
+  const checkedAgainst = process.env.KCDC_CONTRACT_ROOT
+    ? `local contract ${path.resolve(process.env.KCDC_CONTRACT_ROOT)}`
+    : "@kingdomsconnected/types";
+  console.log(`Guides are clean: ${checkedBlocks} code block(s) checked against ${checkedAgainst}.`);
 };
 
 await main();

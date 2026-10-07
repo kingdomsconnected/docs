@@ -69,6 +69,11 @@ the journal, and the game untracks a quest on its own when it is finished or
 failed. Watch `questTrackingChanged` for what really happened.
 :::
 
+Server quests claim a tracking slot before the game turns tracking on.
+The quest title is also used for its map label, so readable server-authored
+titles appear in the journal, tracker and map. Scripts do not need to create
+native localization keys for these labels.
+
 ## Hear when a player tracks or untracks
 
 The event fires on every change, however it happened: your `track` call, the

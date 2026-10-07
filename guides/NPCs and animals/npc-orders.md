@@ -31,7 +31,7 @@ Events.on("npcIntentDone", (who, status) => {
 
 `speed` is `"walk"`, `"jog"` or `"run"`. `follow` and `lookAt` take a handle
 or a network id. `npc.intent` reads back the current order (`hold`, `moveTo`,
-`follow`, `flee` or `lookAt`); a patrol shows as `moveTo`.
+`follow`, `flee`, `lookAt` or `attack`); a patrol shows as `moveTo`.
 
 ## One order at a time
 
@@ -109,7 +109,7 @@ npc.patrol([gate, yard, stables], { loop: true, speed: "walk", waitSeconds: 6 })
 
 - The route stays on the server; clients only get the current waypoint.
 - `waitSeconds` is the pause at each waypoint, 0 to 3600.
-- Each leg reports once. Without `loop`, the patrol stops at the last point.
+- Each leg reports once. Set `loop: false` or `mode: "once"` to stop at the last point; point-array patrols loop by default.
 - A leg that ends `blocked` or `failed` is skipped after at least 2 seconds.
   When every leg of a lap fails in a row, the patrol ends and its last leg
   reports `failed`.
@@ -121,13 +121,30 @@ Your own `npcIntentDone` handler also sees each leg. Giving a new order there
 ends the patrol.
 :::
 
+## Use a World Builder route
+
+`npc.patrol` also takes a `PatrolRoute` handle or its ID. The route supplies
+its mode, pace, arrival radius, waiting times and waypoint overrides:
+
+```ts
+const route = PatrolRoute.getById("village.guard");
+if (route) npc.patrol(route, { pathfinding: "server" });
+```
+
+Wait for exports to load before finding one. See
+[Named patrol routes](../patrol-routes/) for authoring, validation and
+progress events, and [World exports in scripts](../../world/world-resources/)
+for the readiness pattern. To order a fight, use [NPC combat](../npc-combat/).
+
 ## Walk around obstacles
 
 The game's own movement steers a body straight at the point it is given. To
 get around walls, fences and houses, the server plans a route on the level's
 [navigation mesh](../navigation/) and hands the body one corner at a time. It
-walks through the corners without stopping and only passes doors that stand
-open. A dormant NPC is walked along the same route by the server.
+walks through the corners without stopping. Human NPCs open unlocked doors
+in their own virtual world, pause for the swing, then continue. They never
+unlock doors; doors remain open afterward. Animals avoid doorways.
+A dormant NPC is walked along the same route by the server.
 
 The server needs the game's mesh for this; a server operator installs it as
 [`mod.navmesh`](../../hosting-a-server/server-json/#modnavmesh) describes, and

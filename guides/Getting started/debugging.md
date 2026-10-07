@@ -108,6 +108,18 @@ Events.on("resourceStart", (name) => {
 });
 ```
 
+## Check runtime versions
+
+Both server and client scripts can read the running Framework and mod versions:
+
+```ts
+console.log(`KCDC ${ExecutionEnvironment.modVersion}, Framework ${ExecutionEnvironment.frameworkVersion}`);
+```
+
+Use these values when reporting a scripting problem. Match your declaration
+package to the mod version; a type declaration alone does not add a method
+to an older runtime.
+
 ## Related
 
 - [Server vs client authority](../../core-concepts/authority/): the one idea that explains the rest of the API.

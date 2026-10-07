@@ -1,14 +1,14 @@
 ---
 title: Create maps with World Builder
-description: Build a map offline, save an editable project, and export its props, effects, level edits and areas to a multiplayer server.
+description: Build a map offline, save an editable project, and export its objects, areas and NPC patrol routes to a multiplayer server.
 sidebar:
   label: World Builder
   order: 48.5
 ---
 
 World Builder lets you create maps offline and load them on a multiplayer
-server. Place props, effects and areas, edit the level's own objects, and
-save reusable arrangements as blueprints.
+server. Place props, effects and areas, edit the level's own objects, draw
+NPC patrol routes, and save reusable arrangements as blueprints.
 
 ## Start an offline project
 
@@ -22,6 +22,8 @@ save reusable arrangements as blueprints.
 
 Offline access is always available; no server connection or script is needed.
 **Return to menu** ends the offline session and offers to save unsaved changes.
+**Load last project** reopens your most recently opened or saved project at
+its saved camera position. If the file moved, choose it again with **Open project**.
 
 ## Place and edit objects
 
@@ -33,14 +35,17 @@ Use the editor's tabs to choose what to work on:
 | **Effects** | Browse and place particle effects. Select an effect to adjust it in the **Object** tab. |
 | **Level** | Select existing level objects to move or remove them. **Del** removes a selected level object; pressing it again puts it back. |
 | **Areas** | Draw boxes, shapes or spheres for server scripts to use as areas. |
+| **Patrols** | Draw named routes, adjust each waypoint, and preview them with a temporary NPC. |
 
 Select an object and use the gizmo to move, rotate or scale it. Areas define
 regions; your server scripts decide what happens there. See
 [Markers and trigger zones](../markers/) for area behavior and
 [Level edits](../level-edits/) for scripting changes to existing objects.
 
-Keep proportions when scaling props if their collision needs to match their
-shape. A stretched prop uses its largest axis for collision.
+Collision updates after scaling pauses, including grouped edits and undo.
+Keep proportions when collision needs to match the shape: a stretched prop
+uses its largest axis for collision. A model that cannot create collision
+reports a placement error; choose **None** for decoration without physics.
 
 | Control | Action |
 | --- | --- |
@@ -53,9 +58,35 @@ shape. A stretched prop uses its largest axis for collision.
 | **1**, **2**, **3** | Move, rotate or scale with the gizmo. |
 | **Ctrl** + click | Select several props or effects. |
 | **Ctrl+Z** / **Ctrl+Y** | Undo / redo. |
+| Hold **Shift** while translating | Snap props, effects, areas, area handles and patrol waypoints to the ground. |
 
-The **Camera** tab also lets you save views and move between the camera and
-the player. Saved views stay with the project.
+In **Camera**, name a view and click **Remember**. Selecting a saved view
+moves only the camera. **Go to the player** moves the camera to the player;
+**Bring the player here** moves the player to ground near the camera.
+Saved views and the current camera position stay with the project.
+
+**Esc** or right-click cancels prop/effect placement even while a search
+field has focus. Release right mouse before holding it again to fly.
+
+## Restore deleted level objects
+
+**Level > Deleted** lists removed level objects even outside the nearby
+radius or after they stream out. Saved deletions return when you reopen the
+project. Search by name, class or mesh; double-click a row to frame it.
+**Restore** brings back that object while keeping its move. **Include moved
+objects** also lists objects moved without deletion. **Restore all level
+edits** undoes every level-object move and deletion, including filtered rows.
+
+## Draw areas and patrol routes
+
+Areas support point, edge, face, radius and height handles, selection groups
+and editable copies of game areas. Follow [Draw and edit gameplay areas](../world-builder-areas/)
+to give your scripts named regions.
+
+In **Patrols**, author **Once**, **Loop** or **Ping pong** routes with
+per-waypoint speed and waiting times. Follow [Named patrol routes](../../npcs-and-animals/patrol-routes/)
+for preview controls, door behavior and deployment. Routes do not spawn NPCs
+until a server script creates and assigns them.
 
 ## Save your project
 
@@ -63,14 +94,14 @@ In **Project**, use **Save** or **Save as** to keep an editable
 `.project.json` in a folder of your choice. **Ctrl+S** saves;
 **Ctrl+Shift+S** saves under another name.
 
-The project keeps your scene, groups, camera views and export settings.
+The project keeps your scene, routes, groups, camera views and export settings.
 Keep it so you can continue editing after deployment.
 
 | File | Purpose |
 | --- | --- |
 | `.project.json` | Your editable project. Open this to continue working. |
 | `.world.json` | An exported world resource for the server to load. |
-| `.blueprint.json` | A reusable arrangement of props and effects. |
+| `.blueprint.json` | Reusable scene content, including selected patrol routes. |
 
 While there are unsaved changes, the editor writes a recovery copy every
 30 seconds to `maps/recovery.project.json` beside `KCDCClient.dll`.
@@ -91,11 +122,13 @@ save the result as a project.
 
 Blueprints preserve the arrangement of their props and effects. They exclude
 removals and moves of existing level objects, which belong to the original level.
+Selected routes can be included too. If an imported route ID collides with
+an existing one, it gets a numeric suffix; check it before wiring scripts.
 
 ## Export to a multiplayer server
 
-A world resource is a `.world.json` file containing the props, effects,
-level edits and areas the server should create. It needs no loader script.
+A world resource is a `.world.json` file containing objects and areas to
+create and patrol routes to register. It needs no loader script.
 
 1. Save your project.
 2. In **Project**, set **Resource name** to `test1` and choose an
@@ -129,11 +162,15 @@ To publish changes, reopen the project, edit, save, export again, copy the
 updated file to the server and restart it. Server scripts can use the
 exported areas and objects; changes made while the server runs are not saved
 back to your project or export.
+See [Use World Builder exports in scripts](../world-resources/) to wait for
+loading and find its areas, objects and routes. The
+[village patrol tutorial](../../tutorials/world-builder-patrol/) combines
+an exported scene with a script-owned guard.
 
 For a few objects that belong in a script, select them and choose **Copy
 selection as API calls**, then paste the calls into a server resource.
-This copies only the selection. The **Areas** tab has **Copy selected area
-as API call** for an area.
+This copies only the selection. **Areas** has **Copy selected areas as API
+calls**, and **Patrols** has **Copy API call** for its selected route.
 
 ## Allow building in multiplayer
 

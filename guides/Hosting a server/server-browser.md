@@ -45,6 +45,28 @@ by name.
 | Version | The heartbeat: the KCDC version your server runs |
 | Padlock | A [`password`](../server-json/#password) in `server.json`. Selecting the server puts the cursor in a password field, and **Join realm** stays disabled until the player types the password |
 
+## Version confirmation
+
+When the browser knows the server's version and it differs from yours,
+**Different versions** shows both versions and the address. **Cancel**
+returns to the menu; **Join anyway** attempts the connection. It does not
+make incompatible builds work. Use matching client and server versions.
+
+Quick connect uses the warning only when the current server list has one
+unambiguous version for that address and port. An unknown version is not
+proof of compatibility.
+
+## If the public list is unavailable
+
+A failed request shows an error with **Retry** and **Quick connect**.
+Previously loaded rows remain available as cached listings. That is different
+from a successful request returning no servers.
+
+Retry the list, or enter a known server address and game port in **Quick
+connect**. Direct connection bypasses the directory; the server itself must
+still be reachable. The error can include an HTTP status to help identify
+a temporary master server outage or blocked access.
+
 ## 1. Register the server
 
 1. Sign in at [mafiahub.dev](https://mafiahub.dev/dashboard/servers), open

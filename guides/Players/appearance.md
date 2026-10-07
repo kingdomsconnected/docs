@@ -20,6 +20,28 @@ Call it from `playerSpawned`, not `playerConnect`, when their client has a body
 to apply it to. `Appearances.random()` is uniform over the catalog, not over
 what looks good together, so the result looks recognisably random.
 
+## Dress a player in an outfit
+
+`Player.outfitPresets(gender?)` lists the game's clothing presets.
+`player.setOutfit(nameOrGuid)` equips a preset for the player's gender:
+
+```ts
+const presets = Player.outfitPresets(player.appearance.gender);
+const preset = presets[0];
+if (preset && !player.setOutfit(preset)) {
+  console.log("The outfit was refused. Check inventory space and gender.");
+}
+```
+
+The old clothes are unequipped and stay in the inventory. New clothes are
+added and worn; weapons and other items stay as they were. Repeated calls
+can add more clothing. False means the preset is unknown, the gender does
+not match, the inventory is unavailable or there is no room. The player's
+game dresses them after the server inventory changes.
+
+The sample game mode provides `/outfit`; its presets do not change the
+player's face or body.
+
 ## What an appearance is
 
 An [`Appearance`](../../reference/server/interfaces/Appearance.md) is a

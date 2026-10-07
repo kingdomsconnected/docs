@@ -69,8 +69,12 @@ death](../join-and-spawn/#respawn-after-a-death).
 
 `player.dismount()` takes them out of the saddle on every client and returns
 the [`Horse`](../../reference/server/classes/Horse.md), or `null` if they were
-on foot. There is no verb to mount: that starts on the player's own client. See
-[Horses](../../npcs-and-animals/horses/).
+on foot. `player.mount(horse)` requests the normal get-on animation;
+`player.mount(horse, { instant: true })` requests an immediate seat. Stand
+the player near the horse first. Both are client requests: `horseMounting`
+can still refuse them, and `horseMount` confirms the result. A player who
+streams in later sees the rider already seated.
+See [Horses](../../npcs-and-animals/horses/).
 
 ## Set walking pace
 

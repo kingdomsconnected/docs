@@ -12,7 +12,8 @@ hurt, dies, comes back or is spoken to.
 
 ```ts
 Events.on("npcDeath", (npc, attacker) => {
-  const by = attacker ? attacker.nickname : "nobody";
+  const by = attacker instanceof Player ? attacker.nickname
+    : attacker instanceof Npc ? attacker.name : "nobody";
   console.log(`${npc.name || npc.id} was killed by ${by}`);
 });
 ```
@@ -49,12 +50,10 @@ events. A dead NPC stays an entity: the corpse stays, the handle resolves, and
 players can search it if `lootable` is on. `remove()` or `revive()` it when you
 are done.
 
-:::caution[Arrows only]
-Player hits are resolved on the attacker's client and checked by the server, so
-`amount` in `npcDamage` is what was really taken. Arrows land on NPCs; melee
-does not, because these bodies never pair up for a fight and the game only
-resolves melee against a paired opponent.
-:::
+Player melee, arrows and NPC attacks can damage an NPC. For melee, the
+victim's simulator resolves native contact and the server checks the accepted
+swing before changing health. `npcDamage` reports the amount actually taken.
+See [NPC combat](../npc-combat/) to give an NPC an attack order.
 
 ## NPC events
 
@@ -69,14 +68,15 @@ resolves melee against a paired opponent.
 | `npcInteract` | `npc`, `player` | A player pressed the talk key at it. |
 | `npcSimulatorChange` | `npc`, `player` | The client running it changed; `player` is `null` when it went dormant. |
 
-`attacker` and the `npcSimulatorChange` player are `Player | null`, so check
-them. Every event fires for every NPC on the server, including other
+Damage and death events use `Player | Npc | null` for `attacker`.
+The `npcSimulatorChange` player is still `Player | null`. Check the type
+before reading a player-only property such as `nickname`. Every event fires for every NPC on the server, including other
 resources' NPCs: keep a set of your ids and return early for the rest.
 
 ## React to a hit
 
-An NPC never fights back or reacts on its own, so your handler does. Here a
-guard's partner runs when the guard is hit:
+Your game mode decides whether an NPC should counterattack, flee or keep
+its order. Here a guard's partner runs when the guard is hit:
 
 ```ts
 const partners = new Map<number, number>(); // npc id -> partner's id
@@ -119,6 +119,13 @@ Events.on("npcSimulatorChange", (npc, runner) => {
 Most resources never need this. It helps with debugging, and with noticing that
 a pinned actor's player walked away mid-scene. See
 [Spawn NPCs](../npcs/#check-who-runs-the-body).
+
+## Patrol outcomes
+
+Named and point-array patrols also raise `patrolWaypoint(npc, info)` and
+`patrolFinished(npc, info)`. These include the route ID and waypoint state.
+See [Named patrol routes](../patrol-routes/#read-progress) for statuses and
+how they relate to `npcIntentDone`.
 
 ## Related
 

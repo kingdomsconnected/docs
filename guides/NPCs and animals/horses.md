@@ -117,6 +117,43 @@ horse.gearLocked = true; // players cannot change it; scripts still can
 Removing the saddle removes the caparison too. [Horse gear](../../resources/horse-gear/)
 lists every item by slot and what each preset puts on.
 
+## Move an unridden horse
+
+Horse navigation needs a loaded [server navigation mesh](../navigation/).
+Give an unmounted, living horse a destination or point-array patrol:
+
+```ts
+const home = horse.position;
+const destination = Navigation.randomPoint(home, 12, { doors: "none" });
+if (destination) horse.patrol([home, destination], { speed: "walk", loop: true, waitSeconds: 3 });
+
+Events.on("horseIntentDone", (moved, status) => {
+  if (moved.id === horse.id) console.log(`Horse route: ${status}`);
+});
+```
+
+`moveTo(position, { speed, radius })` and `patrol(points, { speed, loop,
+waitSeconds })` return false without a mesh, for invalid input or for a dead
+or mounted horse. `navigationStatus` is `idle`, `running`, `reached`,
+`blocked` or `failed`. `horse.hold()` cancels the route.
+
+Mounting cancels navigation; dismounting does not restart it. Call `hold`
+before teleporting the horse or changing its virtual world. Horses avoid
+doorways, but narrow passages can still block them. Retry after a delay.
+
+Horse patrols take point arrays. To reuse a World Builder route, copy its
+positions explicitly; waypoint overrides and ping-pong mode are not carried
+into this horse API:
+
+```ts
+const definition = PatrolRoute.getById("village.horse")?.toJSON();
+if (definition) {
+  horse.patrol(definition.points.map(point => point.position), {
+    loop: true, speed: "walk", waitSeconds: 2,
+  });
+}
+```
+
 ## Horse events
 
 | Event | Arguments | When |

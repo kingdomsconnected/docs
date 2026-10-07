@@ -144,6 +144,14 @@ Events.on("playerDisconnect", (player) => drinks.delete(player.id));
   can be claimed (`potion`, `poison`, `injury`, `alcohol`, `hangover`,
   `unconsciousness`, `plague` and a few more). Anything else throws.
 
+## Keep effects across rejoins
+
+Cache selected buff names while the player is connected, updating the list
+on buff-added and buff-removed events. `player.buffs` has already been
+cleared by `playerDisconnect`, so it is too late to read the list there.
+Reapplying a name starts the effect again; it does not preserve remaining
+time or stacked strength. See [Set and restore stats](../restoring-stats/).
+
 ## Related
 
 - [Read health, stats and skills](../stats/), for live condition numbers

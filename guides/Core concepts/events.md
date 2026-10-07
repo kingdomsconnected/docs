@@ -96,7 +96,8 @@ Guides: [Join and spawn](../../players/join-and-spawn/),
 | `playerSpawning` | `player` | Their body needs a place to stand. Answer synchronously. |
 | `playerSpawned` | `player` | They are standing in the loaded world. Give kit here. |
 | `playerDisconnect` | `player` | They are leaving; the handle still reads. |
-| `playerDamage` | `player, attacker?, amount, bodyPart?, reason` | Health came off them. Reported by their own client. |
+| `playerHit` | `player, attacker, hit` | A player hit or NPC melee hit is about to take health. Return false to refuse; change `hit.damage` to set the amount. |
+| `playerDamage` | `player, attacker?, amount, bodyPart?, reason` | Health came off them, after any `playerHit` ruling. |
 | `playerInjured` | `player, bodyPart` | A limb becomes injured. |
 | `playerInjuryHealed` | `player, bodyPart` | A limb injury is gone. |
 | `playerDied` | `player, killer?, reason` | A death is accepted. No automatic respawn. |
@@ -108,6 +109,11 @@ Guides: [Join and spawn](../../players/join-and-spawn/),
 | `playerPickpocketStart` | `thief, victim` | A Rob attempt begins. Return `false` to refuse. |
 | `playerPickpocketed` | `thief, victim, items` | A theft settled; `items` is what really moved. |
 | `playerPickpocketCaught` | `thief, victim` | The victim noticed. Nothing was taken. |
+
+For `playerHit`, the attacker can be a player or NPC. The attacker/killer
+in player damage and death events can also be null. Check the type before
+using player-only properties. Lowering health from a script raises damage
+with a null attacker; see [Set and restore stats](../../players/restoring-stats/).
 
 ### Horses and dogs
 
@@ -121,6 +127,7 @@ Guides: [Horses](../../npcs-and-animals/horses/), [Dogs](../../npcs-and-animals/
 | `horseDamage` | `horse, attacker?, amount, reason` | Health came off a horse. |
 | `horseDeath` | `horse, killer?, reason` | A horse dies. |
 | `horseGearChanging` | `horse, player?, gear` | A player changes gear. Return `false` to refuse. |
+| `horseIntentDone` | `horse, status` | A move or patrol leg reached, was blocked or failed. |
 | `horseGearChanged` | `horse, player?, gear` | Gear changed on every client. `player` is null for a script. |
 | `dogSpawn`, `dogDestroy` | `dog` | A dog is created, or is being despawned. |
 | `dogOwnerChanged` | `dog, player?` | A dog is handed over or left masterless. |
@@ -138,9 +145,15 @@ Guides: [Spawn NPCs](../../npcs-and-animals/npcs/),
 | `npcIntentDone` | `npc, status` | An order ends: `reached`, `blocked` or `failed`. |
 | `npcDamage` | `npc, attacker?, amount` | Health came off, as agreed by the server. |
 | `npcDeath` | `npc, attacker?` | Its health runs out. The corpse stays. |
+| `patrolWaypoint` | `npc, info` | A waypoint was reached, blocked or failed. |
+| `patrolFinished` | `npc, info` | A patrol completed, failed or was cancelled. |
 | `npcRevive` | `npc` | A dead NPC is brought back. |
 | `npcInteract` | `npc, player` | A player presses use on an `interactable` NPC. |
 | `npcSimulatorChange` | `npc, player?` | The client running it changes. `null` means dormant. |
+
+NPC damage and death attackers are `Player | Npc | null`.
+[Named patrol routes](../../npcs-and-animals/patrol-routes/) explains the
+route ID, waypoint index and phase carried in patrol events.
 
 ### World and objects
 
@@ -151,6 +164,7 @@ Guides: [Time and weather](../../world/clock-and-weather/),
 
 | Event | Arguments | Fires when |
 | --- | --- | --- |
+| `worldResourcesReady` | none | All configured exports loaded. Check `WorldResource.ready` when starting later. |
 | `worldDayChange` | `day` | The clock crosses midnight. `day` is the new one. |
 | `worldWeatherChange` | `preset, previous, seconds` | A weather blend starts. |
 | `doorInteract` | `player, door, action, keySide` | A player works a door. Return `false` to refuse. |
@@ -196,6 +210,9 @@ Guides: [Quests](../../quests-dialogue-and-shops/quests/),
 | `mapOpened`, `mapClosed` | none | The map screen opens or closes. | [Map and blips](../../user-interface/map/) |
 | `mapWaypointSet` | `position, mapId, moved` | The player drops or moves their map marker. | [Map and blips](../../user-interface/map/) |
 | `mapWaypointCleared` | `position, mapId` | The player removes it. | [Map and blips](../../user-interface/map/) |
+| `followStarted` | `target` | A queued native follow entered. | [Following](../../client-scripting/following/) |
+| `followStopped` | `target, reason` | A follow stopped or failed to enter. | [Following](../../client-scripting/following/) |
+| `monologueSuppressed` | `text, textKey` | A local character remark was suppressed. | [HUD](../../user-interface/hud/#control-the-local-characters-monologue) |
 | `noclipChanged` | `active, reason` | Free camera starts or ends. | [Camera and noclip](../../client-scripting/camera/) |
 | `browserCreated`, `browserLoadingStart`, `browserDocumentReady`, `browserLoadingFailed` | `event` | A web view is created, loads, is ready for `Web.emit`, or fails. | [HTML pages](../../user-interface/web-views/) |
 | `browserNavigate`, `browserPopup`, `browserOriginChange`, `browserResourceBlocked` | `event` | A view navigates, blocks a popup, changes origin, or blocks a request. | [HTML pages](../../user-interface/web-views/) |

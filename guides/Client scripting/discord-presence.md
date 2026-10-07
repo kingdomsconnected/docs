@@ -1,180 +1,116 @@
 ---
 title: Discord Rich Presence
-description: Show what a player is doing on your server in their Discord profile with the client's Discord global.
+description: Add game-mode status to Kingdoms Connected's built-in Discord presence from a client script.
 sidebar:
   label: Discord presence
   order: 75
 ---
 
-Discord Rich Presence is the activity Discord shows on a player's profile while
-they play. The client's
-[`Discord`](../../reference/client/variables/Discord.md) global lets your
-resource publish it: what the player is doing, their party status, a timer and
-a party size.
+Kingdoms Connected publishes a Discord presence automatically: starting up,
+the main menu, joining or playing on a server, and World Builder. Your client
+resource can add its own status line and small image.
 
 ```ts
-Discord.setPresence({
-  details: "Hunting in the Trosky woods",
-  state: "Blue team",
-  startTimestamp: Math.floor(Date.now() / 1000),
-});
+Discord.setPresence({ state: "Hunting in the Trosky woods" });
 ```
 
-`Discord` only exists on the client, so the server decides what a player is
-doing and tells their client, which publishes it. Kingdoms Connected does not
-publish a presence of its own, so nothing is shown until your code publishes
-something.
+## Choose the fields your resource controls
+
+| Field | Who controls it |
+| --- | --- |
+| `state` | A client script can replace the lower status line. |
+| `smallImage`, `smallText` | A client script can set the small image and its tooltip. |
+| `details` | KCDC names the server or current activity. |
+| Large image and tooltip | KCDC's logo and mod version. |
+| Timer | KCDC tracks the menu, session or World Builder activity. |
+| Other fields | Not opened to client scripts by KCDC. |
+
+The generic `Discord` API still exposes setters for details, timestamps,
+party size and secrets. KCDC's presence policy does not publish those script
+fields. Use the status line for a round, role, team or activity instead.
 
 ## Stage fields, then publish
 
-Every setter only stages a value. Nothing reaches Discord until you publish:
-
-- `update()` publishes everything staged so far.
-- `setPresence(options)` stages a batch of fields and publishes in the same
-  call. The fields it does not name keep their staged value.
+Setters stage values. `update()` publishes the staged script fields;
+`setPresence(options)` stages a batch and publishes it in one call.
+Fields omitted from a batch keep their staged value.
 
 ```ts
-Discord.setDetails("Round 3 of 5");
-Discord.setState("Waiting for players");
-Discord.setPartySize(3, 8);
+Discord.setState("Blue team, round 3");
 Discord.update();
 
-// Later, only the state changes. Details and party size are still staged.
-Discord.setState("In a match");
-Discord.update();
+// When the round ends:
+Discord.setPresence({ state: "Waiting for the next round" });
 ```
 
-The fields Discord displays are:
-
-| Field | Setter | What Discord uses it for |
-| --- | --- | --- |
-| `details` | `setDetails` | what the player is currently doing |
-| `state` | `setState` | the player's current party status |
-| `startTimestamp` | `setStartTimestamp` | an elapsed timer, counting from that moment |
-| `endTimestamp` | `setEndTimestamp` | a remaining timer, counting down to that moment |
-| `party.size` | `setPartySize(current, max)` | the party's current and maximum size |
-| `largeImage`, `largeText`, `smallImage`, `smallText` | `setAssets` or one setter each | two images and their hover text |
-
-Timestamps are Unix times in **seconds**, not the milliseconds `Date.now()`
-returns.
-
-`name` and `type` can be staged but change nothing: Discord treats the
-application name as read-only and discards the activity type sent by a game.
-The join and spectate `secrets` drive Discord's invites, Ask to Join and
-Spectate, but Kingdoms Connected does not listen for the events Discord sends
-when a player uses them, so leave them out.
-
-:::caution[Images]
-An image field names an art asset uploaded to the Kingdoms Connected
-application in the Discord Developer Portal, by its key. Leave the image fields
-out unless you know a key the application has.
-:::
+Image keys must name assets uploaded to the Kingdoms Connected Discord
+application. Use only known keys; an arbitrary local filename is not an asset.
 
 ## Clear or reset the presence
 
-- `clear()` removes the presence from Discord and empties the staged fields.
-- `reset()` empties the staged fields but leaves Discord showing the last
-  published presence, so you can build the next one from scratch.
+- `clear()` removes script overrides and clears staged fields. The built-in
+  KCDC activity remains visible.
+- `reset()` clears staged fields without publishing. The last published
+  override remains until the next update or clear.
 
-Leaving a server stops its client resources, but it neither clears the
-presence nor empties the staged fields. Clear it when your resource stops, or a
-player who disconnects keeps advertising your round until they close the game,
-and the next server's first `update()` publishes your leftover fields along
-with its own:
+When the session ends, script presence is cleared and the menu activity
+returns. Clear your own status when your resource stops within a session:
 
 ```ts
-const RESOURCE = "my-mode";
-
-Events.on("resourceStop", (name) => {
-  if (name === RESOURCE) Discord.clear();
+Events.on("resourceStop", name => {
+  if (name === "my-mode") Discord.clear();
 });
 ```
 
-:::note[One presence per player]
-Every client resource shares the same staged fields. If two resources set
-presence, each publish sends whatever the other staged too, and the last one to
-publish wins. Keep presence in one resource, usually your gamemode.
-:::
-
-## When Discord is unavailable
-
-Presence only shows while the Discord app is running. The game connects to
-Discord once, at startup, and `isAvailable()` tells you whether that worked. The setters are safe to call either way, and `update`,
-`setPresence` and `clear` return `false` instead of throwing, so you rarely need
-to check first. A `true` only means the update was handed to Discord: if
-Discord rejects it, your script is not told.
-
-A player can also hide their activity in Discord's settings, in which case
-nothing you publish is visible.
-
-`getUserId()` returns the player's Discord user ID, or an empty string until
-Discord has reported who is signed in. The client sends the same ID to the
-server when it joins, where it is
-[`player.discordId`](../../reference/server/classes/Player.md#discordid). The
-server only checks that it is made of digits, not that the player owns that
-Discord account, so do not use it to grant anything.
-
-## Publish on change, not every frame
-
-Discord allows five presence updates every twenty seconds, and Kingdoms
-Connected does not queue or retry the ones over that limit. Publish when
-something changes (a round starts, a player joins a team), never from a
-per-frame or per-second loop. The timestamps exist so the timer ticks on
-Discord's side without you sending anything.
+Client resources share the staged script fields. Keep presence in one
+resource, usually the game mode, so one resource does not clear another's
+status or publish its leftover fields.
 
 ## Drive the presence from the server
 
-The server knows the round and the team, so it tells each client what to show.
-The client only turns that into a presence:
+Send a short game-mode status to each player. The client turns it into
+an allowed presence field:
 
 ```ts title="src/server/presence.ts"
-const RESOURCE = "my-mode";
-const MAX_PLAYERS = 32;
-
-// Call when a round starts.
-export function announceRound(round: number, endsAt: number) {
-  const players = Player.all();
-  for (const player of players) {
-    player.emit(
-      `${RESOURCE}:presence`,
-      JSON.stringify({
-        details: `Round ${round}`,
-        state: `${player.nickname} on the battlefield`,
-        endTimestamp: Math.floor(endsAt / 1000),
-        players: players.length,
-        max: MAX_PLAYERS,
-      }),
-    );
+export function announceRound(round: number): void {
+  for (const player of Player.all()) {
+    player.emit("my-mode:presence", JSON.stringify({ state: `Round ${round}` }));
   }
 }
 ```
 
 ```ts title="src/client/presence.ts"
-const RESOURCE = "my-mode";
-
-Events.on(`${RESOURCE}:presence`, (payload) => {
-  if (typeof payload !== "object" || payload === null) return;
-  const p = payload as { details?: string; state?: string; endTimestamp?: number; players?: number; max?: number };
-
-  Discord.setPresence({
-    details: p.details ?? "",
-    state: p.state ?? "",
-    endTimestamp: p.endTimestamp,
-    party: { size: [p.players ?? 0, p.max ?? 0] },
-  });
+Events.on("my-mode:presence", payload => {
+  if (!payload || typeof payload !== "object") return;
+  const state = (payload as { state?: unknown }).state;
+  if (typeof state === "string") Discord.setPresence({ state });
 });
 
-Events.on("resourceStop", (name) => {
-  if (name === RESOURCE) Discord.clear();
+Events.on("resourceStop", name => {
+  if (name === "my-mode") Discord.clear();
 });
 ```
 
-[Send data between server and client](../../core-concepts/networking/) covers
-the events used here, including why a client that just joined should ask the
-server for its state rather than wait to be told.
+Call `announceRound` when the round changes. Also send the current state to
+newly ready clients. [Server and client messages](../../core-concepts/networking/)
+shows how a client can request state when its resource starts.
+
+## When Discord is unavailable
+
+Presence needs the Discord desktop app and visible activity in the player's
+Discord settings. `isAvailable()` reports whether the integration initialized.
+`update`, `setPresence` and `clear` return false when it is unavailable.
+A true result is not proof the player or their friends can see the activity.
+
+`getUserId()` returns the signed-in Discord ID once available, otherwise an
+empty string. The server receives it as `player.discordId`; do not treat that
+client-reported value as account authentication.
+
+Publish when something changes, rather than every frame. Discord rate limits
+updates, and the built-in timer runs without repeated script updates.
 
 ## Related
 
-- [Send data between server and client](../../core-concepts/networking/), for the presence event
-- [Resource manifest and lifecycle](../../core-concepts/resources/), for `resourceStop`
-- [Sounds and voice chat](../sound-and-voice/), the other client-only player features
+- [Server and client messages](../../core-concepts/networking/)
+- [Resource manifest and lifecycle](../../core-concepts/resources/)
+- [Sounds and voice chat](../sound-and-voice/)

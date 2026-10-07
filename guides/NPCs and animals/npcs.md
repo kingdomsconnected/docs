@@ -42,8 +42,9 @@ object. Everything has a default; in practice you set `soul` and `position`.
 | `virtualWorld` | Which [virtual world](../../core-concepts/virtual-worlds/) it lives in. |
 
 A role is a real soul from the game's tables, so `guard` already looks like a
-guard. Anything not in `Npc.roles()` is taken as a soul GUID; [Souls](../../resources/souls/)
-lists one for every look the game ships.
+guard. Animal names and GUIDs from `Npc.animals()` also select their native class;
+see [Animal populations](../animals/). Other souls are given by GUID;
+[Souls](../../resources/souls/) lists the game's human looks.
 
 ```ts
 console.log(Npc.roles().join(", "));
@@ -51,6 +52,10 @@ console.log(Npc.roles().join(", "));
 
 `Npc.create` returns before any client runs the body. A new NPC far from every
 player starts dormant, which is fine.
+
+Use ordinary readable text for `name`; KCDC supplies the game's labels for
+conversation and name displays. A resource does not need to register its own
+localization key just to name an NPC.
 
 ### Take over a level NPC
 

@@ -172,6 +172,24 @@ the session ends. `visible` reads back only your own change, so it can say
 how many marks the compass carried at the last tick, the game's included. To
 add marks, use [blips](../map/#put-a-blip-on-the-compass).
 
+## Control the local character's monologue
+
+Multiplayer suppresses the local character's voiced monologue and its
+subtitles by default. A client script can read or change that policy:
+
+```ts
+Hud.setMonologueEnabled(false);
+console.log(Hud.isMonologueEnabled());
+Events.on("monologueSuppressed", (text, textKey) => {
+  console.log(`Suppressed line ${textKey}: ${text}`);
+});
+```
+
+`setMonologueEnabled(true)` lets the game voice and caption it again until
+the session ends. This affects the local character's remarks, not all
+dialogue or voice chat. Use the event if your resource wants to present a
+suppressed line differently.
+
 ## Related
 
 - [Map markers and blips](../map/): your own marks on the compass and map.

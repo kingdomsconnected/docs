@@ -125,11 +125,23 @@ way around anything. With a mesh loaded, `npc.moveTo` and `npc.patrol` plan
 their route here and walk it corner by corner, for NPCs a client simulates and
 for dormant ones alike. Their `pathfinding` option (`auto`, `game` or
 `server`) picks who plans; see
-[Move NPCs](../npc-orders/#walk-around-obstacles). Routes NPCs walk only
-pass doors that stand open.
+[Move NPCs](../npc-orders/#walk-around-obstacles). Human NPCs open unlocked
+doors in their own virtual world and leave them open. Animals and horses
+avoid doorways. Generic navigation queries still use their `doors` option.
 
 In the default gamemode, `/npcdemo escort` spawns an NPC that follows you and
 `/npcdemo stand [auto|game|server]` switches its mode, to watch the difference.
+
+## Validate an authored patrol
+
+`Navigation.validatePatrol(routeOrId, { actor })` checks every leg of a
+[named patrol](../patrol-routes/), including loop closure and both directions
+of a ping-pong route. It returns `available`, `complete` and per-leg results.
+Pass the actual NPC or horse to use its door rules and virtual world.
+It does not check the approach from the actor's current position to point zero.
+
+Unridden horses now use the same mesh for their own movement orders. See
+[Horse navigation](../horses/#move-an-unridden-horse).
 
 ## Related
 

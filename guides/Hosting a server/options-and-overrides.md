@@ -13,7 +13,7 @@ server does without touching its code.
 :::tip[An official Docker image for every release]
 Every KCDC release publishes a public, ready-to-run Linux server image:
 `ghcr.io/kingdomsconnected/kcdc-server:<version>`, for example
-`ghcr.io/kingdomsconnected/kcdc-server:1.6.0`. No login is needed to pull it,
+`ghcr.io/kingdomsconnected/kcdc-server:1.6.2`. No login is needed to pull it,
 and the Pterodactyl egg ships inside it. Tags are exact versions only, with no
 `latest`, so a host always runs the version it chose. See [Docker and
 panels](../containers/).
@@ -149,7 +149,7 @@ for health checks and server lists:
   "mod_config": { "level": "kutnohorsko", "required_dlc": [], "scoreboard": true },
   "mod_name": "KCDC",
   "mod_slug": "kcdc",
-  "mod_version": "1.6.0",
+  "mod_version": "1.6.2",
   "password_required": false,
   "port": 27015
 }

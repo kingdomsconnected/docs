@@ -107,6 +107,10 @@ Until a contract has been published, and whenever you want to see an unpublished
 KCDC_CONTRACT_ROOT=/path/to/mod/build/scripting-contract pnpm build
 ```
 
+Use the same `KCDC_CONTRACT_ROOT` with `pnpm check` and `pnpm check:site`
+to validate examples against that contract's declarations. Without the
+override, checks use the pinned `@kingdomsconnected/types` package.
+
 That bypasses the download and its integrity checks entirely, so use it for previewing only; CI always resolves a published, verified revision.
 
 ### Known issues with services-cli 0.6.4

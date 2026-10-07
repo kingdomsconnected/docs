@@ -8,8 +8,10 @@ sidebar:
 
 Each player's own client owns their body: health, stamina, clothes, buffs and
 where they stand. The server owns everything shared between players, and each
-player's inventory. So reading a player's body gives you their last report,
-and most verbs on a player are requests to their client.
+player's inventory. Reading a player's body gives you its latest snapshot,
+and most body-changing verbs are requests to its client. The server also
+rules on player combat and NPC melee against players before health is taken;
+`playerHit` lets the game mode refuse or change those hits.
 
 ```ts
 // server
@@ -71,6 +73,8 @@ already there, or a beard the face was never modelled with.
 | `setAppearance` | `true` when sent | `player.appearance` reads back the new look. |
 | `addBuff`, `removeBuff` | `true` when sent | `playerBuffAdded` or `playerBuffRemoved` fires. `hasBuff` straight after `addBuff` is still `false`. |
 | `heal` | `true` when sent | `player.health` rises; `playerInjuryHealed` fires per limb. |
+| `setStat`, `setHealth`, `setHunger` | `true` when sent to a ready, living body | A later snapshot reports the applied value. |
+| `mount` | `true` when requested | `horseMounting` can refuse; `horseMount` confirms the seat. |
 | `revive` | `true` when sent | The player stands up and `player.alive` turns true. |
 | `addXp`, `setLevel`, `addPerk` | `true` when sent | `playerXpGained`, `playerLevelUp` or `playerPerkAdded` fires. |
 
@@ -79,12 +83,12 @@ change the inventory the server holds, so their result is final: the player's
 game shows it on the next tick.
 
 <details>
-<summary>Why is there no setter for health or position?</summary>
+<summary>Why use a method instead of assigning a player property?</summary>
 
-A server-side write would be overwritten by the owner's next report a frame
-later, so the API leaves the setter out. `player.position` is inherited from
+A local property assignment does not instruct the player's game to change.
+Use `setHealth` or `setStat` for writable stats. `player.position` is inherited from
 [`Entity`](../../reference/server/classes/Entity.md) and can be assigned, but
-the owner's next pose replaces it. Use `teleport`.
+the owner's next pose replaces it. Use `teleport` or `spawn` to move them.
 
 </details>
 
