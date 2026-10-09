@@ -89,22 +89,29 @@ validate with `{ actor: animal }` to use their door policy.
 
 ## Try the default population manager
 
-The default game mode provides `/animals list`,
-`/animals start <spawnpointGuid>` and `/animals stop`. Startup populations
-are opt-in through that sample's `animalSpawnpoints` list. A command-started
-site uses the caller's virtual world; configured startup sites use world 0.
-Load the navigation mesh first.
+The default game mode provides `/animals list`, `/animals start <spawnpointGuid>` and
+`/animals stop`. It enables all populated sites on the current level in world 0 once
+`Navigation.ready` is true. In `src/server/animals.ts`, `animalSpawnpoints: null`
+selects those sites, a GUID list selects specific sites, and `[]` disables startup
+sites. A command-started site uses the caller's virtual world. `/animals list` lists
+sites; it does not create a population by itself.
 
-The sample limits each site to four slots and all sites to 24, counting
-corpses and pending replacements. Animals roam within 20 metres of home;
-predators acquire players within 18 metres and stop pursuing outside a
+The sample allows up to four slots per site and 256 animal bodies across all sites,
+including corpses. Sites wait when that cap is reached. Animals roam within 20 metres
+of home; predators acquire players within 18 metres and stop pursuing outside a
 45-metre home leash.
 
-After death, replacement waits five to six real minutes and for the corpse
-to be removed. Corpses remain for at least 90 seconds, and are removed only
-with players at least 60 metres away. Spawns need a ready player within
-350 metres and no visible player within 60 metres of the marker or spawn
-point. This is a distance test, not a line-of-sight test.
+After death, replacement waits five to six real minutes and for the corpse to be
+removed. Corpses remain for at least 90 seconds, and are removed only with players at
+least 60 metres away. Spawns need a ready player within 350 metres and no visible
+player within 60 metres of the marker or spawn point. This is a distance test, not a
+line-of-sight test. Living animals are removed when players leave the activation area
+and are far enough from the body, freeing capacity for other sites. Navigation work
+and spawning are spread across server ticks.
+
+The sample prepares animal loot at spawn. Its meat and special-part chances
+are game-mode settings; [Corpse loot](../npc-inventories/) explains the stock
+and harvest APIs.
 
 These limits and timers belong to the sample. They do not use the catalog's
 `respawnDays` or persist across resource/server restarts. A custom population

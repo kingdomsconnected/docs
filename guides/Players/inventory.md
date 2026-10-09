@@ -6,31 +6,62 @@ sidebar:
   order: 35
 ---
 
-The server holds every connected player's inventory, and their game only
-displays it. Nothing a player's game does can create an item, so a script can
-trust what it reads. The server keeps nothing once a player leaves: save what
-you need and restore it when they come back.
+The server holds player and NPC inventory stock, and each player's game displays the
+items it receives. The example below saves inventory rows, equipment and the current
+outfit's quickslots. The server keeps nothing once a player leaves: save what you need
+and restore it when they come back.
 
 ```ts
 type SavedRow = { id: string; item: string; amount: number; metadata: Record<string, unknown>; equipped: number };
-const saved = new Map<string, SavedRow[]>(); // swap for your own storage
+type SavedInventory = { items: SavedRow[]; quickslots: InventoryQuickslots | null };
+const saved = new Map<string, SavedInventory>(); // demo storage, lost on restart
 
 Events.on("playerConnect", (player) => {
-  const items = saved.get(player.nickname);
-  if (items) Inventory.set(player, { items });
+  const inventory = saved.get(player.nickname);
+  if (inventory) {
+    const result = Inventory.set(player, inventory);
+    if (!result.ok) console.log(`Restore refused: ${result.code}`);
+  }
 });
 
 Events.on("playerDisconnect", (player) => {
   const state = Inventory.get(player);
   if (!state) return;
-  saved.set(player.nickname, state.items.map(({ id, item, amount, metadata, equipped }) => ({ id, item, amount, metadata, equipped })));
+  saved.set(player.nickname, {
+    items: state.items.map(({ id, item, amount, metadata, equipped }) => ({ id, item, amount, metadata, equipped })),
+    quickslots: state.quickslots,
+  });
 });
 ```
 
 An inventory exists from `playerConnect` until just after `playerDisconnect`,
 so restoring it at `playerConnect` means the player loads in with it.
 `playerInventoryReady` fires later, once their game shows it for the first
-time. For quick gives and takes by item name, [Items](../items/) is simpler.
+time. This example uses nicknames only to keep the sample short; use an
+authenticated account ID and durable storage in a real server. For quick
+gives and takes by item name, [Items](../items/) is simpler.
+
+## Save quickslots with the inventory
+
+`state.quickslots` describes the current native outfit, or is null when no
+quickslot snapshot exists. Save it with the exact rows it references:
+
+| Field | Saved value |
+| --- | --- |
+| `weapons` | Four entries, each with `primary` and `secondary` row IDs or null. A row can appear in multiple slots. |
+| `items` | Four row IDs or null. |
+| `activeWeapon`, `activeItem` | Selected slot indices from 0 to 3. |
+
+Pass it back as `Inventory.set(player, { items, quickslots })`. Keep row IDs, equipped
+belts and pouches so the references and slot capacity remain valid. A malformed shape
+or a reference outside `items` returns `invalidQuickslots` before changing anything.
+Native item eligibility and capacity still apply. If you omit `quickslots` or pass
+null, normal equipment handling assigns the slots. This saves the current outfit, not
+every outfit the game can hold.
+
+Register [custom item definitions](../custom-items/) before restoring their
+rows, and retain complete `metadata`, including `metadata.custom`.
+For NPC stock and harvest state, see [Corpse loot](../../npcs-and-animals/npc-inventories/).
 
 ## Read an inventory
 
@@ -121,12 +152,14 @@ if (state && coins && coins.amount >= 50) {
 | `poison`, `poisonCharges` | Arrows and bolts only: the poison buff GUID coating it, and uses left. |
 | `onEquipBuffs` | Buff GUIDs the item applies while worn. |
 
-A new item with no properties is quality 1 at full condition. The game can
-wear an item down (a blade blunted in a fight), which arrives as a `wear`
-change. A player who repairs gear with repair kits gets a `repair` change:
-the kits' loss and the equipment's gain arrive together, or not at all. One
-repair may use up to 16 kits; a longer one, or any other improvement their
-game makes on its own (a blade sharpened at a grindstone), is put back.
+A new item with no properties is quality 1 at full condition. The game can wear an
+item down (a blade blunted in a fight), which arrives as a `wear` change. A player who
+repairs gear with repair kits gets a `repair` change: the kits' loss and the
+equipment's gain arrive together, or not at all. One repair may use up to 16 kits;
+longer operations are refused. Sharpening a blade at a native grindstone can increase
+its health. The server checks the station, distance and supported weapon class, then
+records one `sharpen` change. Sharpening spends no repair kit. The server reverses
+unapproved improvements.
 
 ### Change condition without losing metadata
 
@@ -175,7 +208,7 @@ Inventory.set(player, {
 `change.items` lists only the rows that changed, each with `before` and
 `after`: `before: null` is a new row, `after: null` an emptied one.
 `change.reason` says what did it: `add`, `remove`, `properties`, `set` and
-`transfer` for your calls; `use`, `shot`, `wear` and `repair` for the player's
+`transfer` for your calls; `use`, `shot`, `wear`, `repair` and `sharpen` for the player's
 game; `deposit` and `withdraw` for moves into and out of a
 [container](../../world/stashes/); `trade`, `pickpocket`, `drop`, and the
 ground and herb-picking reasons for the other systems.

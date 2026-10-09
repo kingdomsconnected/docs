@@ -29,7 +29,7 @@ TypeScript, so you can build on your own machine and upload the result.
 A release is one archive. Unpack it anywhere, not inside the game folder (nothing is ever copied there):
 
 ```text
-KCDC-1.6.2/
+KCDC/
   client/            KCDCLauncher.exe and the mod itself
   server/            KCDCServer.exe for Windows, with its own resources/
   server-linux/      KCDCServer for Linux, with its own resources/
@@ -78,21 +78,6 @@ the setup.
 The `mafiahub` block in `package.json` tells the server which files to run and send to players; see
 [Resource manifest and lifecycle](../../core-concepts/resources/).
 
-<details>
-<summary>Release 1.5.0 or older: <code>Cannot find name 'Player'</code></summary>
-
-Those releases shipped the gamemode before it took its declarations from npm. Point it at the package
-once, then build as above:
-
-1. In `server/resources/kcdc-gamemode/`, run `pnpm add -D @kingdomsconnected/types@1.6.2` (your
-   release's version).
-2. In `tsconfig.json`, set `"types": ["@kingdomsconnected/types/server"]` and delete the
-   `scripting-api/generated/server-api.d.ts` entry from `include`.
-3. In `src/client/tsconfig.json`, set `"types": ["@kingdomsconnected/types/client"]` and delete the
-   `scripting-api/generated/client-api.d.ts` entry from `include`.
-
-</details>
-
 ## 4. Start the server
 
 From the `server/` folder:
@@ -127,10 +112,13 @@ The launcher finds the game on its own the first time:
 | Your copy | What the launcher does |
 | --- | --- |
 | Steam, with Steam running | Asks Steam where the game is installed. Nothing to pick |
-| GOG, any other copy, or Steam not running | Opens a file dialog. Pick `Bin\Win64MasterMasterSteamPGO\KingdomCome.exe` inside the game folder |
+| Microsoft Store / Xbox app (PC Game Pass) | Detects the installed package after trying Steam |
+| GOG or a copy not detected automatically | Opens a file dialog. Pick GOG's `Bin\Win64MasterMasterGogPGO\KingdomCome.exe` or Steam's `Bin\Win64MasterMasterSteamPGO\KingdomCome.exe` |
 
-Either way it remembers the answer in `client/KCDC_launcher.json`, so later launches skip the
-question. A picked executable keeps winning over Steam from then on. Delete that file to choose again.
+The launcher saves the game path in `client/KCDC_launcher.json`, so later launches use
+the same copy. A manually selected executable takes precedence over automatic store
+detection. Delete that file to choose again. The launcher also registers `kcdc://`
+links for the current Windows user on startup.
 
 The game loads the level named in `server.json`, and the gamemode greets you in chat.
 
@@ -218,8 +206,10 @@ Corepack is not enabled in this terminal. Run `corepack enable` again, then open
 <summary>The launcher cannot find the game</summary>
 
 With a Steam copy, start Steam before the launcher, which asks Steam where the game is installed.
-Otherwise pick `KingdomCome.exe` in the dialog: it lives in `Bin\Win64MasterMasterSteamPGO\` under
-the game folder, and the launcher refuses any other file. Cancelling the dialog closes the launcher.
+The launcher next tries the installed Microsoft Store / Xbox app
+package. If it still asks, pick `KingdomCome.exe` in the dialog: Steam uses
+`Bin\Win64MasterMasterSteamPGO\` and GOG uses `Bin\Win64MasterMasterGogPGO\`
+under the game folder. Cancelling the dialog closes the launcher.
 
 If the game moved, or you picked the wrong copy, delete `KCDC_launcher.json` next to the launcher and
 it will ask again.

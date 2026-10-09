@@ -195,6 +195,17 @@ track the ids you spawned and destroy them in `resourceStop`, as
 The default gamemode's `/drop <item> [amount]` (with `list`, `remove <id>` and
 `clear`) is a working example; quote names with spaces.
 
+## Custom types and crossbow ammunition
+
+For items with your own name, weight, price and private per-instance data,
+use [Custom items](../custom-items/). Register the type on the server before
+giving or restoring it. A copied appearance alone does not add native use
+behavior.
+
+Players can keep bolts equipped alongside arrows. Each accepted crossbow shot spends
+one bolt, and recoverable bolts can be picked up from the ground. Do not subtract
+another bolt in a script reacting to a shot notification.
+
 ## Related
 
 - [Inventories](../inventory/): rows, item quality, transfers, saving between sessions

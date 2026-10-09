@@ -52,6 +52,9 @@ handler itself:
   lands on the level's default start point.
 - `horseMounting`, `horseGearChanging`, `playerPickpocketStart`, `doorInteract`:
   return `false` to refuse. An async handler cannot refuse.
+- `playerConsuming`, `playerConsumptionEffects`, `playerPoisonAbsorbing`:
+  return `false` synchronously to refuse the serving, its native effects, or
+  added pot poison respectively. See [Food and potions](../../players/consumables/).
 
 On the client, `questTrackingChanged`, `poiDiscovered` and `noclipChanged` do
 not await handler promises. Your async handler still runs; nothing waits.
@@ -150,6 +153,9 @@ Guides: [Spawn NPCs](../../npcs-and-animals/npcs/),
 | `npcRevive` | `npc` | A dead NPC is brought back. |
 | `npcInteract` | `npc, player` | A player presses use on an `interactable` NPC. |
 | `npcSimulatorChange` | `npc, player?` | The client running it changes. `null` means dormant. |
+| `npcInventoryReady` | `npc` | Initial server-owned stock is established. |
+| `npcInventoryChanged` | `npc, change` | Stock changes, including committed loot transfers. |
+| `npcHarvested` | `npc, player` | Animal harvesting completes. |
 
 NPC damage and death attackers are `Player | Npc | null`.
 [Named patrol routes](../../npcs-and-animals/patrol-routes/) explains the
@@ -221,6 +227,26 @@ Guides: [Quests](../../quests-dialogue-and-shops/quests/),
 Chat lines from the server arrive through a reserved `chatMessage` event that
 the declarations mention but do not type; see
 [Chat and /commands](../../players/chat/).
+
+## Inventory, consumption and books
+
+| Side | Event | Arguments and purpose |
+| --- | --- | --- |
+| Server | `playerInventoryReady` | `player`: the initial inventory is displayed. |
+| Server | `playerInventoryChanged` | `player, change`: a committed inventory change. |
+| Server | `playerCustomItemUse` | `player, row, revision`: a validated custom use request; no automatic consumption. |
+| Server | `playerConsuming` | `player, consumption`: allow or refuse the serving. |
+| Server | `playerConsumptionEffects` | `player, consumption`: keep or suppress its native effects. |
+| Server | `playerPoisonAbsorbing` | `player, consumption, buff`: allow or block added pot poison. |
+| Server | `playerConsumed` | `player, consumption`: successful native use was confirmed. |
+| Server | `playerStatsChanged` | `player, changes`: stat changes grouped by tick, with previous and current values. |
+| Client | `bookOpened` | `id`: the requested book reached the player's hands. |
+| Client | `bookClosed` | `id, reason`: reading ended or opening failed; promises are not awaited. |
+
+See [Inventories](../../players/inventory/),
+[Custom items](../../players/custom-items/),
+[Food and potions](../../players/consumables/) and
+[Books and letters](../../user-interface/books/) for timing and failure cases.
 
 ## Emit your own events
 

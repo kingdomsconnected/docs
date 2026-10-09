@@ -190,6 +190,19 @@ the session ends. This affects the local character's remarks, not all
 dialogue or voice chat. Use the event if your resource wants to present a
 suppressed line differently.
 
+## Show your own nametag
+
+The client can include its own player in the nametag display:
+
+```ts
+Nametags.setSelfVisible(true);
+console.log(Nametags.isSelfVisible());
+```
+
+Call `setSelfVisible(false)` to hide it again. This is a local display choice;
+it does not change who can see your tag on other clients. Global nametag
+visibility and the entity's own nametag settings still apply.
+
 ## Related
 
 - [Map markers and blips](../map/): your own marks on the compass and map.

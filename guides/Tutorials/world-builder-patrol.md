@@ -11,8 +11,7 @@ route stays in the project, so moving a checkpoint needs no code changes.
 
 ## Before you start
 
-Use matching client and server builds with named patrol support and the
-TypeScript setup from [Use TypeScript](../../getting-started/typescript/).
+Use the TypeScript setup from [Use TypeScript](../../getting-started/typescript/).
 Install the level's [navigation mesh](../../hosting-a-server/server-json/#modnavmesh)
 on the server. This tutorial uses Kuttenberg and world 0.
 
@@ -72,7 +71,7 @@ then add this manifest:
   "version": "1.0.0",
   "scripts": { "build": "tsc -p tsconfig.json" },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.6.2",
+    "@kingdomsconnected/types": "latest",
     "typescript": "^5.9.2"
   },
   "mafiahub": { "serverScripts": ["dist/server/index.js"] }

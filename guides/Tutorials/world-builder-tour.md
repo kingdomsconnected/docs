@@ -52,7 +52,7 @@ at a time; players in the default global world can join it too.
   "version": "1.0.0",
   "scripts": { "build": "tsc -p tsconfig.json && tsc -p src/client/tsconfig.json" },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.6.2",
+    "@kingdomsconnected/types": "latest",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

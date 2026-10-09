@@ -185,6 +185,13 @@ errand.untrack(target.id); // markers off; errand.track(target.id) puts them bac
 A quest reaches everyone in its virtual world (or its one player) wherever
 they are. An objective's `position` only decides where its map marker goes.
 
+## Show objective completion and failure
+
+Set an objective's `progress` to `"done"` or `"failed"` with
+`quest.setObjective(index, { progress: "done" })`. The game marks the objective as
+completed or canceled, shows its usual objective notification, and removes it from the
+active list. Your script still decides when the whole quest is finished.
+
 ## Related
 
 - [Track quests and mark objectives](../quest-tracking/): the tracker, map markers and `questTrackingChanged`.

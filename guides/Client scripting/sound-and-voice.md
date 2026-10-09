@@ -178,6 +178,12 @@ These four events are not in the declarations' `EventMap` yet, so their
 arguments arrive as `unknown` in TypeScript. Cast the player as above.
 :::
 
+## Voice while a UI has focus
+
+Push-to-talk is blocked while a web view has input focus or controls are locked.
+Players can still hear others, and voice activation still transmits speech. If a menu
+should mute voice chat, your game mode must do that separately.
+
 ## Related
 
 - [Discord Rich Presence](../discord-presence/), for the player's Discord status

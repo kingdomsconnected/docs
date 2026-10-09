@@ -155,6 +155,18 @@ refresh **Server browser** in the game.
 | Wrong name or region | Edit the registration on mafiahub.dev; no restart needed |
 | No logo, only a letter | The logo URL is empty, not `http` or `https`, or the image does not load. Open the URL in a browser to check it |
 
+## Realm details and host links
+
+Selecting a server opens its details beside the list: logo, name, region,
+address, player count and version. The password field and **Join realm**
+button are in that panel. Selection alone does not connect.
+
+Publish your Discord invite and website through the MafiaHub dashboard's server
+metadata (`discord_invite_url` and `website_url` ). The browser shows links supplied
+by the listing. Valid HTTP or HTTPS links open in the player's web browser while the
+game menu stays open. Configure these fields in the listing metadata; `server.json`
+does not provide them.
+
 ## Related
 
 - [server.json settings](../server-json/): every key the server reads.

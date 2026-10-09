@@ -31,6 +31,11 @@ Errors point at the compiled file in `dist/`, which stays close to your `.ts`. F
 `"sourceMap": true` to `tsconfig.json` and read the `.map` next to each file.
 :::
 
+## Release client log name
+
+The release client writes `KCDC.log`. Include this log and the client and server
+revision numbers when reporting a problem.
+
 ## When a script throws
 
 **Inside an event handler**, the throw is caught and logged with the event's name and a stack trace.

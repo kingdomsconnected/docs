@@ -101,6 +101,17 @@ Set `KCDC_CONTRACT_CHANNEL`, `KCDC_CONTRACT_REVISION`, or `KCDC_SERVICES_API_URL
 
 ### Building against a local contract
 
+From the mod checkout, run `node scripts/build_scripting_contract.mjs --out
+<absolute-contract-directory>`. From this docs checkout in PowerShell:
+
+```powershell
+$env:KCDC_CONTRACT_ROOT = '<absolute-contract-directory>'
+pnpm check
+pnpm build
+pnpm check:site
+git diff --check
+```
+
 Until a contract has been published, and whenever you want to see an unpublished API change rendered, point the generator at a contract bundle built from a mod checkout:
 
 ```sh

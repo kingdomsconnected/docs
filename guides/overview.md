@@ -37,6 +37,8 @@ Read **Getting started** in order:
 | Players | Teleport, kick, revive or rename a player | [Teleport, kick and other actions](../players/actions/) |
 | Players | Give, take or drop items, read equipment | [Items](../players/items/) |
 | Players | Carry sacks, baskets or a downed player in the arms | [Carrying](../players/carrying/) |
+| Players | Register custom types and personalize their inventory rows | [Custom items](../players/custom-items/) |
+| Players | Approve food and potions or replace their effects | [Food and potions](../players/consumables/) |
 | Players | Read, move or save a player's inventory, set item quality | [Inventories](../players/inventory/) |
 | Players | Let players brew potions, refuse or reward a batch, refund an unfinished craft | [Alchemy](../players/alchemy/) |
 | Players | Let players forge at smitheries, teach recipes, decide what a failed workpiece costs | [Smithing](../players/smithing/) |
@@ -61,6 +63,7 @@ Read **Getting started** in order:
 | NPCs and animals | Draw, preview and run named NPC patrols | [Named patrol routes](../npcs-and-animals/patrol-routes/) |
 | NPCs and animals | Order melee and bow combat | [NPC combat](../npcs-and-animals/npc-combat/) |
 | NPCs and animals | Spawn predators and prey, choose population and respawn rules | [Animal populations](../npcs-and-animals/animals/) |
+| NPCs and animals | Set corpse loot and harvest animals | [Corpse loot](../npcs-and-animals/npc-inventories/) |
 | NPCs and animals | React when an NPC is hit, dies or is talked to | [NPC events](../npcs-and-animals/npc-events/) |
 | NPCs and animals | Spawn horses or dogs | [Horses](../npcs-and-animals/horses/), [Dogs](../npcs-and-animals/dogs/) |
 | NPCs and animals | Give a player their own horse, keep it when they leave | [Horse owners](../npcs-and-animals/horse-owners/) |
@@ -72,14 +75,19 @@ Read **Getting started** in order:
 | Core concepts | Ship my own models, textures, animations, sounds or effects, or replace the game's | [Custom assets](../core-concepts/custom-assets/) |
 | Client scripting | Read the local player, bind a key | [Local player](../client-scripting/local-player/), [Key binds](../client-scripting/input/) |
 | Client scripting | Let a player follow another player or an NPC guide | [Following](../client-scripting/following/) |
+| Client scripting | Replace an item's native inventory action | [Inventory use](../client-scripting/inventory-use/) |
+| Client scripting | Cut or glide to a scripted view | [Camera shots](../client-scripting/camera-shots/) |
 | Client scripting | Move the camera, fly a free camera | [Camera and noclip](../client-scripting/camera/) |
 | Client scripting | Play sounds, use voice chat, set Discord status | [Sound and voice](../client-scripting/sound-and-voice/), [Discord presence](../client-scripting/discord-presence/) |
 | Client scripting | Make the screen look drunk, hurt or dreamlike | [Screen effects](../client-scripting/screen-effects/) |
 | Client scripting | Draw debug lines, boxes and areas in the world | [Debug gizmos](../client-scripting/gizmos/) |
+| User interface | Show your own books and letters in the player's hands | [Books and letters](../user-interface/books/) |
 | User interface | Show an HTML menu and talk to it | [Web views](../user-interface/web-views/), [Page data bridge](../user-interface/page-bridge/) |
 | User interface | Show a HUD message, nametag or map blip | [HUD](../user-interface/hud/), [Map and blips](../user-interface/map/) |
 | User interface | Show a "Press [key] to ..." hint, let a player design their look | [Action hints](../user-interface/action-hints/), [Character creator](../user-interface/character-creator/) |
 | User interface | Turn off the game's own inventory, map or journal | [Native UI screens](../user-interface/native-ui/#turn-off-the-games-own-menus) |
+| Tutorials | Give a personalized letter and open its pages | [Readable custom letter](../tutorials/custom-letter/) |
+| Getting started | Try items, crafting and companions on a development server | [Development playground](../getting-started/playground/) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
 | Tutorials | Connect a World Builder route to a guard | [Village patrol](../tutorials/world-builder-patrol/) |
 | Tutorials | Defend a yard drawn in World Builder | [Guarded yard](../tutorials/world-builder-sentry/) |

@@ -6,7 +6,7 @@ sidebar:
   order: 103
 ---
 
-A player needs Kingdom Come: Deliverance II (Steam, GOG or any other copy),
+A player needs Kingdom Come: Deliverance II (Steam, GOG, or Microsoft Store / Xbox app),
 the `client/` folder of a KCDC release, and your server's address. The first part of this page is
 the checklist to send them; the second is your side: making the server
 reachable.
@@ -15,10 +15,11 @@ reachable.
 
 1. **Install.** Unpack a KCDC release anywhere. Nothing goes into the game
    folder and no game file is modified.
-2. **Start Steam**, if the game is on Steam. The launcher asks Steam where
-   the game is. For any other copy, or when Steam cannot answer, it asks for
-   `Bin\Win64MasterMasterSteamPGO\KingdomCome.exe` under the game folder
-   the first time instead.
+2. **Start Steam** if you own the Steam copy. The launcher also detects
+   Microsoft Store / Xbox app copies, including PC Game Pass.
+   Without a saved game path, it tries Steam, then Microsoft Store, then
+   asks you to select the executable. For GOG, pick `Bin\Win64MasterMasterGogPGO\KingdomCome.exe`;
+   the Steam executable is under `Bin\Win64MasterMasterSteamPGO\`.
 3. **Launch.** Run `client\KCDCLauncher.exe`.
 4. **Connect.** On the KCDC menu, set your nickname, then pick a server:
    - **Server browser**: servers listed on the masterlist. A padlock marks
@@ -27,9 +28,10 @@ reachable.
      password empty unless the host gave you one.
    - **Quick connect**: `127.0.0.1:27015`, a server on the same machine.
 
-Use the same KCDC version as the server. Nothing refuses a mismatch; it just
-misbehaves. The launcher updates itself, so the usual culprit is a server
-left behind after an update.
+Use matching KCDC client and server builds. The browser can warn about a known version
+mismatch, and continuing may cause connection or gameplay problems. The launcher
+updates itself, so also check whether the server has been updated. See
+[Server browser](../server-browser/#version-confirmation).
 
 :::caution[Unpack, do not copy]
 The launcher updates itself using the channel stamped in

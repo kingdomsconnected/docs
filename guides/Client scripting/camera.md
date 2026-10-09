@@ -28,7 +28,8 @@ the eye `position`, the unit vectors `forward`, `right` and `up` (roll
 included), the vertical `fov` in degrees and the `aspectRatio`.
 
 It is whichever camera the game has now: behind the player, in a dialogue, in a
-cutscene or in a free flight. `Camera` cannot move it; only `NoClip` can.
+cutscene or in a free flight. For a fixed view or a glide between points,
+use [Camera.setShot](../camera-shots/). Use `NoClip` for free flight.
 
 ## Aim through a point on screen
 
@@ -81,7 +82,7 @@ it may enable it, and see [Server vs client authority](../../core-concepts/autho
 | `enabled` | the flight started |
 | `alreadyActive` | one was already running; the new options are not applied |
 | `noCamera` | there is no level to put the camera in |
-| `cameraBusy` | the World Builder (`MapEditor`) is open and holds the camera |
+| `cameraBusy` | World Builder (`MapEditor`) or a scripted camera shot holds the camera |
 
 **F7** opens World Builder when this player has access; a client resource can
 also call `MapEditor.open()`. See

@@ -58,17 +58,11 @@ server's can `kick` or `teleport`). One program cannot load both, so each half h
 The manifest now points at compiled files in `dist/`. `files` ships the whole compiled client folder,
 because a client split across several files needs all of them.
 
-Install the compiler and the declarations for the version your server runs (here 1.6.2):
+Install the compiler and API declarations:
 
 ```sh title="In resources/hello/"
-pnpm add -D typescript @kingdomsconnected/types@1.6.2
+pnpm add -D typescript @kingdomsconnected/types@latest
 ```
-
-:::caution[Match the server's version]
-A newer package can declare methods an older server does not have, and the compiler will happily let
-you call them. The server's status page, `http://<server>:27016/`, shows its version as
-`mod_version`.
-:::
 
 ## 2. The server program
 
@@ -197,11 +191,11 @@ runtime. A clean build prints nothing; read the output before you `ensure`.
 
 ## Update after a server upgrade
 
-Move the package to the server's new version and rebuild. Removed or renamed methods become compile
-errors instead of surprises in production:
+Update the declarations and rebuild. Removed or renamed methods become
+compile errors instead of surprises in production:
 
 ```sh title="In resources/hello/"
-pnpm add -D @kingdomsconnected/types@1.6.2
+pnpm add -D @kingdomsconnected/types@latest
 pnpm run build
 ```
 

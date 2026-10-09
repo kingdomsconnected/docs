@@ -51,7 +51,7 @@ The resource has a server program only.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.6.2",
+    "@kingdomsconnected/types": "latest",
     "typescript": "^5.9.2"
   },
   "mafiahub": {

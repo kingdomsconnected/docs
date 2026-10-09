@@ -141,6 +141,26 @@ A player is also an [`Entity`](../../reference/server/classes/Entity.md), so
 `player.setVirtualWorld(world)` ([virtual worlds](../../core-concepts/virtual-worlds/))
 work too.
 
+## Hide a player's body
+
+The server can hide or show a player's body:
+
+```ts
+player.setVisible(false);
+// Later, when the effect ends:
+player.setVisible(true);
+```
+
+This hides the body, clothes, armor, sheathed weapons and held items on the owner's
+screen and other clients. Players who come into range later also see the body as
+hidden. `player.visible` reads the owning client's reported state; the setter returns
+whether the request was sent.
+
+The hidden player still has collision, can take damage, use weapons and die, and NPCs
+can still detect them. Nametags are separate: use `player.setNametagVisible(false)` if
+your mode should hide those too. The body stays hidden until another call or the
+player disconnects. Restore visibility when your effect ends.
+
 ## Related
 
 - [Join, spawn and respawn](../join-and-spawn/), for spawn points and death

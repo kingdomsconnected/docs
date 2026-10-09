@@ -58,10 +58,11 @@ quest.track(player.id);   // just this player
 quest.untrack(player.id); // stop: its markers leave the map and compass
 ```
 
-Both return how many clients were told, `0` when that player does not have the
-quest. `Quest.give` with `track: true` does the same for every recipient, and
-a quest given a moment ago can be tracked at once: the client waits for it to
-arrive.
+Both return how many clients were told, `0` when that player does not have the quest.
+`Quest.give` with `track: true` does the same for every recipient, and a quest given a
+moment ago can be tracked at once: the client waits for it to arrive. With
+`track: true`, tracking starts before the quest announcement, so the announcement
+shows the quest as tracked.
 
 :::note
 `track` is an instruction, not a lock. The player can untrack the quest from

@@ -48,7 +48,7 @@ It is all server code.
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.6.2",
+    "@kingdomsconnected/types": "latest",
     "typescript": "^5.9.2"
   },
   "mafiahub": {
@@ -283,6 +283,11 @@ Events.on("npcSimulatorChange", (npc, player) => {
 ```
 
 ## Next steps
+
+To hold the camera at a fixed position or glide between points, use the
+[scripted camera API](../../client-scripting/camera-shots/). Its duration controls the
+transition, and `clearShot` returns to the player's view. Use `Controls` separately if
+players should not move during the scene.
 
 - Add a step type that waits for the viewer to press use on an actor, with `npcInteract` from [NPC damage, death and interaction](../../npcs-and-animals/npc-events/).
 - Swap `moveTo` for a patrol or follow order from [Move NPCs](../../npcs-and-animals/npc-orders/).

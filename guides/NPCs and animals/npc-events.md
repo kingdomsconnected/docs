@@ -127,6 +127,13 @@ Named and point-array patrols also raise `patrolWaypoint(npc, info)` and
 See [Named patrol routes](../patrol-routes/#read-progress) for statuses and
 how they relate to `npcIntentDone`.
 
+## Inventory and harvest events
+
+`npcInventoryReady(npc)` fires when the starting inventory is ready.
+`npcInventoryChanged(npc, change)` reports committed changes, including loot
+transfers. `npcHarvested(npc, player)` fires when a player finishes harvesting an
+animal. See [Corpse loot](../npc-inventories/) for scripted stock and persistence.
+
 ## Related
 
 - [Spawn NPCs](../npcs/): options, simulation and pinning.

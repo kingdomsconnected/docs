@@ -166,6 +166,14 @@ From [`BasePlayer`](../../reference/server/classes/BasePlayer.md):
 | `ip` | Remote address, or `""`. |
 | `steamId`, `discordId`, `hardwareId` | Identifiers, each `""` when unavailable. |
 
+## Observe changes
+
+The server's `playerStatsChanged(player, changes)` event reports changes to resource
+and derived stats once per tick. Each entry contains `stat`, `previous` and `current`.
+The event cannot be cancelled and does not identify which effect caused a change. The
+first report for a body sets the baseline. See [Food and potions](../consumables/) for
+using these observations alongside approved consumption.
+
 ## Related
 
 - [Join, spawn and respawn](../join-and-spawn/), for when reads become valid

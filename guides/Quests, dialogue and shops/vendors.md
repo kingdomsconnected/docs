@@ -158,6 +158,19 @@ Events.on("vendorClosed", (session, reason) => {
 - The default gamemode's `src/server/commands/vendor.ts` is a working example
   (`/vendor stall`, `/vendor here`).
 
+## Sell custom items
+
+Register the [custom type](../../players/custom-items/) before setting stock.
+Each `Vendor.setStock` row can include `metadata`, including display overrides
+and private `custom.data`. Purchases receive those properties; `vendorTrade`
+lines include the metadata of the actual variant bought or sold.
+
+Give the type a positive base price so it appears in the native shop. The
+stock price alone does not make a zero-base-price custom type visible.
+The native price list supports one stock row per class. Selling an item does
+not automatically put that variant into the vendor's stock; implement any
+resale policy in your game mode.
+
 ## Related
 
 - [Build an NPC shop](../../tutorials/market-stall/): an NPC, a greeting and a vendor together.

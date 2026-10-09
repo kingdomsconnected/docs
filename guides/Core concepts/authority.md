@@ -38,6 +38,8 @@ Events.on("playerCommand", (player, command) => {
 | A horse standing idle | The server | Spawn, move and change it directly. |
 | A horse with a rider | The rider's client | Handed over on `horseMount`, back on `horseDismount`. |
 | An NPC | The server; a nearby client runs the body | Identity, orders and health are the server's. Writes apply at once. |
+| NPC inventory and harvest state | The server | Set stock with `Inventory.set`, or wait for the client to report the starting inventory. See [Corpse loot](../../npcs-and-animals/npc-inventories/). |
+| Food and potion use | Server decision, native client execution | Approve the serving and effects; react to confirmed use. See [Food and potions](../../players/consumables/). |
 | Props, markers, particle effects, ground items, stashes, quests | The server | Spawn, change and destroy directly. |
 | World clock and weather | The server | Every client adopts the server's values. |
 | Entity state bags | The server | Only the server writes; clients read. See [State bags](../state/). |

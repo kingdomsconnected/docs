@@ -205,3 +205,8 @@ those changes with everyone, export and deploy them using the steps above.
 
 See [server.json settings](../../hosting-a-server/server-json/#modworld_resources)
 for loading several exports or assigning resource names.
+
+## Offline character vitals
+
+Offline World Builder protects your character's vitals while you build. On a
+multiplayer server, the server's rules still apply.
