@@ -15,8 +15,9 @@ In **Areas**, choose **+ Box**, **+ Shape** or **+ Sphere**. Draw it in the
 world, select it, and set its ID and name in the inspector. Use IDs such as
 `village.yard`, keeping them unique across your exports and scripts.
 
-An area is a region for scripts to test. Drawing one does not create a wall,
-spawn an NPC or make native AI enforce a rule. Labels and metadata let your
+By default, an area is a region for scripts to test. Enable **Collision** to
+add an invisible physical boundary in **1.6.6**. Drawing an area does not
+spawn an NPC or make native AI enforce a gameplay rule. Labels and metadata let your
 game mode describe its purpose. A virtual-world setting can restrict it to
 one world; leaving that unset makes it available in every world.
 
@@ -35,10 +36,61 @@ one world; leaving that unset makes it available in every world.
 fewer than three polygon points would remain, it removes the entire area.
 **Escape** or **Move whole area** returns to the whole-area gizmo.
 
-Hold **Shift** while dragging a translate gizmo to snap to ground. This also
-works for points and edges. If no ground is found, the translation stays
-where you moved it. Keep the vertical bounds high enough to include a
+Translation snap applies to new areas, whole-area moves and handles. Hold
+**Shift** while dragging to put a whole area's bottom on the ground; points
+and edges snap directly to the surface. **Shift** while clicking **+ Box**,
+**+ Shape** or **+ Sphere** grounds the new area. Ground snapping takes
+precedence over the vertical grid step and ignores the area's own collision.
+If no ground is found, the translation stays where you moved it.
+Keep the vertical bounds high enough to include a
 standing body, and test entry from both sides of the boundary.
+
+## Make an invisible boundary
+
+Select an authored area and enable **Collision**. Boxes, polygons and spheres
+block crossing from either side while leaving their interior empty. Boxes
+and polygons include a floor and ceiling. Press **F7** and walk against the
+boundary to check its position.
+
+Collision starts disabled, including on existing projects. Moving or
+reshaping the area updates it; undo restores the setting. Turning off
+**Enabled** disables both the trigger and collision. The setting survives
+project saves, blueprints, world exports and copied API calls.
+
+Walls are 0.2 metres thick, centred on the drawn outline. Box dimensions and
+sphere radii must exceed 0.2 metres. Polygons need a height above 0.2 metres
+and a simple outline without crossing or repeated edges; concave outlines
+are supported. Their floor and ceiling remain horizontal. Spheres use a
+polygon mesh, which becomes coarser on very large spheres.
+
+Enabling or moving a wall does not move a player already intersecting it
+to a chosen side. Test boundaries before opening the area to players.
+
+Server scripts can create and toggle the same boundary:
+
+```ts
+const boundary = Area.create({
+  id: "courtyard.boundary",
+  type: "box",
+  position: new Vector3(2500, 1500, 100),
+  min: new Vector3(-10, -10, 0),
+  max: new Vector3(10, 10, 8),
+  collision: true,
+});
+
+boundary.collision = false; // Keep the area, remove its physical boundary.
+boundary.collision = true;
+```
+
+Invalid collision shapes are rejected. `area.enabled = false` disables
+the boundary until re-enabled; `area.toJSON()` includes `collision`.
+Level areas are read-only, so make an editable copy before adding collision.
+Server boundaries follow the area's virtual world and reach later joiners.
+They disappear when the area is destroyed or its world resource unloads.
+Use compatible **1.6.6** clients and server for multiplayer collision.
+
+MCP's `wb_area_create` and `wb_area_update` accept the same `collision`
+boolean inside the area definition.
 
 ## Group and reuse areas
 

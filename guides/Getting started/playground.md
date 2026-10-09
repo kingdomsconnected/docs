@@ -18,7 +18,8 @@ Before enabling the playground on a shared server, edit `config.allowed` in
 ## Install from a bundle containing it
 
 1. Open `resources/optional/kcdc-playground/` in a terminal.
-2. Run `pnpm install --frozen-lockfile` and `pnpm run build`.
+2. In **1.6.6**, run `npm ci` and `npm run build` using the supplied
+   `package-lock.json`.
 3. Move the built folder to `resources/kcdc-playground/`, beside
    `kcdc-gamemode`.
 4. Start the server. Resources directly under `resources/` load automatically.

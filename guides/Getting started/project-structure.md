@@ -197,7 +197,7 @@ functions. If it touches `Chat`, `Horse` or `LocalPlayer`, one build fails.
 
 | Half | How |
 | --- | --- |
-| Server | Runs in Node.js, so packages in the resource's `node_modules` import normally (`import { z } from "zod"`). Run `pnpm install` on the server machine. |
+| Server | Runs in Node.js, so packages in the resource's `node_modules` import normally (`import { z } from "zod"`). Run `npm install` on the server machine. |
 | Client | The loader only follows relative paths inside the resource; `require("zod")` is refused. Bundle the client half into one file with a bundler such as [esbuild](https://esbuild.github.io/) and point `clientScripts` at it. |
 
 ## Living next to other resources

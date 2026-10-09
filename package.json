@@ -13,7 +13,7 @@
     "check:site": "node scripts/check_guides.mjs --dist"
   },
   "devDependencies": {
-    "@kingdomsconnected/types": "1.6.4",
+    "@kingdomsconnected/types": "1.6.6",
     "typescript": "5.9.3"
   }
 }

@@ -34,9 +34,11 @@ updates itself, so also check whether the server has been updated. See
 [Server browser](../server-browser/#version-confirmation).
 
 :::caution[Unpack, do not copy]
-The launcher updates itself using the channel stamped in
-`client\.mafiahub\channel`. Copying the binaries out of the archive leaves
-that stamp behind, and the launcher cannot update.
+Unpack the full client archive with its dependencies. In **1.6.6**, the
+launcher asks the update service which channel the installed build belongs
+to. The archive's `client\.mafiahub\channel` is an initial hint, rather than
+a requirement that permanently decides future updates. A missing hint no
+longer blocks startup solely because the installation is unstamped.
 :::
 
 The launcher remembers the game it found or was given in

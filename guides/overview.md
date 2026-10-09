@@ -53,7 +53,10 @@ Read **Getting started** in order:
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
 | World | Build a trebuchet or cannon, fire it, let players work it | [Siege engines](../world/siege-engines/) |
 | World | Create a map offline, save blueprints and export it to a server | [World Builder](../world/world-builder/) |
-| World | Draw and group areas for gameplay rules | [World Builder areas](../world/world-builder-areas/) |
+| World | Draw gameplay areas and invisible collision boundaries | [World Builder areas](../world/world-builder-areas/) |
+| World | Let an assistant or local application control the offline editor | [MCP automation](../world/world-builder-mcp/) |
+| World | Align objects and organize a project with favorites and layers | [Grid, favorites and layers](../world/world-builder-editing/) |
+| World | Inspect a scene at dusk or in rain | [Preview light and weather](../world/world-builder-environment/) |
 | World | Find exported objects, areas and routes in a server script | [World exports in scripts](../world/world-resources/) |
 | World | Refill or disable a shared stew pot | [Shared stew pots](../world/cook-pots/) |
 | World | Remove or move the level's own walls and gates from scripts | [Level edits](../world/level-edits/) |
@@ -90,6 +93,8 @@ Read **Getting started** in order:
 | Getting started | Try items, crafting and companions on a development server | [Development playground](../getting-started/playground/) |
 | Tutorials | Build a complete feature end to end | [/command system](../tutorials/command-system/), [NPC shop](../tutorials/market-stall/), [Capture-zone mode](../tutorials/team-rounds/) |
 | Tutorials | Connect a World Builder route to a guard | [Village patrol](../tutorials/world-builder-patrol/) |
+| Tutorials | Call editor tools directly from PowerShell over HTTP | [World Builder HTTP](../tutorials/world-builder-http/) |
+| Tutorials | Recreate a route and inspect a guard with an assistant | [MCP patrol tutorial](../tutorials/world-builder-mcp-patrol/) |
 | Tutorials | Defend a yard drawn in World Builder | [Guarded yard](../tutorials/world-builder-sentry/) |
 | Tutorials | Lead a player on an authored NPC route | [Walking tour](../tutorials/world-builder-tour/) |
 | Hosting a server | Run a dedicated server, change its settings, load world exports | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |

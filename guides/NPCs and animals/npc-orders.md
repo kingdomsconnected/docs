@@ -176,6 +176,12 @@ route:
 - `kinematic`: the client moves the body itself, in straight lines with one
   gait and no walk animation.
 
+Omitting `locomotion`, or passing `undefined` when spawning, keeps the native
+default. Explicit values must be exactly `"native"` or `"kinematic"`;
+invalid strings and other values throw before changing the NPC. Starting a
+patrol keeps its existing locomotion mode. If a guard slides along its route,
+check that it was not explicitly set to `kinematic`.
+
 ## Say, gesture or teleport
 
 These happen once and leave the current order alone:

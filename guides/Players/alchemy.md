@@ -12,6 +12,11 @@ them and works out the result itself, so a modified client cannot brew
 something from nothing. Your script decides who may use a table and whether a
 result is granted.
 
+In **1.6.6**, nearby players see the brewer at the station, including players
+who come into view after brewing starts. This observer animation does not
+change the crafting events or recipe rules below. Update both clients and
+server for station synchronization.
+
 ```ts
 Events.on("craftingStarting", (player, proposal) => {
   // Only the global world has working tables on this server.

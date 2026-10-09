@@ -211,7 +211,7 @@ resource automatically releases any follow action it owns.
 
 ## Try it
 
-1. Run `pnpm install` and `pnpm build`, then `ensure village-tour` in the
+1. Run `npm install` and `npm run build`, then `ensure village-tour` in the
    server console.
 2. Find the guide at waypoint one and press the game's talk key. Press F8
    nearby after finishing the interaction.

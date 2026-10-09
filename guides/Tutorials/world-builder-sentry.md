@@ -172,7 +172,7 @@ return can still fail if a door locks or an obstacle blocks the path.
 
 ## Try it
 
-1. Run `pnpm install` and `pnpm build`, then `ensure village-sentry` in the
+1. Run `npm install` and `npm run build`, then `ensure village-sentry` in the
    server console. Join in world 0 or the default global world.
 2. Stay outside the yard. The guard patrols.
 3. Enter the yard within 30 metres. The guard draws his weapon and attacks.

@@ -159,7 +159,7 @@ areas and the route belong to the server and remain loaded.
 
 ## Try it
 
-1. In the resource folder, run `pnpm install` and `pnpm build`.
+1. In the resource folder, run `npm install` and `npm run build`.
 2. In the server console, run `ensure village-patrol`.
 3. Join and walk to waypoint one. A player in world 0 or the global world
    sees Radim walk the route and wait at each point. Check the server log

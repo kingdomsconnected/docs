@@ -32,7 +32,7 @@ every release. Its version is the release version.
 :::note[Why two programs?]
 The server's `Player` and the client's `Player` are different classes with the same name (only the
 server's can `kick` or `teleport`). One program cannot load both, so each half has its own
-`tsconfig.json`, naming its side of the package, and `pnpm run build` compiles them in turn.
+`tsconfig.json`, naming its side of the package, and `npm run build` compiles them in turn.
 :::
 
 ## 1. package.json
@@ -61,7 +61,7 @@ because a client split across several files needs all of them.
 Install the compiler and API declarations:
 
 ```sh title="In resources/hello/"
-pnpm add -D typescript @kingdomsconnected/types@latest
+npm install --save-dev typescript @kingdomsconnected/types@latest
 ```
 
 ## 2. The server program
@@ -173,15 +173,15 @@ Delete the old `server/main.js` and `client/main.js`: the manifest no longer poi
 ## 5. Build and reload
 
 ```sh title="In resources/hello/"
-pnpm run build
+npm run build
 ```
 
 Then `ensure hello` in the server console. Day to day, keep a compiler running for the half you edit
 and type `ensure hello` after each save:
 
 ```sh title="In resources/hello/"
-pnpm run watch            # server half
-pnpm run watch:client     # client half, in a second terminal
+npm run watch            # server half
+npm run watch:client     # client half, in a second terminal
 ```
 
 :::tip
@@ -195,8 +195,8 @@ Update the declarations and rebuild. Removed or renamed methods become
 compile errors instead of surprises in production:
 
 ```sh title="In resources/hello/"
-pnpm add -D @kingdomsconnected/types@latest
-pnpm run build
+npm install --save-dev @kingdomsconnected/types@latest
+npm run build
 ```
 
 ## Related

@@ -36,6 +36,9 @@ Use the editor's tabs to choose what to work on:
 | **Level** | Select existing level objects to move or remove them. **Del** removes a selected level object; pressing it again puts it back. |
 | **Areas** | Draw boxes, shapes or spheres for server scripts to use as areas. |
 | **Patrols** | Draw named routes, adjust each waypoint, and preview them with a temporary NPC. |
+| **Layers** | Organize props, effects and level objects, then hide or lock them while editing. |
+| **Environment** | Preview the offline project under a chosen hour, sky and rain. |
+| **MCP** | Let a local assistant or script inspect and control the offline editor. |
 
 Select an object and use the gizmo to move, rotate or scale it. Areas define
 regions; your server scripts decide what happens there. See
@@ -56,6 +59,7 @@ reports a placement error; choose **None** for decoration without physics.
 | **Alt** + left mouse drag | Orbit the selection or the point where the drag began. |
 | **F** | Frame the selection. |
 | **1**, **2**, **3** | Move, rotate or scale with the gizmo. |
+| **G** / **X** | Switch world/local axes or toggle snapping for the current gizmo. |
 | **Ctrl** + click | Select several props or effects. |
 | **Ctrl+Z** / **Ctrl+Y** | Undo / redo. |
 | Hold **Shift** while translating | Snap props, effects, areas, area handles and patrol waypoints to the ground. |
@@ -67,6 +71,20 @@ Saved views and the current camera position stay with the project.
 
 **Esc** or right-click cancels prop/effect placement even while a search
 field has focus. Release right mouse before holding it again to fly.
+
+See [Grid, favorites and layers](../world-builder-editing/) for alignment,
+project favorite folders and locking finished parts of the scene. Use
+[Preview light and weather](../world-builder-environment/) to inspect the
+project at dusk or in rain. These controls are available in **1.6.6**.
+
+## Optional: MCP integration
+
+Enable MCP to let an AI assistant automate editor tasks, inspect your level
+changes, or set up a patrol preview. Your own local programs can use the
+same tools over HTTP without an AI agent. Follow
+[Automate World Builder with MCP](../world-builder-mcp/) to connect, or
+[Control World Builder over HTTP](../../tutorials/world-builder-http/)
+for a working PowerShell example.
 
 ## Restore deleted level objects
 
@@ -94,7 +112,8 @@ In **Project**, use **Save** or **Save as** to keep an editable
 `.project.json` in a folder of your choice. **Ctrl+S** saves;
 **Ctrl+Shift+S** saves under another name.
 
-The project keeps your scene, routes, groups, camera views and export settings.
+The project keeps your scene, routes, groups, camera views, export settings,
+layers, favorite folders, viewport preferences and preview conditions.
 Keep it so you can continue editing after deployment.
 
 | File | Purpose |
@@ -108,8 +127,8 @@ While there are unsaved changes, the editor writes a recovery copy every
 **Recover autosaved project** opens it as an unsaved project; save it under
 your own name. There is only one recovery slot, shared by projects.
 
-For an older `maps/<name>.json` file, choose **Import an older map**, then
-save the result as a project.
+Use **Open project** for editable projects and **Open blueprint** for reusable
+content. The older **Import an older map** section has been removed.
 
 ## Reuse groups as blueprints
 

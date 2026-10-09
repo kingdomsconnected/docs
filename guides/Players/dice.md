@@ -84,6 +84,74 @@ if (match !== 0) Dice.stop(match);     // false when it had already ended
 
 Both tables close, and `diceMatchEnd` fires with reason `stopped`.
 
+## Name the scoreboard seats
+
+In **1.6.6**, supply labels when starting a match, or change them afterwards:
+
+```ts
+const match = Dice.start(player.id, target.id, {
+  targetScore: 3000,
+  firstName: player.nickname,
+  secondName: target.nickname,
+});
+Dice.setNames(match, player.nickname, target.nickname);
+```
+
+Names follow the two seats passed to `Dice.start`. Each client maps them to
+its own and its opponent's scoreboard columns. Labels allow at most 64 UTF-8
+bytes without control characters. Empty names restore the native labels on
+the next scoreboard refresh. `Dice.setNames` returns `false` after a match
+ends. The default game mode uses player nicknames.
+
+## Follow turns, rolls and accepted moves
+
+The **1.6.6** server exposes four progress events for match logs and custom
+displays. Each receives one event object:
+
+```ts
+Events.on("diceTurnStart", event => {
+  console.log(`Match ${event.match}: turn ${event.turn}, player ${event.player}`);
+});
+Events.on("diceRoll", event => {
+  console.log(`Roll ${event.roll}: ${event.faces.join(", ")} (${event.reason})`);
+});
+Events.on("diceMove", event => {
+  console.log(`${event.reason}: ${event.points} points, mask ${event.heldMask}`);
+});
+Events.on("diceTurnEnd", event => {
+  console.log(`Turn ended: ${event.reason}; banked total ${event.totalScore}`);
+});
+```
+
+| Field | Meaning |
+| --- | --- |
+| `match`, `player`, `seat` | Match ID, acting player's network ID, and seat (`0` first, `1` second). |
+| `turn`, `roll` | Turn starts at 1 and advances when play passes seats. Roll starts at 1 within a turn, or 0 before its first roll. |
+| `faces`, `rolledMask` | Six pip values on `diceRoll`; bits 0 to 5 identify the dice rolled this time. Other dice were already scored. |
+| `heldMask` | Bits 0 to 5 identify dice selected in an accepted move. |
+| `points` | The selection's score in `diceMove`, or the turn's banked score in a passed or won `diceTurnEnd`. |
+| `turnScore`, `totalScore` | Unbanked turn points before a pass or bust, and that seat's banked total. |
+| `reason` | `rolled` or `bust` for a roll; `continue` or `pass` for a move; the ending reason for a turn. |
+
+Events follow accepted server decisions: turn start, roll, then accepted
+moves and resulting rolls. A bust emits roll, turn end, then the next turn
+start. Passing emits move and turn end; play then changes seats unless the
+match was won. Rejected and duplicate moves emit nothing. An early stop
+also ends the open turn before `diceMatchEnd`.
+
+These notifications can precede native animations. Use `diceMatchEnd` to
+settle a wager, rather than a roll or progress notification. Calling
+`Dice.stop` inside a handler is supported; already queued notifications
+retain their order.
+
+## What nearby players see
+
+Observers see seated participants, dice throws, cups and table props without
+entering the minigame. This presentation does not decide scores. Props are
+removed when the report expires, the match ends, or the participant leaves
+the observer's streamed world. Update both clients and server for the
+**1.6.6** station and dice synchronization changes.
+
 ## Hear how it ended
 
 `diceMatchEnd` fires once per match, after both players have been told:

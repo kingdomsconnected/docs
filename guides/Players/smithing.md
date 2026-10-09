@@ -13,6 +13,12 @@ nothing. Smithing shares the [`Crafting`](../../reference/server/variables/Craft
 API and events with [alchemy](../alchemy/); every payload says which with
 `kind`.
 
+In **1.6.6**, nearby players see the smith at the station, including players
+who come into view later. Male characters show the forging loop while
+working; female characters stay at the workstation without that animation.
+This presentation is separate from the recipe transaction and its events.
+Update both clients and server for station synchronization.
+
 ```ts
 Events.on("craftingStarting", (player, proposal) => {
   if (proposal.kind !== "smithing") return;

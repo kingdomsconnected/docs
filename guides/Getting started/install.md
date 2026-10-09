@@ -15,8 +15,7 @@ standing in it. It takes about ten minutes the first time.
 | --- | --- | --- |
 | Kingdom Come: Deliverance II | The client runs inside the game. A Steam, GOG or any other copy works | Join a server |
 | A KCDC release | The launcher, the client and the dedicated server for Windows and Linux | Run anything |
-| Node.js 22 or newer | Runs the TypeScript compiler | Build the default gamemode or any TypeScript resource |
-| pnpm 10 | Installs the gamemode's pinned compiler and API declarations | Same |
+| Node.js 22 or newer, with npm | Installs dependencies and runs the TypeScript compiler | Build the default gamemode or any TypeScript resource |
 | An editor | [Visual Studio Code](https://code.visualstudio.com/) autocompletes the whole API in a TypeScript resource | Writing code |
 
 :::note
@@ -41,22 +40,20 @@ Each server folder reads resources from the `resources/` folder next to its bina
 `resources/` is a spare copy for hosting elsewhere; the guides use the one inside `server/`.
 
 :::caution
-Unpack the archive instead of copying files out of it. The launcher updates itself from the channel
-stamped in `client/.mafiahub/channel`, and a hand-copied install has no stamp.
+Unpack the complete archive so the launcher has its dependencies. In **1.6.6**,
+it resolves updates from the installed build through the update service;
+the archive's channel file is only an initial hint for a fresh installation.
 :::
 
-## 2. Install Node.js and pnpm
+## 2. Install Node.js and npm
 
 1. Install [Node.js 22 or newer](https://nodejs.org/). The LTS installer is fine.
-2. Turn on Corepack, which ships with Node and manages pnpm. On Windows, use an Administrator terminal
-   if it complains about permissions.
+2. Open a new terminal. `node --version` should print `v22` or later, and
+   `npm --version` should print a version number.
 
-   ```sh title="Any terminal"
-   corepack enable
-   corepack prepare pnpm@10.4.1 --activate
-   ```
-
-3. Check both: `node --version` should print `v22` or later, `pnpm --version` should print `10.4.1`.
+The **1.6.6** default game mode and optional playground use npm and include a
+`package-lock.json`. They do not require pnpm or Corepack. Your own resources
+can use the package manager you prefer.
 
 ## 3. Build the gamemode
 
@@ -64,14 +61,14 @@ A release ships the gamemode as TypeScript source. Until you build it, the serve
 commands.
 
 ```sh title="In server/resources/kcdc-gamemode/"
-pnpm install
-pnpm run build
+npm ci
+npm run build
 ```
 
-`pnpm install` fetches the pinned compiler and the API declarations,
+`npm ci` installs the locked compiler and API declarations,
 [`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types) at your release's
-version. `pnpm run build` compiles the server and client halves as two programs and prints nothing on
-success. You now have `dist/server/index.js` (what the server runs)
+version. `npm run build` compiles the server and client halves as two programs.
+You now have `dist/server/index.js` (what the server runs)
 and `dist/client/index.js` (what every player's game runs). [Use TypeScript](../typescript/) explains
 the setup.
 
@@ -148,11 +145,10 @@ Press **F4** for the debug panel: live stats, the world clock, who is connected 
 
 ## 7. Change something and reload
 
-1. Keep the compiler watching the half you edit:
+1. Keep both compilers watching your changes:
 
    ```sh title="In server/resources/kcdc-gamemode/"
-   pnpm run watch          # server half
-   pnpm run watch:client   # client half, in a second terminal
+   npm run dev
    ```
 
 2. Edit `src/server/index.ts`, for example the welcome line in the `playerSpawned` handler.
@@ -165,7 +161,14 @@ Press **F4** for the debug panel: live stats, the world clock, who is connected 
    `ensure` reloads a running resource from disk and pushes new client files to everyone connected.
    Reconnect to see the new welcome.
 
-This loop works for every resource. [Console commands](../../hosting-a-server/run-a-server/#console-commands)
+`npm run dev` watches both halves in one terminal. It recompiles files but
+does not reload the running resource; use `ensure` after a successful compile.
+Press **Ctrl+C** to stop both watchers. Use `npm test` to build both halves
+and run the game mode's automated tests. The separate `npm run watch` and
+`npm run watch:client` commands remain available.
+
+Compilation followed by `ensure` works for your own resources too.
+[Console commands](../../hosting-a-server/run-a-server/#console-commands)
 lists the others, such as `stop`, `start` and `refresh`.
 
 ## Troubleshooting
@@ -173,8 +176,8 @@ lists the others, such as `stop`, `start` and `refresh`.
 <details>
 <summary><code>error TS2304: Cannot find name 'Player'</code> (and hundreds like it)</summary>
 
-The compiler cannot find the declarations. Run `pnpm install` in the gamemode folder first. On release
-1.5.0 or older, follow the note at the end of [step 3](#3-build-the-gamemode).
+The compiler cannot find the declarations. Run `npm ci` in the game mode
+folder first, then build again.
 
 </details>
 
@@ -182,7 +185,9 @@ The compiler cannot find the declarations. Run `pnpm install` in the gamemode fo
 <summary>The build fails on a few specific methods</summary>
 
 Your declarations and your release are different versions. Check that `@kingdomsconnected/types` in
-the gamemode's `package.json` is your release's version, then `pnpm install` and build again.
+the game mode's `package.json` is your release's version. Use the matching
+release's package files and run `npm ci` again. If you deliberately edit
+dependencies, run `npm install` to update the lockfile before building.
 
 </details>
 
@@ -196,9 +201,10 @@ With no compiled gamemode, nothing listens for commands, so `/help` is silently 
 </details>
 
 <details>
-<summary><code>pnpm: command not found</code></summary>
+<summary><code>npm: command not found</code></summary>
 
-Corepack is not enabled in this terminal. Run `corepack enable` again, then open a new terminal.
+Install Node.js with npm selected, then open a new terminal so its updated
+PATH is available.
 
 </details>
 
