@@ -52,8 +52,8 @@ the archive's channel file is only an initial hint for a fresh installation.
    `npm --version` should print a version number.
 
 The **1.6.6** default game mode and optional playground use npm and include a
-`package-lock.json`. They do not require pnpm or Corepack. Your own resources
-can use the package manager you prefer.
+`package-lock.json`, so `npm ci` is all they need. Your own resources can use the
+package manager you prefer.
 
 ## 3. Build the gamemode
 

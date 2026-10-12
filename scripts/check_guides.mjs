@@ -1,6 +1,6 @@
 // Checks every guide against the scripting declarations its readers install.
 //
-//   pnpm check
+//   npm run check
 //
 // Three things are checked:
 //
@@ -186,7 +186,7 @@ const checkLinks = async (report) => {
   };
   const guidePages = await htmlFiles(path.join(dist, "guides"));
   if (!guidePages.length) {
-    report("dist", 1, "no built guide pages; run pnpm build first");
+    report("dist", 1, "no built guide pages; run npm run build first");
     return;
   }
   for (const page of guidePages) {

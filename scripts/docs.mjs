@@ -18,11 +18,11 @@ const run = (executable, args, options = {}) => {
   if (result.status !== 0) throw new Error(`${executable} exited with status ${result.status}`);
 };
 
-// pnpm is a .cmd shim on Windows, and Node refuses to spawn one without a shell. Quote the
+// npx is a .cmd shim on Windows, and Node refuses to spawn one without a shell. Quote the
 // arguments ourselves, because a shell is what splits them once it is asked for.
-const runPnpm = (args) => {
+const runNpx = (args) => {
   const useShell = process.platform === "win32";
-  run("pnpm", useShell ? args.map((argument) => (/[\s"]/.test(argument) ? JSON.stringify(argument) : argument)) : args, { shell: useShell });
+  run("npx", useShell ? args.map((argument) => (/[\s"]/.test(argument) ? JSON.stringify(argument) : argument)) : args, { shell: useShell });
 };
 
 const createRenderConfig = async (contractRoot) => {
@@ -70,7 +70,7 @@ const generate = async (output) => {
   if (contractVersion) args.push("--contract-version", contractVersion);
   const localCli = process.env.MAFIAHUB_SERVICES_CLI_ENTRYPOINT;
   if (localCli) run(process.execPath, [path.resolve(localCli), ...args]);
-  else runPnpm(["dlx", `@mafiahub/services-cli@${servicesCliVersion}`, ...args]);
+  else runNpx(["-y", `@mafiahub/services-cli@${servicesCliVersion}`, ...args]);
   const manifestPath = path.join(output, "manifest.json");
   const siteManifest = JSON.parse(await readFile(manifestPath, "utf8"));
   siteManifest.sources.reference.revision = contractRevision;

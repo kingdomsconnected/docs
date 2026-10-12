@@ -36,19 +36,14 @@ jobs:
       - name: Checkout documentation
         uses: actions/checkout@v5
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.4.1
-
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Resolve canonical documentation target
         id: target
@@ -59,7 +54,7 @@ jobs:
           : "${KCDC_SERVICES_MOD_ID:?KCDC_SERVICES_MOD_ID is not set}"
           : "${MAFIAHUB_DOCS_UPLOAD_TOKEN:?KCDC_DOCS_UPLOAD_TOKEN is not set}"
           CLI_VERSION="$(node -p 'require("./docs.config.json").servicesCliVersion')"
-          TARGET="$(pnpm --silent dlx "@mafiahub/services-cli@${CLI_VERSION}" docs target \
+          TARGET="$(npx -y --silent "@mafiahub/services-cli@${CLI_VERSION}" docs target \
             --api-url "${KCDC_SERVICES_API_URL}" \
             --mod-id "${KCDC_SERVICES_MOD_ID}" \
             --channel "${KCDC_DOCS_CHANNEL}" \
@@ -79,7 +74,7 @@ jobs:
         env:
           KCDC_DOCS_SITE_URL: ${{ steps.target.outputs.site_url }}
           KCDC_DOCS_BASE_PATH: ${{ steps.target.outputs.base_path }}
-        run: pnpm build
+        run: npm run build
 
       - name: Deploy static documentation
         shell: bash
@@ -87,7 +82,7 @@ jobs:
           set -euo pipefail
           CONTRACT_REVISION="$(cat .cache/contract-revision)"
           VERSION="docs-${GITHUB_SHA::7}-${CONTRACT_REVISION:0:7}"
-          pnpm dlx "@mafiahub/services-cli@${{ steps.target.outputs.cli_version }}" docs deploy \
+          npx -y "@mafiahub/services-cli@${{ steps.target.outputs.cli_version }}" docs deploy \
             --api-url "${KCDC_SERVICES_API_URL}" \
             --mod-id "${KCDC_SERVICES_MOD_ID}" \
             --channel "${KCDC_DOCS_CHANNEL}" \

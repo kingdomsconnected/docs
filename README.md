@@ -22,7 +22,7 @@ The closed-source mod remains authoritative for the generated client and server 
 - `scripts/sync_contract.mjs` downloads and verifies the public scripting contract.
 - `scripts/docs.mjs` is the single local and CI generation entrypoint.
 - `scripts/generate_resources.mjs` rewrites the lists on the `Resources/` pages from a mod checkout.
-- `scripts/check_guides.mjs` type-checks every code sample against `@kingdomsconnected/types` and lints the prose (`pnpm check`).
+- `scripts/check_guides.mjs` type-checks every code sample against `@kingdomsconnected/types` and lints the prose (`npm run check`).
 - `src/styles/production.css` is the production theme shared by the standalone site and local preview.
 
 ## Contributing
@@ -37,22 +37,22 @@ Guides document the API as it is, not as it is planned. Every global, function a
 - **Example first.** One or two sentences on what the page lets you do, then a working sample, then task headings ("Give an item", "React to a hit"). Properties, events and failure cases go in tables. Rationale goes in a short `:::note` or a `<details>`, or is left to the Core concepts page that already explains it.
 - **Frontmatter:** every page has a `title`, a one-sentence `description`, a short `sidebar.label` and a `sidebar.order`.
 - **Plain punctuation.** No em or en dashes, and no `--` standing in for one. Write the way you would explain it to a colleague.
-- **Links** between guides use the page's route, relative to the page you are writing: from `guides/Getting started/typescript.md` (served at `guides/getting-started/typescript/`) the events page is `[Events](../../core-concepts/events/)`. Lowercase every folder and replace spaces with dashes. (A `.md` link cannot cross a folder whose name has a space in it.) Links into the API reference are relative `.md` links, as if `reference/` sat next to `guides/`: `[Player](../../reference/server/classes/Player.md#teleport)` from a page in a group folder. Never use absolute `/...` links, because the site can be deployed under a base path. `pnpm check:site` verifies every link and anchor.
+- **Links** between guides use the page's route, relative to the page you are writing: from `guides/Getting started/typescript.md` (served at `guides/getting-started/typescript/`) the events page is `[Events](../../core-concepts/events/)`. Lowercase every folder and replace spaces with dashes. (A `.md` link cannot cross a folder whose name has a space in it.) Links into the API reference are relative `.md` links, as if `reference/` sat next to `guides/`: `[Player](../../reference/server/classes/Player.md#teleport)` from a page in a group folder. Never use absolute `/...` links, because the site can be deployed under a base path. `npm run check:site` verifies every link and anchor.
 - **Markdown only.** Asides (`:::note`, `:::tip[Title]`, `:::caution`, `:::danger`), titled code blocks (`title="src/server/index.ts"`), line markers (`{2-4}`, `ins={3}`, `del={5}`), `diff lang="ts"` blocks, `<details>` and tables all work. MDX components do not.
 - **The generator rejects a page** containing `<script`, `<style`, `<button`, `<meta`, `<link`, `<input`, `<form`, `<iframe`, `<object`, `<embed`, `<base`, an ` onX=` attribute or a `javascript:` URL anywhere, **code blocks included**. Show web pages without those tags, and put their JavaScript in its own block.
 
 ### Code samples are checked
 
-`pnpm check` type-checks every `js` and `ts` block against [`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types), the package readers install, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
+`npm run check` type-checks every `js` and `ts` block against [`@kingdomsconnected/types`](https://www.npmjs.com/package/@kingdomsconnected/types), the package readers install, parses every `json` block, and lints the prose. A sample that calls something the runtime does not have fails the check.
 
-When a release ships, bump the package's exact version in `package.json` (`pnpm add -D -E @kingdomsconnected/types@<version>`) and in the guides that name it (`grep -rn 'types@\|types": "' guides`).
+When a release ships, bump the package's exact version in `package.json` (`npm install -D -E @kingdomsconnected/types@<version>`) and in the guides that name it (`grep -rn 'types@\|types": "' guides`).
 
 - Blocks on pages under `guides/Client scripting/` and `guides/User interface/` use the client declarations; everything else uses the server's. A block whose first line is `// client` or `// server`, or whose title names a `client/` or `server/` path, picks its side explicitly.
 - Blocks titled with a file path are compiled together, so a tutorial's files can import each other (`./command.js`).
 - A few names are pre-declared so short samples need no setup: `player`, `target`, `horse`, `quest`, `npc`, `dog` and `session` on the server, `player` on the client. See `PLACEHOLDERS` in the script.
 - `<!-- check: skip -->` on the line before a fence skips a block that is not meant to compile on its own (a fragment, or browser code). Use it rarely.
 
-`pnpm check:site` additionally checks every link and anchor in the built `dist/`, so run it after `pnpm build`.
+`npm run check:site` additionally checks every link and anchor in the built `dist/`, so run it after `npm run build`.
 
 ### Regenerating the Resources lists
 
@@ -61,7 +61,7 @@ a mod checkout, which CI does not have. Regenerate them when a release ships, al
 from that release's tag:
 
 ```sh
-KCDC_MOD_ROOT=/path/to/KCD2MP KCDC_MOD_REF=v1.5.2 pnpm resources
+KCDC_MOD_ROOT=/path/to/KCD2MP KCDC_MOD_REF=v1.5.2 npm run resources
 ```
 
 Without `KCDC_MOD_REF` it reads the working tree. Each list sits between
@@ -78,15 +78,13 @@ Install [Node.js 22 or newer](https://nodejs.org/), clone this repository, and i
 ```sh
 git clone https://github.com/kingdomsconnected/docs.git
 cd docs
-corepack enable
-corepack prepare pnpm@10.4.1 --activate
-pnpm install --frozen-lockfile
+npm ci
 ```
 
 Start the local development server:
 
 ```sh
-pnpm dev
+npm run dev
 ```
 
 Open <http://localhost:4321/>. The first run downloads the current `testing` contract into the ignored `.cache/` directory. Edit Markdown, colocated images, `docs.config.json`, or `src/styles/production.css`; the complete production site rebuilds and the browser refreshes automatically.
@@ -94,7 +92,7 @@ Open <http://localhost:4321/>. The first run downloads the current `testing` con
 To download the contract without starting the preview:
 
 ```sh
-pnpm docs:sync
+npm run docs:sync
 ```
 
 Set `KCDC_CONTRACT_CHANNEL`, `KCDC_CONTRACT_REVISION`, or `KCDC_SERVICES_API_URL` to select another public contract. A manual deployment can pin an exact immutable revision; otherwise it resolves the selected public channel when the docs workflow starts.
@@ -106,19 +104,19 @@ From the mod checkout, run `node scripts/build_scripting_contract.mjs --out
 
 ```powershell
 $env:KCDC_CONTRACT_ROOT = '<absolute-contract-directory>'
-pnpm check
-pnpm build
-pnpm check:site
+npm run check
+npm run build
+npm run check:site
 git diff --check
 ```
 
 Until a contract has been published, and whenever you want to see an unpublished API change rendered, point the generator at a contract bundle built from a mod checkout:
 
 ```sh
-KCDC_CONTRACT_ROOT=/path/to/mod/build/scripting-contract pnpm build
+KCDC_CONTRACT_ROOT=/path/to/mod/build/scripting-contract npm run build
 ```
 
-Use the same `KCDC_CONTRACT_ROOT` with `pnpm check` and `pnpm check:site`
+Use the same `KCDC_CONTRACT_ROOT` with `npm run check` and `npm run check:site`
 to validate examples against that contract's declarations. Without the
 override, checks use the pinned `@kingdomsconnected/types` package.
 
@@ -126,8 +124,8 @@ That bypasses the download and its integrity checks entirely, so use it for prev
 
 ### Known issues with services-cli 0.6.4
 
-Two of them, both in the generator rather than in this repository, and both
-absent from the Linux runner CI uses:
+One, in the generator rather than in this repository, and absent from the Linux
+runner CI uses.
 
 - **The API reference renders empty on Windows.** The generator hands the
   contract's entry point to TypeDoc as a glob after resolving it to a native
@@ -135,17 +133,13 @@ absent from the Linux runner CI uses:
   nothing. The build reports `server: 0 bound member names represented` and
   succeeds anyway. Guides and navigation are unaffected; build under WSL or
   Linux to preview the reference itself.
-- **`pnpm dlx` cannot resolve the generator's own peer dependency.** The Astro
-  build fails with `Cannot find package 'satteri'`. `npx -y
-  @mafiahub/services-cli@<version>` installs it and works, so a local Windows
-  preview can invoke the generator that way until the packaging is fixed.
 
 Before opening a pull request, verify the affected pages at desktop and mobile widths and run:
 
 ```sh
-pnpm check
-pnpm build
-pnpm check:site
+npm run check
+npm run build
+npm run check:site
 git diff --check
 ```
 
