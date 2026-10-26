@@ -47,9 +47,16 @@ is ignored. Assigning it rebuilds the prop on every client, so set it right
 after `Prop.spawn`, before pushing. `setVelocity` moves a prop the same way
 whatever it weighs; how hard an impulse pushes depends on the mass.
 
-Some meshes carry no mass in their collision, a tree's among them. Every
-client refuses to build such a prop as `rigid`, and logs an error naming the
-model. Give it a mass and it builds.
+Some meshes carry no mass in their collision, a tree's among them. Without a
+`mass`, every client builds such a prop as a `static` one instead: it stands
+where it was placed, solid, and pushes do nothing. Each client logs a warning
+naming the model. Give it a mass to make it fall and roll.
+
+:::note
+In 1.7.2, a `rigid` prop whose mesh has no mass was not built at all, so it
+was missing in World Builder and on servers. From 1.7.3 it stands as a static
+prop, as it did before 1.7.2.
+:::
 
 ## Who simulates a rigid prop
 
@@ -95,7 +102,7 @@ Events.on("propRest", (prop, position) => {
 | `applyImpulse`, `setVelocity`, `wake`, `sleep` | The prop is gone or not `rigid`, a value is not finite or is out of range (an impulse past 10,000,000, a velocity past 200 m/s, a spin past 100 rad/s), or no player is within 60 m. | Returns `false`; nothing happens. `true` means it was sent to the simulating client. |
 | `resetPhysics` | The prop is gone or not `rigid`. | Returns `false`. |
 | `prop.mass = value` | Outside 0 to 100,000. | Ignored. |
-| A `rigid` prop whose mesh has no mass | `mass` is left at `0`. | Not built on any client; each logs why. |
+| A `rigid` prop whose mesh has no mass | `mass` is left at `0`. | Built as a `static` prop on every client; each logs why. Pushes do nothing. |
 
 ## React to weapon hits
 

@@ -105,8 +105,8 @@ export function spawnBarrel(player: Player, ahead: { x: number; y: number }): Pr
 
 `mass` is in kilograms. A prop normally takes its mass from its collision
 mesh. Setting it yourself makes the numbers below predictable, and it is
-required for meshes that carry no mass, such as trees: a rigid prop without
-a mass is refused. Setting `mass` rebuilds the prop for every player, so set
+required for meshes that carry no mass, such as trees: without one, such a
+prop stands as a static prop and cannot be pushed. Setting `mass` rebuilds the prop for every player, so set
 it straight after `Prop.spawn`, before you push it.
 
 ## 3. Push it, stop it and put it back
