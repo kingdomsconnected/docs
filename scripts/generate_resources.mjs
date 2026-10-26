@@ -33,11 +33,23 @@ const readMod = (path) =>
     ? execFileSync("git", ["-C", modRoot, "show", `${modRef}:${path}`], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
     : readFileSync(join(modRoot, path), "utf8");
 
-const game = (name) => readMod(`code/shared/game/${name}`);
+// The generated tables live in code/shared/generated/ from 1.6.10; older tags keep them in code/shared/game/.
+const game = (name) => {
+  try {
+    return readMod(`code/shared/generated/${name}`);
+  } catch {
+    return readMod(`code/shared/game/${name}`);
+  }
+};
 
 // The body of `const std::vector<...> <name> = { ... };`.
+// From 1.6.10 a large table is a constant array, `kName[] = { ... }`, which `name` spans.
 const vectorBody = (source, name) => {
-  const start = source.indexOf(`${name} = {`);
+  let start = source.search(new RegExp(`\\b${name}\\s*=\\s*\\{`));
+  if (start < 0) {
+    const array = new RegExp(`\\b${name}\\s*=\\s*(\\w+);`).exec(source)?.[1];
+    if (array) start = source.search(new RegExp(`\\b${array}\\[\\]\\s*=\\s*\\{`));
+  }
   if (start < 0) throw new Error(`${name} not found`);
   let depth = 0;
   for (let index = source.indexOf("{", start); index < source.length; index += 1) {
@@ -156,8 +168,14 @@ const gearSource = game("horse_gear_catalog.cpp");
 const gear = rows(vectorBody(gearSource, "g_HorseGear")).map(([name, guid, slot]) => ({ name, guid, slot: slot.split("::")[1] }));
 const gearByGuid = new Map(gear.map((item) => [item.guid, item]));
 const presets = [];
+// From 1.6.10 a preset names a run of one shared array, `{kPresetItems + offset, count}`, instead of listing its GUIDs.
+const presetItems = gearSource.includes("kPresetItems[]")
+  ? [...vectorBody(gearSource.replace("kPresetItems[] =", "kPresetItems ="), "kPresetItems").matchAll(/"([^"]+)"/g)].map((guid) => guid[1])
+  : [];
 for (const match of vectorBody(gearSource, "g_HorseGearPresets").matchAll(/\{"([^"]+)",\s*\{([^}]*)\}\}/g)) {
-  presets.push({ name: match[1], items: [...match[2].matchAll(/"([^"]+)"/g)].map((guid) => gearByGuid.get(guid[1])) });
+  const run = /kPresetItems\s*\+\s*(\d+),\s*(\d+)/.exec(match[2]);
+  const guids = run ? presetItems.slice(Number(run[1]), Number(run[1]) + Number(run[2])) : [...match[2].matchAll(/"([^"]+)"/g)].map((guid) => guid[1]);
+  presets.push({ name: match[1], items: guids.map((guid) => gearByGuid.get(guid)) });
 }
 const slotNames = { Saddle: "saddle", Head: "head", Torso: "torso", Shoe: "shoe" };
 const slotLabels = { Saddle: "Saddles", Head: "Bridles and chanfrons", Torso: "Caparisons and trappings", Shoe: "Horseshoes" };
