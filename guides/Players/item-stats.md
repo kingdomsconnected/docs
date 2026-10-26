@@ -41,8 +41,7 @@ lists them under:
 - Values are finite and within 100000 of zero. `strReq` and `agiReq` are
   whole stat levels, rounded, and cannot be negative.
 - Classes that a running resource's [KCD2 mod](../../core-concepts/kcd2-mods/)
-  adds take changes like the game's own. A player's game writes them once the
-  mod's tables have loaded, at the next level load.
+  adds take changes like the game's own.
 - Nothing is saved. Set your changes in your resource's startup code.
 
 `setItemStats` returns `true` once the numbers are written.

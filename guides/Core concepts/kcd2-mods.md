@@ -55,30 +55,23 @@ archive.
 
 ## What each folder carries
 
-| Mod content | Goes in | Takes effect |
-| --- | --- | --- |
-| Models, materials, textures, sounds, `.adb` | `replace/`, at the mod's paths | As any [replaced file](../custom-assets/#replace-the-games-files) |
-| Table patches, `libs/tables/.../<table>__<id>.xml` | `replace/`, at the mod's paths | At each player's next level load |
-| String patches, `<file>__<id>.xml` | `localization/<language>/` | As soon as the player has the archive |
+| Mod content | Goes in |
+| --- | --- |
+| Models, materials, textures, sounds, `.adb` | `replace/`, at the mod's paths, as any [replaced file](../custom-assets/#replace-the-games-files) |
+| Table patches, `libs/tables/.../<table>__<id>.xml` | `replace/`, at the mod's paths |
+| String patches, `<file>__<id>.xml` | `localization/<language>/` |
 
 A table can only be patched, never replaced whole. The `<id>` in a patch's
 name uses lowercase letters, digits and `_`, as the game's mod ids do. The
 game's own loaders merge each patch row by row, so a mod can change items,
 souls, shops, presets and AI brains as well as plain tables.
 
-### When patches apply
+A string patch is used for the language the player's game runs in, with
+English as the fallback.
 
-Table patches are applied and removed between levels, after the old level
-unloads and before the new one loads, because everything in a level points
-into the tables' rows. Joining a server is such a point, so a player who joins
-has every patch before the level appears. Patches from a resource started or
-restarted while players are in reach each of them at their next level load.
-Every database except the AI scheduler's is read again at that point.
-
-String patches merge as soon as their archive arrives, mid-session included,
-for the language the game is running in. The player's language wins, and
-English is the fallback. A removed string patch is undone by reading the
-game's own text again.
+Start mod resources together with the server. If you start or change one
+while players are connected, they get its table changes (items, recipes,
+shops and the rest) when they reconnect. Text changes show straight away.
 
 ## What a server refuses
 
@@ -109,9 +102,6 @@ rest take them by GUID or by table name, like the game's own classes, and
 - **Start order.** A resource's classes join once it has started, after its
   own scripts and `resourceStart` handlers. A resource that names them while
   it starts lists the mod in `resourceDependencies`, so the mod starts first.
-- **Mid-session starts.** The server knows the classes at once, but a
-  connected player's game has the rows only after their next level load.
-  Start mod resources with the server.
 - **Stopping** the resource takes its classes out of the server's catalog.
 - **Wear and quality** follow the same rules as the game's items. A piece
   whose clothing component is one of the game's armor types that never wear
@@ -126,8 +116,8 @@ rest take them by GUID or by table name, like the game's own classes, and
 
 Recipe patches, `libs/tables/minigame/alchemyrecipe__<id>.xml` and
 `blacksmithrecipes__<id>.xml`, join the server's crafting when the resource
-starts and leave when it stops. Players' games read them at their next level
-load. A row with the id of one of the game's recipes replaces that recipe.
+starts and leave when it stops. A row with the id of one of the game's
+recipes replaces that recipe.
 `Crafting.recipes` lists them with `source: "mod"`. See
 [Custom recipes](../../players/custom-recipes/).
 
