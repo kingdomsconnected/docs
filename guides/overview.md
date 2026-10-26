@@ -36,18 +36,25 @@ Read **Getting started** in order:
 | Players | Grant XP, levels and perks, slow down levelling, keep a character | [Skills, XP and perks](../players/progression/) |
 | Players | Teleport, kick, revive or rename a player | [Teleport, kick and other actions](../players/actions/) |
 | Players | Give, take or drop items, read equipment | [Items](../players/items/) |
+| Players | Change a weapon's or armour's combat numbers for every player | [Item stats](../players/item-stats/) |
 | Players | Carry sacks, baskets or a downed player in the arms | [Carrying](../players/carrying/) |
 | Players | Register custom types and personalize their inventory rows | [Custom items](../players/custom-items/) |
 | Players | Approve food and potions or replace their effects | [Food and potions](../players/consumables/) |
 | Players | Read, move or save a player's inventory, set item quality | [Inventories](../players/inventory/) |
 | Players | Let players brew potions, refuse or reward a batch, refund an unfinished craft | [Alchemy](../players/alchemy/) |
 | Players | Let players forge at smitheries, teach recipes, decide what a failed workpiece costs | [Smithing](../players/smithing/) |
+| Players | Add alchemy and smithing recipes with their own icons and recipe book pictures | [Custom recipes](../players/custom-recipes/) |
 | Players | Change a face, hair or body; add a buff | [Appearance](../players/appearance/), [Buffs](../players/buffs/) |
+| Players | Create your own buffs with stat modifiers, for players and horses | [Custom buffs](../players/custom-buffs/) |
 | Players | Add `/commands` or send chat messages | [Chat and /commands](../players/chat/) |
 | Players | Seat two players at a dice table, list the tables, settle what they played for | [Dice matches](../players/dice/) |
 | World | Change the time or the weather | [Time of day and weather](../world/clock-and-weather/) |
 | World | Place objects, fill chests, open virtual storage, or play particle effects | [Props](../world/props/), [Stashes](../world/stashes/), [Effects](../world/effects/) |
-| World | Lock a door, open a castle gate | [Lock doors, open gates](../world/doors-and-gates/) |
+| World | Push, stop or reset a falling prop, react when a weapon hits a tree or a wall | [Prop physics](../world/prop-physics/) |
+| World | Place point lights with shadows | [Lights](../world/lights/) |
+| World | Lock a door, open a castle gate, take the level's doors out | [Lock doors, open gates](../world/doors-and-gates/) |
+| World | Hang a new door with its own lock and key | [Hang doors](../world/hang-doors/) |
+| World | Place benches, beds, dice tables and crafting stations players can use | [Seats and stations](../world/smart-objects/) |
 | World | Mark a spot, detect players entering an area | [Markers and trigger zones](../world/markers/) |
 | World | Trace a ray, tell what it hit (door, tree, rock), find the ground, list nearby entities | [Raycasts and nearby entities](../world/raycasts/) |
 | World | Spawn a cart or wagon and let players drive it | [Carts and wagons](../world/carts/) |
@@ -55,11 +62,12 @@ Read **Getting started** in order:
 | World | Create a map offline, save blueprints and export it to a server | [World Builder](../world/world-builder/) |
 | World | Draw gameplay areas and invisible collision boundaries | [World Builder areas](../world/world-builder-areas/) |
 | World | Let an assistant or local application control the offline editor | [MCP automation](../world/world-builder-mcp/) |
-| World | Align objects and organize a project with favorites and layers | [Grid, favorites and layers](../world/world-builder-editing/) |
+| World | Align objects, organize a project, copy, convert or swap the level's own objects | [Grid, favorites and layers](../world/world-builder-editing/) |
+| World | Select many objects by box, lasso, brush or area, remap the editor's keys | [Selecting objects](../world/world-builder-selection/) |
 | World | Inspect a scene at dusk or in rain | [Preview light and weather](../world/world-builder-environment/) |
 | World | Find exported objects, areas and routes in a server script | [World exports in scripts](../world/world-resources/) |
 | World | Refill or disable a shared stew pot | [Shared stew pots](../world/cook-pots/) |
-| World | Remove or move the level's own walls and gates from scripts | [Level edits](../world/level-edits/) |
+| World | Remove, move or swap the level's own objects (a tree for a stump) from scripts | [Level edits](../world/level-edits/) |
 | World | Let players pick herbs, refuse a pick, or change how fast plants regrow | [Herb gathering](../world/gathering/) |
 | NPCs and animals | Spawn NPCs and make them walk, follow or patrol | [Spawn NPCs](../npcs-and-animals/npcs/), [Move NPCs](../npcs-and-animals/npc-orders/) |
 | NPCs and animals | Route NPCs around walls, plan paths, find the floor or a random walkable spot | [Navigation mesh](../npcs-and-animals/navigation/) |
@@ -76,6 +84,7 @@ Read **Getting started** in order:
 | Core concepts | Send data to a player's client and back | [Send data between server and client](../core-concepts/networking/) |
 | Core concepts | Store a team, a score or a role on a player | [Entity state bags](../core-concepts/state/) |
 | Core concepts | Ship my own models, textures, animations, sounds or effects, or replace the game's | [Custom assets](../core-concepts/custom-assets/) |
+| Core concepts | Ship a KCD2 mod's items, recipes, table changes and texts from my server | [KCD2 mods](../core-concepts/kcd2-mods/) |
 | Client scripting | Read the local player, bind a key | [Local player](../client-scripting/local-player/), [Key binds](../client-scripting/input/) |
 | Client scripting | Let a player follow another player or an NPC guide | [Following](../client-scripting/following/) |
 | Client scripting | Replace an item's native inventory action | [Inventory use](../client-scripting/inventory-use/) |
@@ -97,6 +106,10 @@ Read **Getting started** in order:
 | Tutorials | Recreate a route and inspect a guard with an assistant | [MCP patrol tutorial](../tutorials/world-builder-mcp-patrol/) |
 | Tutorials | Defend a yard drawn in World Builder | [Guarded yard](../tutorials/world-builder-sentry/) |
 | Tutorials | Lead a player on an authored NPC route | [Walking tour](../tutorials/world-builder-tour/) |
+| Tutorials | Furnish a tavern in World Builder and use it on a server | [Furnish with World Builder](../tutorials/furnish-with-world-builder/) |
+| Tutorials | Lay items on the ground and keep a stall stocked | [Items in the world](../tutorials/place-items/) |
+| Tutorials | Swap a tree for a stump, kick a barrel across the ground | [Swap level objects](../tutorials/swap-level-objects/), [Push props](../tutorials/push-props/) |
+| Tutorials | Give a custom item its own icon, add recipes with their own pictures | [Custom item icons](../tutorials/custom-item-icons/), [Custom recipes](../tutorials/custom-recipes/), [Borrow recipe pictures](../tutorials/borrow-recipe-pictures/) |
 | Hosting a server | Run a dedicated server, change its settings, load world exports | [Run a server](../hosting-a-server/run-a-server/), [Options and overrides](../hosting-a-server/options-and-overrides/), [server.json](../hosting-a-server/server-json/) |
 | Hosting a server | Run the official Docker image or a Pterodactyl egg | [Docker and panels](../hosting-a-server/containers/) |
 | Hosting a server | Let players connect, list the server publicly with a logo | [Let players connect](../hosting-a-server/players-connecting/), [Server browser listing](../hosting-a-server/server-browser/) |
@@ -107,9 +120,9 @@ Read **Getting started** in order:
 | Group | What is in it | Runs on |
 | --- | --- | --- |
 | Getting started | Install, first resource, TypeScript, layout, debugging | Both |
-| Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing, custom assets | Both |
-| Players | Join and spawn, stats, progression, actions, items, carrying, inventories, alchemy, smithing, appearance, buffs, chat, dice | Server |
-| World | Clock and weather, props, stashes, doors, markers, effects, raycasts, carts, siege engines, level edits, herb gathering, World Builder exports, stew pots | Server (raycasts: both) |
+| Core concepts | Authority, resources, events, networking, state, positions, virtual worlds, sharing, custom assets, KCD2 mods | Both |
+| Players | Join and spawn, stats, progression, actions, items and item stats, carrying, inventories, alchemy, smithing, custom recipes, appearance, buffs and custom buffs, chat, dice | Server |
+| World | Clock and weather, props and prop physics, stashes, doors, seats and stations, markers, effects, lights, raycasts, carts, siege engines, level edits, herb gathering, World Builder and its exports, stew pots | Server (raycasts and lights: both) |
 | NPCs and animals | NPCs, combat, named patrols, animal populations, horses and their owners, dogs, navigation | Server |
 | Quests, dialogue and shops | Journal quests and tracking, dialogue choices, vendors | Server |
 | Client scripting | Local player, key binds, camera, placement, sound, Discord, following, screen effects, debug gizmos | Client |

@@ -33,8 +33,15 @@ mismatch, and continuing may cause connection or gameplay problems. The launcher
 updates itself, so also check whether the server has been updated. See
 [Server browser](../server-browser/#version-confirmation).
 
+:::caution[1.7.2 needs players and servers to update together]
+A 1.7.2 client and a 1.7.2 server do not connect to earlier versions: among
+other things, 1.7.2 changes what the server sends players about revived NPCs.
+Update the server when your players' launchers move to 1.7.2. The server log
+names a refused player with `Build mismatch from <id>, dropping peer`.
+:::
+
 :::caution[Unpack, do not copy]
-Unpack the full client archive with its dependencies. In **1.6.6**, the
+Unpack the full client archive with its dependencies. Since **1.6.6**, the
 launcher asks the update service which channel the installed build belongs
 to. The archive's `client\.mafiahub\channel` is an initial hint, rather than
 a requirement that permanently decides future updates. A missing hint no

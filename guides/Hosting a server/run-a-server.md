@@ -50,12 +50,15 @@ it until you build it. See [Install and run a server](../../getting-started/inst
 | `server-linux/` | `KCDCServer`, `libnode.so.*`, `crashpad_handler`, `resources/` |
 
 The server carries its own JavaScript runtime in `libnode`, so the host needs
-no Node.js. On Linux it also links against the system's libcurl, OpenSSL 3,
+no Node.js. Since 1.7.2 that runtime is Node.js 26.12.1; earlier releases ran
+Node.js 25. On Linux it also links against the system's libcurl, OpenSSL 3,
 zlib and libstdc++ (on Ubuntu 24.04: `libcurl4t64`, `libssl3t64`, `zlib1g`,
 `libstdc++6`, as in the official container image).
 
 Build resources on any machine and copy the folder, `dist/` included, to the
-server.
+server. A resource that uses npm packages needs its `node_modules` too, and a
+package with a native addon must be installed for the server's operating
+system ([npm packages](../../core-concepts/resources/#use-nodejs-and-npm-packages)).
 
 ## Ports
 
@@ -136,9 +139,10 @@ like `quit`.
 
 ### Reload a resource
 
-A reload runs the resource's `resourceStop` handlers, removes its listeners
-and timers, forgets its cached modules, re-reads `package.json` and starts
-it again. Resources that depend on it restart with it.
+A reload runs the resource's `resourceStop` handlers, removes the entities it
+created, frees its script runtime (listeners, timers, sockets, worker threads
+and cached modules), re-reads `package.json` and starts it again in a fresh
+runtime. Resources that depend on it restart with it.
 
 Players stay connected: they receive the changed client files and restart
 the client half in place. Scripts and tooling usually want `ensure`, which

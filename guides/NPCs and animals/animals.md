@@ -72,7 +72,8 @@ cap and choose which sites to enable.
 
 ## Roaming and fighting
 
-Animals accept `moveTo`, `patrol`, `follow`, `flee` and `hold` through `Npc`.
+Animals accept `moveTo`, `patrol`, `follow`, `flee` and `hold` through `Npc`;
+`flee` runs the game's own escape, [below](#make-an-animal-flee).
 They avoid doorways. Narrow passages may still block a body, so handle failed
 orders and retry after a delay rather than every frame.
 
@@ -86,6 +87,32 @@ animals cannot attack, and animals cannot use bows. Choosing prey, protecting
 teams and limiting pursuit are [game-mode decisions](../npc-combat/).
 Named [World Builder patrols](../patrol-routes/) also work for animal NPCs;
 validate with `{ actor: animal }` to use their door policy.
+
+## Make an animal flee
+
+`flee` hands an animal to the game's own escape, so it bolts the way the
+game's animals do rather than steering straight away:
+
+```ts
+npc.flee(player);                          // from a player or NPC
+npc.flee(player.position, { radius: 40 }); // or from a place
+```
+
+- **Pace and path are the animal's.** Its own mind picks them and runs as far
+  as its kind runs: a hare about 50 metres, a boar 70 to 90. `speed` is ignored.
+- **`radius` only decides `reached`.** `npcIntentDone` reports `reached` once
+  the run takes it `radius` metres (default 25) clear, so a radius past what
+  its kind runs may never report.
+- **It must start within five seconds.** If the animal has not taken the
+  escape by then, the order ends `failed`.
+- **The animal keeps its own mind until the next order.** Once clear it goes
+  on as the game's animals do, and a wild one may bolt again from a human it
+  notices. A client that takes the animal over after `reached` holds it where
+  it stands. Give `hold()` or any other order to take it back.
+- A dormant animal waits for a client to run it before it flees.
+
+`flee` returns `false` for a player or NPC that is not there. Human NPCs flee
+differently; see [Move NPCs](../npc-orders/#make-an-npc-flee).
 
 ## Try the default population manager
 

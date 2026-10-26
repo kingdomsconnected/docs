@@ -1,6 +1,6 @@
 ---
 title: Herb gathering and regrowth
-description: Refuse or watch herb picks with gatheringHarvest and gatheringHarvested, and set how fast picked plants regrow or bring them back from a script.
+description: Refuse or watch herb picks with gatheringHarvest and gatheringHarvested, find or clear the herbs in a place, and set how fast picked plants regrow or bring them back from a script.
 sidebar:
   label: Herb gathering
   order: 49
@@ -9,7 +9,8 @@ sidebar:
 Players pick the level's own herbs as they do in single player, and the server
 decides what each pick gives. A picked plant is gone for everyone in that
 virtual world until it regrows. [`Gathering`](../../reference/server/variables/Gathering.md)
-sets how long that takes, or brings plants back on demand.
+sets how long that takes, finds and clears the herbs in a place, or brings
+plants back on demand.
 
 ```ts
 Gathering.setRespawnTime(1, 3); // each picked plant waits 1 to 3 game hours
@@ -93,11 +94,74 @@ const hours = (seconds * World.timeScale) / 3600;
 Gathering.setRespawnTime(hours, hours);
 ```
 
+## Find herbs
+
+`Gathering.getHerbs(position, radius, virtualWorld?)` lists the plants still
+standing in a sphere. The server reads its own catalog of the level's herbs,
+so it answers with no player nearby.
+
+```ts
+const herbs = Gathering.getHerbs(player.position, 15, player.virtualWorld);
+for (const herb of herbs) {
+  console.log(`${herb.item} (kind ${herb.kind}) at ${herb.position.x.toFixed(1)}, ${herb.position.y.toFixed(1)}`);
+}
+```
+
+| `GatheringHerb` field | What it is |
+| --- | --- |
+| `kind` | The game's pickable area id for the species, as `gatheringHarvest` reports it. |
+| `item` | Item class GUID of the herb it gives. |
+| `position` | Where it grows, a `Vector3` in world metres. |
+
+Picked and removed plants are left out. So are mushrooms, quest plants, and
+plants that custom map assets or other mods add: the catalog holds the game's
+own medicinal herbs. `radius` is an inclusive 3D distance from 0 to 100000 m,
+and each position coordinate must be finite and between -100000 and 100000.
+
+The world defaults to 0; pass `player.virtualWorld` to act where a player is.
+The global world players start in, `0xFFFFFFFF`, is a bucket of its own here
+and does not reach every world. Invalid arguments throw before anything
+changes.
+
+## Clear herbs from a place
+
+`Gathering.removeHerbs(position, radius, virtualWorld?)` removes every
+catalogued plant in the sphere for every player in that world, picked ones
+included, and players who arrive later find them gone too. It gives no herbs
+or XP, raises no harvest events, and returns how many plants it newly
+removed, so repeating it returns 0.
+
+```ts
+const removed = Gathering.removeHerbs(player.position, 12, player.virtualWorld);
+```
+
+Removed plants do not regrow, whatever `setRespawnTime` says. They come back
+only through the [respawn calls](#bring-plants-back) or a server restart.
+
+To clear another shape, use an [area](../world-builder-areas/): a script's
+box, sphere or polygon, or one of the level's own areas.
+
+```ts
+const clearing = Area.create({ id: "camp-clearing", type: "sphere", position: player.position, radius: 12 });
+clearing.getHerbs();     // what still grows inside it
+clearing.removeHerbs();  // clears it; returns how many
+clearing.respawnHerbs(); // brings back picked and removed plants inside it
+```
+
+- The world defaults to the area's own, or 0 for an area in every world.
+  Naming a world other than the area's own returns an empty list or 0.
+- They use the area's current shape, even while `area.enabled` is false.
+  Moving, reshaping, disabling or destroying the area does not bring removed
+  plants back: call `respawnHerbs` first. A destroyed area returns an empty
+  list or 0.
+- Removal is held in server memory. To keep a clearing across restarts, save
+  `area.toJSON()`, create the area again when your resource starts and call
+  `removeHerbs` again.
+
 ## Bring plants back
 
-These restore picked plants at once, timed regrowth or not, for the server and
-for every player's game. They only restore plants that were picked; they never
-create new ones.
+These restore picked and removed plants at once, timed regrowth or not, for the
+server and for every player's game. They never create new ones.
 
 ```ts
 Gathering.respawn(player.position, 20, player.virtualWorld); // within 20 m
@@ -109,13 +173,14 @@ invalid arguments. With timed regrowth off, they are the only way plants return,
 which suits a game mode that resets the map between rounds.
 
 :::note
-Nothing about gathering is saved. A server restart brings every plant back and
-forgets a `setRespawnTime`, so set it again on boot.
+Nothing about gathering is saved. A server restart brings every plant back,
+removed ones included, and forgets a `setRespawnTime`, so set it again on boot.
 :::
 
 The default gamemode's `/herbs` command (`src/server/commands/herbs.ts`) wraps
-all of this: `/herbs time <seconds>`, `/herbs defaults`, `/herbs respawn` and
-`/herbs respawn-all`.
+regrowth and respawning: `/herbs time <seconds>`, `/herbs defaults`,
+`/herbs respawn` and `/herbs respawn-all`. It has no verb for finding or
+clearing herbs.
 
 ## Related
 
@@ -123,3 +188,4 @@ all of this: `/herbs time <seconds>`, `/herbs defaults`, `/herbs respawn` and
 - [Progression](../../players/progression/): the Survival level and XP behind a pick.
 - [Clock and weather](../clock-and-weather/): the game hours regrowth counts in.
 - [Virtual worlds](../../core-concepts/virtual-worlds/): each world has its own picked plants.
+- [Gameplay areas](../world-builder-areas/): areas to find and clear herbs in.

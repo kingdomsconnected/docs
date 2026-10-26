@@ -8,7 +8,8 @@ sidebar:
 
 A buff is one of the game's named status effects: a potion, a poison, an
 injury, a hangover. Add and remove them, read which a player carries, or take
-over a whole kind of effect so your gamemode decides what drinking does.
+over a whole kind of effect so your gamemode decides what drinking does. To
+define effects of your own, see [Custom buffs](../custom-buffs/).
 
 ```ts
 Events.on("playerSpawned", (player) => {
@@ -23,9 +24,10 @@ Events.on("playerBuffAdded", (player, buff, source) => {
 ## Name a buff
 
 Every buff verb takes the exact name from the game's buff tables or the buff's
-GUID ([Buffs and status effects](../../resources/buffs/) lists them all).
-[`Buffs.find`](../../reference/server/variables/Buffs.md#find) resolves either, or
-returns `null`:
+GUID ([Buffs and status effects](../../resources/buffs/) lists them all), or the
+id or GUID of a [custom buff](../custom-buffs/).
+[`Buffs.find`](../../reference/server/variables/Buffs.md#find) resolves any of
+them, or returns `null`:
 
 ```ts
 const info = Buffs.find("hangover");
@@ -37,7 +39,9 @@ if (info) {
 A [`BuffInfo`](../../reference/server/interfaces/BuffInfo.md) has the `name`,
 its `class` (`potion`, `poison`, `alcohol`, `injury`...), its `aiTag` (the
 family `clearBuffs` removes it with, usually `null`) and `duration` in real
-seconds, negative for no end.
+seconds, negative for no end. `custom` is `true` for an effect from
+`Buffs.register`, whose `displayName` and `description` carry its text; both
+are `null` for the game's own effects.
 
 ## Add and remove buffs
 
@@ -81,7 +85,7 @@ morning" must clear what it ends, such as `alcohol_drunk` and
 `player.buffs` is a [`BuffState[]`](../../reference/server/interfaces/BuffState.md):
 `BuffInfo` plus `since` (seconds on) and `source` (`"server"` if this server
 added it, `"native"` if the game did). `duration - since` is roughly what is
-left.
+left. A stacked custom buff has one row per instance.
 
 ```ts
 const potions = player.buffs.filter((buff) => buff.class === "potion");
@@ -137,6 +141,8 @@ Events.on("playerDisconnect", (player) => drinks.delete(player.id));
 - **Follow-on effects are refused too.** Claiming `alcohol` also stops the six
   `alcoholism_level*` steps.
 - **Effects have no strength.** Block, swap or allow; you cannot halve one.
+  A [custom buff](../custom-buffs/) with your own modifiers is the closest
+  substitute.
 - **A claim replaces the previous one.** `Buffs.claim(["alcohol", "poison"])`
   claims both; `Buffs.claim([])` hands everything back. It reaches every client,
   including later joiners.
@@ -154,6 +160,8 @@ time or stacked strength. See [Set and restore stats](../restoring-stats/).
 
 ## Related
 
+- [Custom buffs](../custom-buffs/), for effects with your own name, timer and stat modifiers
+- [Horses](../../npcs-and-animals/horses/), which take buffs too
 - [Read health, stats and skills](../stats/), for live condition numbers
 - [Items: give, take and drop](../items/), for potions and food
 - [Time of day and weather](../../world/clock-and-weather/), which does not advance effects

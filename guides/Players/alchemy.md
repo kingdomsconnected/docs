@@ -12,10 +12,15 @@ them and works out the result itself, so a modified client cannot brew
 something from nothing. Your script decides who may use a table and whether a
 result is granted.
 
-In **1.6.6**, nearby players see the brewer at the station, including players
-who come into view after brewing starts. This observer animation does not
-change the crafting events or recipe rules below. Update both clients and
-server for station synchronization.
+Nearby players see the brewer at the station, including players who come
+into view after brewing starts. A male brewer's steps (taking, grinding,
+pouring, the bellows, the book) play on their screens as the brewer takes
+them; a female brewer is shown in the station's idle. This presentation does
+not change the crafting events or recipe rules below.
+
+Tables placed with [smart objects](../../world/smart-objects/) work like the
+level's own, and [custom recipes](../custom-recipes/) brew by the same rules
+as the game's.
 
 ```ts
 Events.on("craftingStarting", (player, proposal) => {
@@ -132,20 +137,32 @@ whenever it walks away, so choose such a policy only where that is fine.
 ## Find tables and read sessions
 
 ```ts
-const [table] = Crafting.stations("alchemy"); // every table in the level: id, layer, position
+const [table] = Crafting.stations("alchemy"); // tables in the global world: id, placed, layer, position
 if (table) Crafting.occupancy(table.id, 0);    // who holds it in world 0; null for an unknown id
+Crafting.stations("alchemy", 5);              // the tables players in world 5 can use
+Crafting.stations(undefined, 5);              // alchemy tables and smitheries in world 5
 Crafting.session(player);                     // the player's batch, or null
 Crafting.cancel(player);                      // end it as walking away would
 Crafting.recipes(player, "alchemy");          // recipes with ingredients and products
 ```
 
-- A station's `id` is stable, so it is what to store. Some tables sit behind
-  quest layers of the level and may not be usable even when free.
+- A station's `id` is `<level>:<guid>`. A level table's never changes, so it
+  is what to store; a placed table's lasts until the server stops. Some tables
+  sit behind quest layers of the level and may not be usable even when free.
+- `stations(kind?, virtualWorld?)` lists what players in one world can use,
+  the global world when you leave it out: the level's tables, minus any a
+  level edit took out of that world, plus every table placed there or in the
+  global world. `placed` is `true` for those, and their `layer` is empty.
+- A table taken out of a world refuses new batches there. A batch already
+  running is not ended; call `Crafting.cancel` if it should be. Destroying a
+  placed table ends the batch at it.
 - Each [virtual world](../../core-concepts/virtual-worlds/) has its own copy
   of every table.
-- `recipes` lists what the game ships, not what a player knows. Its
-  `ingredients` carry the item names `Inventory.add` takes, which is handy for
-  handing out a kit:
+- `recipes` lists every recipe the server offers, not what a player knows:
+  the game's, then those from streamed KCD2 mods and from
+  [`Crafting.registerRecipe`](../custom-recipes/), with `source` set to
+  `game`, `mod` or `script`. Its `ingredients` carry the item names
+  `Inventory.add` takes, which is handy for handing out a kit:
 
 ```ts
 const potion = Crafting.recipes(player, "alchemy")[0];
@@ -173,7 +190,8 @@ Events.on("craftingCompleted", (player, event) => {
 Events.on("playerDisconnect", (player) => books.set(player.nickname, Crafting.knowledge(player)));
 ```
 
-`setKnowledge(player, recipe, 0)` forgets a recipe. A disconnecting player's
+`setKnowledge(player, recipe, 0)` forgets a recipe, and a custom recipe's
+step `id`s are its bits in the mask. A disconnecting player's
 batch ends before `playerDisconnect`, so refunds are already in the inventory
 you save there.
 
@@ -188,4 +206,6 @@ gives you the ingredients for one batch of every recipe.
 - [Skills, XP and perks](../progression/): alchemy XP and the perks that improve brewing
 - [Buffs](../buffs/): what a potion does once drunk
 - [Smithing](../smithing/): the same API at the smithery
+- [Custom recipes](../custom-recipes/): add alchemy and smithing recipes of your own
+- [Smart objects](../../world/smart-objects/): place alchemy tables and take the level's out
 - [Crafting reference](../../reference/server/variables/Crafting.md)

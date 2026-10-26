@@ -198,7 +198,7 @@ The entry point handles `/build`, `/build stop` and `/build clear`, and removes 
 import { BUDGET, beginBuild, clearBuilt, installBuildHandlers, sendBudget, stopBuild } from "./build.js";
 
 const RESOURCE = "build-mode";
-const DEFAULT_MODEL = "objects/manmade/barrels/barrel_a.cgf";
+const DEFAULT_MODEL = "objects/manmade/common_furniture/barrels/barrel_a.cgf";
 
 installBuildHandlers();
 
@@ -218,7 +218,7 @@ Events.on("playerCommand", (player, command, args) => {
   }
 });
 
-// Props outlive the resource that spawned them.
+// The props go with the resource when it stops; this also ends any build in progress.
 Events.on("resourceStop", (name) => {
   if (name === RESOURCE) clearBuilt();
 });
@@ -297,7 +297,7 @@ Build the resource and run `ensure build-mode` in the server console. In game:
 1. `/build`. A green barrel follows your crosshair. Aim at a steep slope or the sky and it turns red.
 2. Left click a few times. Each click builds a barrel and the info line counts down your pieces.
 3. Keep going until you run out. The preview turns red and stays red.
-4. `/build clear` removes your barrels and gives you ten pieces again; if you are still building, the preview turns green. `/build objects/manmade/barrels/barrel_a.cgf` names the mesh explicitly.
+4. `/build clear` removes your barrels and gives you ten pieces again; if you are still building, the preview turns green. `/build objects/manmade/common_furniture/barrels/barrel_a.cgf` names the mesh explicitly.
 5. Right click ends the mode.
 
 ## Next steps

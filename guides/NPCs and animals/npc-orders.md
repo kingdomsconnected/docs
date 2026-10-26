@@ -25,13 +25,26 @@ Events.on("npcIntentDone", (who, status) => {
 | `moveTo(position, { speed, radius, pathfinding })` | Walks there (default pace walk). | It is within `radius` (default 1.5 m) across the ground and within 2 m in height. |
 | `patrol(points, { speed, loop, waitSeconds, pathfinding })` | Walks a route one waypoint at a time; loops by default (walk). | Each leg reports like a `moveTo`. |
 | `follow(target, { speed, radius })` | Stays near a player or NPC as they move (jog). | It has caught up to within `radius` (default 3 m). |
-| `flee(from, { speed, radius })` | Runs away from a point (run). | It is `radius` (default 25 m) away. |
+| `flee(from, { speed, radius })` | Runs away from a point, player or NPC (run). | It is `radius` (default 25 m) away. |
 | `lookAt(target)` | Turns its head, and its body if needed, to a player, NPC or point. | It is facing the target. |
 | `hold()` | Cancels the current order and stands still. | It is in position. |
 
-`speed` is `"walk"`, `"jog"` or `"run"`. `follow` and `lookAt` take a handle
-or a network id. `npc.intent` reads back the current order (`hold`, `moveTo`,
-`follow`, `flee`, `lookAt` or `attack`); a patrol shows as `moveTo`.
+`speed` is `"walk"`, `"jog"` or `"run"`. `follow`, `flee` and `lookAt` take a
+player or NPC handle or a network id; `flee` and `lookAt` also take a position.
+`npc.intent` reads back the current order (`hold`, `moveTo`, `follow`, `flee`,
+`lookAt` or `attack`); a patrol shows as `moveTo`.
+
+## Make an NPC flee
+
+```ts
+npc.flee(player, { radius: 40 }); // from a player or NPC, or from a position
+```
+
+A human NPC runs straight away from the position, or from where the player or
+NPC stood when ordered; it does not track them afterwards. An animal runs the
+game's own escape instead, at its own pace and on its own path; see
+[Animal populations](../animals/#make-an-animal-flee). `flee` returns `false`
+for a player or NPC that is not there, or for the NPC itself.
 
 ## One order at a time
 
@@ -164,7 +177,7 @@ npc.moveTo({ x: 812, y: 1440, z: 31 }, { pathfinding: Navigation.ready ? "server
 A goal the mesh cannot reach ends the move with `blocked`, and a blocked route
 is not retried. `follow` and `flee` take no `pathfinding` option: they steer
 straight, and when they report `blocked`, a loaded mesh lets the server try a
-route first.
+route first. An animal's flee is the exception: its own escape picks the path.
 
 ## Choose how it walks
 

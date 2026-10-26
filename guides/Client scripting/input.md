@@ -1,15 +1,15 @@
 ---
 title: Key binds and controls
-description: Bind keys and mouse buttons with Key, poll them, and take the player's movement or show a pointer with Controls.
+description: Bind keys, mouse buttons and the wheel with Key, poll them, and take the player's movement, switch off a game action or show a pointer with Controls.
 sidebar:
   label: Key binds
   order: 71
 ---
 
 [`Key`](../../reference/client/variables/Key.md) runs your code when the player
-presses a key or mouse button. [`Controls`](../../reference/client/variables/Controls.md)
-takes gameplay input away from the game, or draws a mouse pointer, while your
-resource needs it. Both are client-only.
+presses a key or mouse button or turns the wheel. [`Controls`](../../reference/client/variables/Controls.md)
+takes gameplay input away from the game, switches off one game action, or draws
+a mouse pointer, while your resource needs it. Both are client-only.
 
 ```ts
 Key.bind("g", () => {
@@ -71,6 +71,7 @@ fails at start-up.
 | Editing | `space` `enter` (or `return`) `escape` (or `esc`) `tab` `backspace` `insert` `delete` `home` `end` `pageup` `pagedown` `capslock` |
 | Numpad | `numpad0` to `numpad9` (or `num0` to `num9`) |
 | Mouse | `mouse1` (left) `mouse2` (right) `mouse3` (middle) `mouse4` `mouse5` |
+| Mouse wheel | `wheelup` (rolled away from you) `wheeldown` (rolled towards you) |
 
 If the name comes from a config file or the server, catch the throw:
 
@@ -87,17 +88,48 @@ function bindFromConfig(name: string, handler: () => void): boolean {
 
 ### Keys already in use
 
-Nothing stops you binding these, but both actions will happen:
+Nothing stops you binding these, but both actions will happen unless you
+[switch the action off](#switch-off-a-game-action). The mod's own keys are
+defaults the player can move under the game's Controls > Keybinds >
+Multiplayer.
 
-| Key | Used by |
-| --- | --- |
-| `f9` | the client itself: it disconnects from the server |
-| `t` | opens the chat box |
-| `f4` | the default gamemode's panel |
-| `v` | voice push-to-talk, unless the player moved it |
+| Key | Used by | Action |
+| --- | --- | --- |
+| `f9` | the client itself: it disconnects from the server | |
+| `t` | opens the chat box, and the mod's Talk to NPC | `kcdc_npc_interact` |
+| `g` | the mod's emote wheel | `kcdc_emote_wheel` |
+| `h` | voice push-to-talk | `kcdc_push_to_talk` |
+| `y` | voice range | `kcdc_voice_tier` |
+| `u` | offering to end a fight | `kcdc_end_combat` |
+| `tab` | the player list | `kcdc_scoreboard` |
+| `f4` | the default gamemode's panel | |
 
 There is no rebinding menu for resource binds. If players need a choice,
 store it yourself and bind what they picked.
+
+## Bind the mouse wheel
+
+Each notch of the wheel is a press and a release, so a `"down"` bind runs once
+per notch. A fast spin runs it once for every notch, in order, even when
+several land in one frame.
+
+```ts
+let zoom = 5;
+
+Key.bind("wheelup", () => {
+  zoom = Math.max(1, zoom - 1);
+});
+
+Key.bind("wheeldown", () => {
+  zoom = Math.min(10, zoom + 1);
+});
+```
+
+- Bind `"down"` or `"up"`, not `"both"`, which runs twice per notch.
+- `Key.isDown("wheelup")` is always `false`: the wheel is never held.
+- `Key.getLabel` answers `Wheel Up` and `Wheel Down`.
+- `Voice.setPushToTalkKey` throws for either name, since push-to-talk needs a
+  key that is held.
 
 ## Show the key's label
 
@@ -136,8 +168,9 @@ per frame: fine for actions, too coarse for text entry (use a web view).
 :::caution
 `Controls.disable`, [placement](../placement/) and the
 [free camera](../camera/) do not stop your binds. A `mouse1` bind still fires on
-the click that confirms a placement, so check `PropPlacer.isActive()` in a
-handler that should stay quiet then.
+the click that confirms a placement, and a wheel bind on the notches that turn
+its preview, so check `PropPlacer.isActive()` in a handler that should stay
+quiet then.
 :::
 
 ## Freeze the player: `Controls`
@@ -156,6 +189,37 @@ Events.on("my-mode:round.countdown", () => {
 
 Holds are counted per resource. Input returns only once nothing holds it: your
 resource, a focused panel, the chat line or an overlay.
+
+## Switch off a game action
+
+`Controls.disableAction(action)` keeps one action of the game's action maps
+from doing anything, whatever key the player has it on, while that key still
+reaches your `Key.bind`. Use it when your own key shares a game key, or when
+your resource takes over what the action does.
+
+```ts
+let atStall = false;
+
+Events.on("my-mode:stall", (inside) => {
+  if (typeof inside !== "boolean" || inside === atStall) return;
+  atStall = inside;
+  if (inside) Controls.disableAction("use"); // the game's interaction stops
+  else Controls.enableAction("use");
+});
+
+Key.bind("e", () => {
+  if (atStall) Events.emitServer("my-mode:stall.use");
+});
+```
+
+- `action` is a name from the game's action maps, such as `use`, or one of the
+  mod's own from the [table above](#keys-already-in-use), such as
+  `kcdc_npc_interact`. It must be 1 to 64 letters, digits or underscores, or
+  the call throws. A well-formed name no map has is accepted and blocks nothing.
+- Holds are counted per resource, like `disable`. `enableAction(action)` gives
+  back one of yours, and the action works again once no resource holds it.
+- The block survives a level load. A stopping resource's holds are given back
+  for it.
 
 ## Show a mouse pointer
 
@@ -177,5 +241,6 @@ it.
 
 - [Show an HTML page (web views)](../../user-interface/web-views/), for focus and typed input
 - [Camera and free camera (noclip)](../camera/), for what a key press is aimed at
-- [Sounds and voice chat](../sound-and-voice/), to move push-to-talk
+- [Sounds and voice chat](../sound-and-voice/), for push-to-talk
+- [Action hints](../../user-interface/action-hints/), for a "Press [key] to ..." prompt on one of the game's controls
 - [Resource manifest and lifecycle](../../core-concepts/resources/)

@@ -16,7 +16,7 @@ world, select it, and set its ID and name in the inspector. Use IDs such as
 `village.yard`, keeping them unique across your exports and scripts.
 
 By default, an area is a region for scripts to test. Enable **Collision** to
-add an invisible physical boundary in **1.6.6**. Drawing an area does not
+add invisible walls around it. Drawing an area does not
 spawn an NPC or make native AI enforce a gameplay rule. Labels and metadata let your
 game mode describe its purpose. A virtual-world setting can restrict it to
 one world; leaving that unset makes it available in every world.
@@ -48,25 +48,54 @@ standing body, and test entry from both sides of the boundary.
 ## Make an invisible boundary
 
 Select an authored area and enable **Collision**. Boxes, polygons and spheres
-block crossing from either side while leaving their interior empty. Boxes
-and polygons include a floor and ceiling. Press **F7** and walk against the
-boundary to check its position.
+block crossing from either side while leaving their interior empty. Turn on
+**Show collision**, beside **Show drawn areas**, to shade what the selected
+areas build, then press **F7** and walk against the boundary to check it.
 
-Collision starts disabled, including on existing projects. Moving or
-reshaping the area updates it; undo restores the setting. Turning off
-**Enabled** disables both the trigger and collision. The setting survives
-project saves, blueprints, world exports and copied API calls.
+Boxes and polygons get side walls only unless you add a plate:
 
-Walls are 0.2 metres thick, centred on the drawn outline. Box dimensions and
-sphere radii must exceed 0.2 metres. Polygons need a height above 0.2 metres
-and a simple outline without crossing or repeated edges; concave outlines
-are supported. Their floor and ceiling remain horizontal. Spheres use a
-polygon mesh, which becomes coarser on very large spheres.
+| Setting | Effect |
+| --- | --- |
+| **Floor** | Adds a plate across the whole inside, at the bottom. Off by default. |
+| **Ceiling** | Adds a plate across the whole inside, at the top. Off by default. |
+| **Wall thickness** | 0.2 metres by default, from 0.05 to 2, centred on the drawn outline. Plates use it too. |
+
+Turn on a floor or ceiling only when players must not get under or over the
+walls. A plate is flat, so over sloping ground it can sit just above the
+ground in one place and within reach overhead in another. Spheres are always
+one closed shell, so the two options do nothing for them. A very large
+sphere is too detailed to shade; its outline still shows.
+
+:::caution[Keep a ceiling above head height]
+Collision is solid to the game's combat checks as well as to movement. A
+ceiling less than about 2 metres above where a player stands blocks the
+overhead attack directions, and the Areas tab warns about this while
+**Ceiling** is on. The ceiling is the area's top (a polygon's **Height** or
+a box's top face), and its underside sits half the wall thickness lower. A
+wall only gets in the way of attacks within about a metre of it.
+:::
+
+Collision starts disabled on new areas and existing projects. Areas saved,
+exported or created by scripts before **1.7.1** read as walls only, with
+0.2 metre walls; earlier builds also closed the floor and ceiling, so turn
+those on to get a plate back. Players and the server must update together,
+because an older client still builds both plates.
+
+Moving or reshaping the area updates its collision; undo restores the
+settings. Turning off **Enabled** disables both the trigger and collision.
+The settings survive project saves, blueprints, world exports and copied
+API calls.
+
+Box dimensions and sphere radii must exceed the wall thickness. Polygons
+need a height above it and a simple outline without crossing or repeated
+edges; concave outlines are supported. Their floor and ceiling remain
+horizontal. Spheres use a polygon mesh, which becomes coarser on very large
+spheres.
 
 Enabling or moving a wall does not move a player already intersecting it
 to a chosen side. Test boundaries before opening the area to players.
 
-Server scripts can create and toggle the same boundary:
+Server scripts can create and change the same boundary:
 
 ```ts
 const boundary = Area.create({
@@ -76,21 +105,33 @@ const boundary = Area.create({
   min: new Vector3(-10, -10, 0),
   max: new Vector3(10, 10, 8),
   collision: true,
+  collisionThickness: 0.5,
 });
 
 boundary.collision = false; // Keep the area, remove its physical boundary.
 boundary.collision = true;
+boundary.collisionCeiling = true; // Also close the top.
 ```
 
-Invalid collision shapes are rejected. `area.enabled = false` disables
-the boundary until re-enabled; `area.toJSON()` includes `collision`.
-Level areas are read-only, so make an editable copy before adding collision.
-Server boundaries follow the area's virtual world and reach later joiners.
-They disappear when the area is destroyed or its world resource unloads.
-Use compatible **1.6.6** clients and server for multiplayer collision.
+| Property | Default | Meaning |
+| --- | --- | --- |
+| `collision` | `false` | Builds the boundary. |
+| `collisionFloor` | `false` | Box and polygon only: closes the bottom with a plate. |
+| `collisionCeiling` | `false` | Box and polygon only: closes the top with a plate. |
+| `collisionThickness` | `0.2` | Thickness in metres, from 0.05 to 2. |
 
-MCP's `wb_area_create` and `wb_area_update` accept the same `collision`
-boolean inside the area definition.
+Each works in the [`AreaDefinition`](../../reference/server/interfaces/AreaDefinition.md)
+and as a property of an [`Area`](../../reference/server/classes/Area.md).
+Invalid shapes and options are rejected: `Area.create` throws, and an
+assignment throws and leaves the area as it was. `area.enabled = false`
+disables the boundary until re-enabled; `area.toJSON()` includes all four
+settings. Level areas are read-only, so make an editable copy before adding
+collision. Server boundaries follow the area's virtual world and reach later
+joiners. They disappear when the area is destroyed or its world resource
+unloads.
+
+MCP's `wb_area_create` and `wb_area_update` accept the same four fields
+inside the area definition.
 
 ## Group and reuse areas
 
@@ -109,6 +150,11 @@ colliding IDs a free suffix, so check IDs before connecting scripts.
 The corresponding **as API calls** buttons copy `Area.create(...)` calls.
 Groups organize the editor and stay in the project; exports and API calls
 omit them.
+
+With one drawn area selected, **Select objects inside this area** selects
+the objects within its shape that the
+[selection filter](../world-builder-selection/#filter-what-the-tools-take)
+lets through.
 
 ## Copy a game area
 
@@ -144,7 +190,9 @@ else Events.once("worldResourcesReady", findYard);
 `containsPlayer` tests a body's position and world. `contains(position)`
 tests geometry alone. Crossing events can include bodies from other worlds;
 check `matchingVirtualWorld` when handling them. See
-[Markers and trigger zones](../markers/) for events and queries.
+[Markers and trigger zones](../markers/) for events and queries, and
+[Gathering](../gathering/) to list, remove or respawn the herbs inside an
+area.
 
 Build [a guard for an exported yard](../../tutorials/world-builder-sentry/)
 to combine the area with a patrol route and NPC combat.

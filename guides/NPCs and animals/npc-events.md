@@ -50,9 +50,15 @@ events. A dead NPC stays an entity: the corpse stays, the handle resolves, and
 players can search it if `lootable` is on. `remove()` or `revive()` it when you
 are done.
 
-Player melee, arrows and NPC attacks can damage an NPC. For melee, the
-victim's simulator resolves native contact and the server checks the accepted
-swing before changing health. `npcDamage` reports the amount actually taken.
+`revive()` raises `npcRevive`, and every client replaces the corpse with a
+fresh body. The revived NPC fights as it did in its first life: blows on it
+and by it raise `npcDamage`, `npcDeath`, `playerHit` and `playerDamage` again,
+so it can be hurt and killed once more.
+
+Player melee, arrows and NPC attacks can damage an NPC. An arrow hurts it
+whether it lodges in the body or not. For melee, the victim's simulator
+resolves native contact and the server checks the accepted swing before
+changing health. `npcDamage` reports the amount actually taken.
 See [NPC combat](../npc-combat/) to give an NPC an attack order.
 
 ## NPC events
@@ -86,7 +92,7 @@ Events.on("npcDamage", (npc, attacker, amount) => {
   if (partnerId === undefined || !attacker) return;
 
   console.log(`${npc.name} took ${amount.toFixed(0)}, ${npc.health.toFixed(0)} left`);
-  Npc.getById(partnerId)?.flee(attacker.position, { speed: "run", radius: 30 });
+  Npc.getById(partnerId)?.flee(attacker, { speed: "run", radius: 30 });
 });
 ```
 

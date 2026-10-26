@@ -30,7 +30,7 @@ A [`WorldRayHit`](../../reference/server/interfaces/WorldRayHit.md) has:
 | Field | What it is |
 | --- | --- |
 | `position`, `normal`, `distance` | Where it hit, the surface normal, metres along the ray. |
-| `kind` | What it stopped on: `terrain`, `entity` (doors, props, NPCs, players), `vegetation` (trees, bushes, plants the level paints), `brush` (walls, houses, rocks, cliffs placed one by one) or `static` (anything else). |
+| `kind` | What it stopped on: `terrain`, `entity` (doors, `rigid` props, NPCs, players), `vegetation` (trees, bushes, plants the level paints), `brush` (walls, houses, rocks, cliffs placed one by one, and a server's `static` props) or `static` (anything else). |
 | `terrain` | Whether it hit the ground itself, the same as `kind` being `terrain`. Nothing lies behind terrain. |
 | `model` | The mesh of a `vegetation` or `brush` hit, by its path. `null` otherwise. |
 | `category` | `tree`, `bush`, `plant` or `rock`, from the folder `model` lives in. `null` for anything else, man-made included. |
@@ -38,6 +38,7 @@ A [`WorldRayHit`](../../reference/server/interfaces/WorldRayHit.md) has:
 | `material` | The material drawn where it hit, by its path (a trunk's bark, not the whole tree). `null` for terrain and when nothing names one. |
 | `entityGuid` | The level's id for what was hit, the same on every machine. `null` for terrain, static geometry and anything the session spawned. |
 | `entityName`, `entityClass` | The level's name and engine class (`AnimDoor`, `NPC_NAI`, `GeomEntity`). `null` when nothing named was hit. |
+| `levelObject` | The object the level placed that was hit (a tree, a rock, a wall, a door), in the form a [level edit](../level-edits/) takes. `null` for terrain, for static geometry the engine records no source for, and for anything the session spawned. |
 | `entityId` | Client only: that machine's own handle. Not a network id; never send it to the server. |
 | `player` | Client only: the player whose body it was, or `null`. |
 
@@ -46,18 +47,32 @@ so an `anything` ray that hits an `AnimDoor` tells you which door it was.
 
 ### Tell a tree or a rock apart
 
-Trees and rocks are not entities and have no GUID. Read `kind`, `category` and
-`model` instead, and use `model` with `position` as the key: the pair is the
-same on every client on the same level, so a server can keep a felled tree or
-a mined rock by it.
+Trees and rocks are not entities and have no GUID. Read `kind` and `category`
+to tell what was hit, and key it by its
+[`levelObject`](../../reference/server/interfaces/WorldLevelObject.md), which
+is the same on every client on the same level, so a server can keep a felled
+tree or a mined rock by it:
 
 ```ts
 function resourceKey(hit: WorldRayHit): string | null {
-  if (hit.category !== "tree" && hit.category !== "rock") return null;
-  const p = hit.position;
-  return `${hit.model}@${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)}`;
+  const object = hit.levelObject;
+  if (!object || (hit.category !== "tree" && hit.category !== "rock")) return null;
+  return `${object.name}@${object.at.x.toFixed(2)},${object.at.y.toFixed(2)},${object.at.z.toFixed(2)}`;
 }
 ```
+
+| `levelObject` field | What it is |
+| --- | --- |
+| `kind` | `brush` for a static mesh or a vegetation instance (a wall, a rock, a tree), `entity` for anything the level gives a GUID. |
+| `name` | A brush's mesh path, the same as the hit's `model`, or an entity's name. |
+| `guid`, `class` | An entity's level GUID and engine class. `undefined` for a brush. |
+| `at` | Where the level put the object: its pivot, not the point the ray met. It stays the same while an edit has moved the object. |
+| `rotation`, `scale` | How the level turned and sized it. A level edit reads them only with a `position`. |
+
+Spread it into [`LevelEdit.apply`](../level-edits/) to take the object out or
+swap it for another mesh: `LevelEdit.apply({ ...hit.levelObject, model })`.
+A weapon striking the world reports the same hit, see
+[Prop physics](../prop-physics/#react-to-weapon-hits).
 
 `surface` says what something is made of, not what it is: a plank wall is
 `mat_wood` as much as a trunk is, so tell a tree by `category`.
@@ -219,4 +234,6 @@ open that door?), let the server decide from its own data.
 - [Camera and free camera](../../client-scripting/camera/), for `Camera.screenRay` and the camera pose
 - [Let players place objects](../../client-scripting/placement/), aiming built on these rays
 - [Lock doors, open gates](../doors-and-gates/), what to do with a door's GUID
+- [Remove or move the level's own objects](../level-edits/), what to do with a `levelObject`
+- [Push props and react to weapon hits](../prop-physics/), the same hit from a swing
 - [Server vs client authority](../../core-concepts/authority/), why client answers are not trusted

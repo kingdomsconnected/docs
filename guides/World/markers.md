@@ -121,9 +121,9 @@ Marker.removeAll(3);      // every marker in virtual world 3; returns the count
 Marker.removeAll();       // every marker on the server
 ```
 
-Markers stream to players within 50 to 400 m, depending on size. They outlive
-your resource, so remove yours in `resourceStop` (see
-[Props](../props/#clean-up-when-your-resource-stops)).
+Markers stream to players within 50 to 400 m, depending on size. A marker
+belongs to the resource that placed it and goes when that resource stops or
+restarts (see [Props](../props/#clean-up-when-your-resource-stops)).
 
 | Event | Arguments | When |
 | --- | --- | --- |

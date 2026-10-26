@@ -1,6 +1,6 @@
 ---
 title: Sounds and voice chat
-description: Play the game's own sounds with Audio, tune proximity voice chat on the client, and enforce who hears whom on the server.
+description: Play the game's own sounds with Audio, tune proximity voice chat and replace its indicator on the client, and enforce who hears whom on the server.
 sidebar:
   label: Sound and voice
   order: 74
@@ -88,13 +88,13 @@ file every 0.1 seconds.
 ## Voice chat settings (client)
 
 The server relays a player's voice only to players within range, and playback
-fades with distance. Push-to-talk is on `v` by default. The client side is the
-player's own settings:
+fades with distance. Push-to-talk is the game's own **Push to talk** binding,
+`h` by default, which the player moves under Controls > Keybinds > Multiplayer.
+The client side is the player's own settings:
 
 ```ts
 Voice.setEnabled(true);          // off closes the mic and stops receiving
 Voice.setVolume(1.5);            // playback gain, 0 to 4, 1 is unchanged
-Voice.setPushToTalkKey("b");     // same names as Key.bind; unknown names throw
 Voice.setPushToTalkReleaseDelay(250); // keep sending briefly after release, 0 to 2000 ms
 Voice.setHearingRange(15);       // can only narrow the server's range; 0 removes the limit
 
@@ -103,9 +103,17 @@ if (!Voice.hasMicrophone()) {
 }
 ```
 
-Each setter has a getter (`isEnabled`, `getVolume`, `getPushToTalkKey`, ...).
+Each setter has a getter (`isEnabled`, `getVolume`, ...).
 `Voice.getRange()` reads the server's range, and `Voice.isTalking()` whether
 the local player is sending now.
+
+`Voice.setPushToTalkKey(key)` takes the names `Key.bind` takes and throws for
+an unknown one or for `wheelup` and `wheeldown`, which are never held.
+`getPushToTalkKey()` reads back what was set. The key that opens the
+microphone is still the binding in the game's menu.
+
+A player with a closed helmet visor sounds muffled to everyone else.
+[`player.visorClosed`](../local-player/#fields-you-can-read) reads it.
 
 :::note[Authority]
 These are preferences the player controls. Who hears whom is decided on the
@@ -177,6 +185,40 @@ Events.on("playerVoiceStop", (who) => {
 These four events are not in the declarations' `EventMap` yet, so their
 arguments arrive as `unknown` in TypeScript. Cast the player as above.
 :::
+
+## Replace the voice indicator
+
+The mod draws a microphone low on the left while this player is sending, and a
+talking icon on the nametag of each player they hear. A resource that draws
+its own hides both and reads the same state:
+
+```ts
+declare const voiceView: number; // your own web view
+
+Voice.setIndicatorVisible(false);
+
+setInterval(() => {
+  Web.emit(voiceView, "voice:me", {
+    talking: Voice.isTalking(),
+    tier: Voice.getTier(), // 0 whisper, 1 normal, 2 shout
+    level: Voice.getInputLevel(), // microphone level, 0 to 1
+  });
+}, 100);
+
+function talkingAmong(ids: number[]): number[] {
+  return ids.filter((id) => Voice.isPlayerTalking(new Player(id)));
+}
+```
+
+| Call | What it does |
+| --- | --- |
+| `setIndicatorVisible(visible)` | `false` hides both indicators, `true` shows them. Voice itself carries on. Throws unless `visible` is a boolean |
+| `isIndicatorVisible()` | `true` unless a resource hid them |
+| `isPlayerTalking(player)` | Whether this client is playing that player's voice now, held across the pauses between words: what the nametag icon follows. Someone out of range, muted for this player, or beyond the talkers this client plays at once reads `false`. For the local player it answers `isTalking()`. Throws unless given a `Player` |
+
+The indicators belong to the resource that hid them and come back when it
+stops or the session ends. A `setIndicatorVisible(true)` from any resource
+shows them again.
 
 ## Voice while a UI has focus
 

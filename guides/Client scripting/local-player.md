@@ -1,6 +1,6 @@
 ---
 title: Read the local player
-description: Read the health, stats, conditions and buffs of the player at this machine and of the other players this client can see.
+description: Read the health, stats, conditions and buffs of the player at this machine and of the other players this client can see, and keep a player out of this machine's lock-on.
 sidebar:
   label: Local player
   order: 70
@@ -8,7 +8,8 @@ sidebar:
 
 A client resource can read the player sitting at this machine, and anyone else
 this client can currently see: health, stamina, conditions, skills, what is in
-their hands and which effects are on them. It cannot change them.
+their hands and which effects are on them. It cannot change them; the one
+client-side verb only keeps a body out of this machine's lock-on.
 
 ```ts
 const me = LocalPlayer;
@@ -58,6 +59,7 @@ reference lists every one.
 | Progression | `level`, `levels`, `perks`, and `getTrack(track)` for XP and perk points |
 | Movement | `position`, `rotation`, `velocity`, `lookDirection`, `inAir`, `crouched`, `moveSpeedTag`, `moveDirTag`, `stanceTag`, `physicsProfile` |
 | Combat | `fistsUp`, `guard`, `combatZone`, `rightHandItem`, `leftHandItem`, `equipment` |
+| Body | `visible`, `visorClosed` |
 
 - Most values are in the game's own units, which is why each comes with its
   maximum. `healthPercent` is the exception: it is what the nametag bar draws.
@@ -65,6 +67,12 @@ reference lists every one.
   `me.skills.defense`).
 - Progression is read-only here; the server grants it. [Skills, XP and
   perks](../../players/progression/#on-the-client) has the client events.
+- `visible` is `false` once their client has stopped drawing a body the server
+  hid with [`setVisible`](../../players/actions/#hide-a-players-body). A hidden
+  player still stands there, collides, can be hit, and is seen by NPCs.
+- `visorClosed` is `true` while they wear a helmet with its visor down, as
+  their own game reports it; it is the state that muffles their voice. No
+  event fires when it moves, and no script can open or close it.
 
 ## Client-only fields
 
@@ -105,13 +113,15 @@ function describeBuffs(): string[] {
   }
   return me.buffs.map((buff) => {
     const left = buff.duration < 0 ? "no end" : `${Math.round(buff.duration - buff.since)} s left`;
-    return `${buff.name} (${buff.class}, ${left}, from ${buff.source})`;
+    return `${buff.displayName ?? buff.name} (${buff.class}, ${left}, from ${buff.source})`;
   });
 }
 ```
 
 `duration - since` is only roughly what is left, because each client advances
-buff time on its own frame clock.
+buff time on its own frame clock. An effect the server registered as a
+[custom buff](../../players/custom-buffs/) has `custom` set and carries its own
+`displayName` and `description`; the game's own effects read `null` there.
 
 ## Read another player
 
@@ -151,16 +161,56 @@ see reads empty values (`nickname` is an empty string once their body is gone),
 so check `ready` first. `other.state.get("my-mode:team")` reads the player's
 [state bag](../../core-concepts/state/).
 
+## Keep a player out of lock-on
+
+`player.setTargetable(false)` keeps another player's body out of this machine's
+combat lock-on and opponent picker, for someone lying wounded, say; `true` lets
+it back. Only this client's picker changes, so the server tells every client:
+
+```ts
+// server
+Events.emitAllClients("my-mode:downed", { id: player.id, down: true });
+```
+
+```ts
+Events.on("my-mode:downed", (payload) => {
+  if (typeof payload !== "object" || payload === null) return;
+  const { id, down } = payload as { id?: unknown; down?: unknown };
+  if (typeof id !== "number" || typeof down !== "boolean") return;
+  new Player(id).setTargetable(!down);
+});
+```
+
+It does not stop a swing that lands anyway; damage is the server's to refuse.
+It is kept by player id until changed or the session ends, even after your
+resource stops, and throws unless `targetable` is a boolean.
+
+## React to your weapon hitting the world
+
+`weaponHit` fires on this machine when the local player's swing meets
+something solid that is not a body (a tree, a wall, a rock, a prop, the
+ground), once per thing per attack, with a [`WorldRayHit`](../../world/raycasts/).
+Fists, kicks and blows on players, NPCs or animals are not reported.
+
+```ts
+Events.on("weaponHit", (hit) => {
+  if (hit.category === "tree") Hud.showInfoText("Thunk.", 1000);
+});
+```
+
+The server hears of the same swing as `playerWeaponHit`;
+[Prop physics](../../world/prop-physics/) covers both events.
+
 ## Change a player: ask the server
 
-:::note[No client-side verbs]
-Everything that changes a player lives on the server's `Player`, where the
-server can refuse it. A client asks with an event and the server decides; see
-[Server vs client authority](../../core-concepts/authority/).
+:::note[Ask the server]
+Apart from `setTargetable`, everything that changes a player lives on the
+server's `Player`, where the server can refuse it. A client asks with an event
+and the server decides; see [Server vs client authority](../../core-concepts/authority/).
 :::
 
 ```ts
-Key.bind("h", () => {
+Key.bind("f7", () => {
   Events.emitServer("my-mode:horse.request");
 });
 ```
@@ -190,11 +240,11 @@ Both getters read the latest snapshot and return zero without one. Client
 scripts cannot set these values. See [Set and restore player stats](../../players/restoring-stats/)
 for server setters and the difference between writable and derived stats.
 
-To move the local player alongside someone, see [Following players and NPCs](../following/).
-
 ## Related
 
 - [Read health, stats and skills](../../players/stats/), the server side
 - [Buffs and status effects](../../players/buffs/), to add or remove them
+- [Teleport, kick and other player actions](../../players/actions/), to hide a body
 - [Send data between server and client](../../core-concepts/networking/), for requests like the one above
 - [Key binds and controls](../input/)
+- [Following players and NPCs](../following/), to move the local player alongside someone

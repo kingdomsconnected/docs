@@ -27,6 +27,7 @@ Events.on("playerDisconnect", (player) => {
 
 | Event | What is true | Use it for |
 | --- | --- | --- |
+| `playerConnecting` | They asked to join. No body or player slot exists yet, and they have been sent nothing. | Bans, whitelists, queues: see [below](#admit-or-turn-away-a-connection) |
 | `playerConnect` | The body exists. `player.ready` is false and the level is still loading on their machine. | Bookkeeping, starting async lookups |
 | `playerSpawning` | Their client waits behind its loading screen for a place to stand. Fires once per connection. | Choosing the spawn point, synchronously |
 | `playerSpawned` | They stand in the world and the ground under them has loaded. | Welcome lines, starting kit, markers |
@@ -36,6 +37,31 @@ Events.on("playerDisconnect", (player) => {
 Anything the player should see belongs in `playerSpawned`: a chat line sent
 from `playerConnect` arrives while they still look at a loading screen. The
 full list is in [Events](../../core-concepts/events/#server-events).
+
+## Admit or turn away a connection
+
+`playerConnecting` hands you a
+[`PendingConnection`](../../reference/server/interfaces/PendingConnection.md)
+before the player takes a slot:
+
+```ts
+const banned = new Set<string>(); // Epic account ids, from your own storage
+
+Events.on("playerConnecting", (connection) => {
+  if (connection.epicId !== "" && banned.has(connection.epicId)) {
+    connection.reject("You are banned from this server.");
+  }
+});
+```
+
+It carries `nickname`, `steamId`, `epicId`, `discordId`, `hardwareId`,
+`ticket` and `ip`. Each identifier is what the player's own client reported,
+unverified, and empty when it had none. The request waits until every handler
+has returned and every promise a handler returned has settled, up to the
+admission timeout (30 seconds by default); `connection.update(message)` shows
+a status line and restarts that timeout. A handler that throws, or
+`connection.reject(reason)`, turns the player away. With no handler, everyone
+is let in while slots are free.
 
 ## Wait for `ready`
 
@@ -150,6 +176,7 @@ Events.on("playerDied", (player) => {
 | `player.playerIndex` | Connection slot (65535 while unassigned). Reused by the next joiner: fine for `/tp 3`, wrong for storage. |
 | `player.nickname` | Name they connected under. Not unique, not authenticated. |
 | `player.steamId` | Survives a reconnect. Empty when unavailable. |
+| `player.epicId` | Epic Games account id their client reported, not verified by the server. Empty when unavailable. |
 
 ## Store ids, not handles
 

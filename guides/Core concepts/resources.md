@@ -120,29 +120,36 @@ The framework then removes:
 - event handlers (`on`, `once`, `onClient`, `onLocal`) and state bag `onChange` subscriptions
 - `setTimeout` and `setInterval` timers
 - message handlers and exports; pending `Messages.request` calls to or from it reject
-- on the server, every entity it spawned (props, horses, NPCs, markers...)
+- on the server, every entity its scripts created: props, ground items,
+  markers, effects, lights, NPCs, horses, doors, smart objects and the rest.
+  The objects a [world export](../../world/world-resources/) loads belong to
+  the server and stay.
 - on a client, its web views, key binds, `Controls` holds, prop placement and native UI
 
-Remove anything else yourself in `resourceStop`: listeners on your own
-`EventEmitter` or on `process`, and timers from `require('timers')`.
+On the server, the resource's [runtime](#each-server-resource-has-its-own-runtime)
+goes too, with everything it left running: timers of any kind, sockets and
+HTTP servers, worker threads, and files opened with `fs.open()`. On a client,
+resources share one script context, so remove listeners on your own
+`EventEmitter` objects yourself in `resourceStop`.
 
 ## Handle errors
 
 An event handler that throws is caught and logged; the resource keeps running.
 A rejected async handler rejects the emitter's promise (see
 [Events](../events/#async-handlers)). `errorBehavior` covers what nothing
-catches on the server: a throw in a timer callback, or an unhandled rejection.
-It is charged to the resource whose file appears in the stack.
+catches: a throw in a timer callback, or an unhandled rejection. On the server
+it is charged to the resource whose runtime raised it. Since 1.6.10 the same
+holds for client resources, on the machine of the player whose game raised it.
 
 | `errorBehavior` | After an uncaught error |
 | --- | --- |
-| `"stop"` | The resource is marked failed. `ensure` it to bring it back. |
-| `"restart"` | The resource starts again after a second or more. |
-| `"continue"` | The error is logged; nothing else happens. |
+| `"stop"` | The resource is marked failed and its runtime is dropped: its handlers, timers and exports stop. `ensure` it to bring it back. |
+| `"restart"` | As `"stop"`, then the resource starts again after 1, 2, then 4 seconds. After three restarts within five minutes it stays failed. |
+| `"continue"` | The error is logged; the resource keeps running. |
 
 :::caution
 Whatever you choose, an uncaught error marks the resource failed and despawns
-its entities. Catch errors in timer callbacks and at the end of
+the entities it created, as a stop does. Catch errors in timer callbacks and at the end of
 fire-and-forget promise chains.
 :::
 
@@ -165,17 +172,58 @@ screen. There is no file watcher: rebuild, then
 `ensure my-mode`.
 
 :::note
-Reloading relies on the CommonJS module cache, which a TypeScript resource
-compiled to CommonJS uses. Modules loaded with dynamic `import()` are not
-re-read.
+On the server, every start runs in a fresh runtime, so every file is read
+again, modules loaded with `import()` included. Client scripts are CommonJS
+only; a client restart evicts the resource's modules from its cache.
 :::
 
-## Share one runtime
+## Each server resource has its own runtime
 
-All server resources share one Node.js runtime; all client resources on a
-machine share one script context. Modules stay separate, but `globalThis` and
-the event bus are shared. Prefix event names (`"my-mode:round.start"`) and
-keep things off `globalThis`.
+Every server resource runs in a Node.js environment of its own, with its own
+globals, module cache and event loop. What one resource puts on `globalThis`
+is invisible to the others, and a resource that requires another's file gets
+its own copy of that module. Values passed between resources through events,
+exports and messages are copied; see
+[What crosses between resources](../sharing/#what-crosses-between-resources).
+
+- Every runtime runs on the server's one script thread, so a resource that
+  blocks still blocks the others. Move long work to a worker thread, which
+  stops with its resource.
+- `process.chdir()` throws `ERR_WORKER_UNSUPPORTED_OPERATION`, since process
+  state belongs to the server.
+- `process.exit()` stops the resource that calls it, not the server. Handlers
+  on `process.on("exit")` run only then, never when the resource is stopped:
+  use `resourceStop`.
+
+Client resources on a machine still share one script context: modules stay
+separate, but `globalThis` is shared. On both sides every resource shares the
+event bus, so prefix event names (`"my-mode:round.start"`).
+
+## Use Node.js and npm packages
+
+The server runs Node.js 26.12.1 (since 1.7.2) with its full API: `fs`, `net`,
+`http`, `worker_threads` and the rest. A server script loads npm packages from
+its resource's own `node_modules`, as Node does:
+
+```json title="resources/my-mode/package.json"
+{
+  "name": "my-mode",
+  "dependencies": { "zod": "^4.0.0" },
+  "devDependencies": { "typescript": "^5.9.2", "@kingdomsconnected/types": "1.7.2" },
+  "mafiahub": { "serverScripts": ["dist/server/index.js"] }
+}
+```
+
+- Put what the server loads in `dependencies` and build tools in
+  `devDependencies`. `npm install --omit=dev` in the resource folder installs
+  only the first.
+- A resource built elsewhere needs its `node_modules` copied with it. The
+  [container image](../../hosting-a-server/containers/) has no Node.js or npm.
+- Native addons built on Node-API load on Windows and Linux servers (on
+  Windows since 1.6.10). An addon is compiled for one operating system, so
+  install the packages on the same system as the server.
+- Client scripts cannot load packages; see
+  [Use packages from npm](../../getting-started/project-structure/#use-packages-from-npm).
 
 ## Related
 

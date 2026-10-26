@@ -7,8 +7,9 @@ sidebar:
 ---
 
 World Builder lets you create maps offline and load them on a multiplayer
-server. Place props, effects and areas, edit the level's own objects, draw
-NPC patrol routes, and save reusable arrangements as blueprints.
+server. Place props, effects, lights, working doors, furniture, items and
+areas, edit the level's own objects, draw NPC patrol routes, and save
+reusable arrangements as blueprints.
 
 ## Start an offline project
 
@@ -31,14 +32,16 @@ Use the editor's tabs to choose what to work on:
 
 | Tab | What you can do |
 | --- | --- |
-| **Library** | Search the game's prop meshes. Click a mesh to pick it up, click in the world to place it, and press **Esc** to stop placing. |
+| **Library** | Search the game's prop meshes, doors, interactive objects and items. Click a row to pick it up, click in the world to place it, and press **Esc** to stop placing. |
 | **Effects** | Browse and place particle effects. Select an effect to adjust it in the **Object** tab. |
-| **Level** | Select existing level objects to move or remove them. **Del** removes a selected level object; pressing it again puts it back. |
+| **Lights** | Add point lights and set their color, intensity, radius and shadows. |
+| **Level** | Select existing level objects to move or remove them. **Del** removes a selected level object; pressing it again puts it back. You can also [copy, convert, swap or restore](../world-builder-editing/#turn-a-level-object-into-a-prop) them. |
 | **Areas** | Draw boxes, shapes or spheres for server scripts to use as areas. |
 | **Patrols** | Draw named routes, adjust each waypoint, and preview them with a temporary NPC. |
-| **Layers** | Organize props, effects and level objects, then hide or lock them while editing. |
+| **Layers** | Organize placed and level objects, then hide or lock them while editing. |
 | **Environment** | Preview the offline project under a chosen hour, sky and rain. |
-| **MCP** | Let a local assistant or script inspect and control the offline editor. |
+| **MCP** | Let an AI assistant or your own local program inspect and control the offline editor. See [MCP automation](../world-builder-mcp/) or the [HTTP tutorial](../../tutorials/world-builder-http/). |
+| **Keys** | Change the editor's keys. |
 
 Select an object and use the gizmo to move, rotate or scale it. Areas define
 regions; your server scripts decide what happens there. See
@@ -60,8 +63,9 @@ reports a placement error; choose **None** for decoration without physics.
 | **F** | Frame the selection. |
 | **1**, **2**, **3** | Move, rotate or scale with the gizmo. |
 | **G** / **X** | Switch world/local axes or toggle snapping for the current gizmo. |
-| **Ctrl** + click | Select several props or effects. |
-| **Ctrl+Z** / **Ctrl+Y** | Undo / redo. |
+| **Ctrl** + click | Add an object to the selection or take it out. |
+| Left mouse drag | Select by box, lasso or brush, as chosen under **Drag** on the toolbar. |
+| **Ctrl+Z** / **Ctrl+Y** | Undo / redo. Each step selects what it changed. |
 | Hold **Shift** while translating | Snap props, effects, areas, area handles and patrol waypoints to the ground. |
 
 In **Camera**, name a view and click **Remember**. Selecting a saved view
@@ -72,28 +76,39 @@ Saved views and the current camera position stay with the project.
 **Esc** or right-click cancels prop/effect placement even while a search
 field has focus. Release right mouse before holding it again to fly.
 
-See [Grid, favorites and layers](../world-builder-editing/) for alignment,
-project favorite folders and locking finished parts of the scene. Use
-[Preview light and weather](../world-builder-environment/) to inspect the
-project at dusk or in rain. These controls are available in **1.6.6**.
+These are the default keys; change them in **Keys**. See
+[Selecting objects](../world-builder-selection/) for box, lasso and brush
+selection, [Grid, favorites and layers](../world-builder-editing/) for
+alignment, layers and edits to the level's own objects, and
+[Preview light and weather](../world-builder-environment/) for dusk or rain.
 
-## Optional: MCP integration
+## Travel with the game map
 
-Enable MCP to let an AI assistant automate editor tasks, inspect your level
-changes, or set up a patrol preview. Your own local programs can use the
-same tools over HTTP without an AI agent. Follow
-[Automate World Builder with MCP](../world-builder-mcp/) to connect, or
-[Control World Builder over HTTP](../../tutorials/world-builder-http/)
-for a working PowerShell example.
+In an offline session, click **Map** in the toolbar, then a point on the
+map. The editor waits for collision there, then moves the player and the
+camera; **Escape** cancels until then, and a wait that fails restores the
+camera. Your waypoint, project, selection and the asset in hand are kept.
+Travel stays in the loaded region, needs a player who is not riding, cannot
+be undone and is unavailable in multiplayer. Choose an open outdoor spot:
+the map does not pick an interior floor or check that a spot is walkable.
 
-## Restore deleted level objects
+## Place doors, furniture and items
 
-**Level > Deleted** lists removed level objects even outside the nearby
-radius or after they stream out. Saved deletions return when you reopen the
-project. Search by name, class or mesh; double-click a row to frame it.
-**Restore** brings back that object while keeping its move. **Include moved
-objects** also lists objects moved without deletion. **Restore all level
-edits** undoes every level-object move and deletion, including filtered rows.
+The **Library**'s `doors`, `interactive` and `items` folders hold door
+leaves, seats, beds, the dice table, crafting stations and every shipped
+item class. Place them like meshes; the server builds them as working doors,
+furniture and stacks players pick up. See
+[Set up doors, furniture and items](../world-builder-editing/#set-up-doors-furniture-and-items).
+
+## Light a scene
+
+In **Lights**, click **Add light in front of camera**, then move the light
+with the gizmo or the **Object** tab's position fields. Both tabs set its
+color, **Intensity** (0 to 100, 1 by default), **Radius (m)** (0.1 to 100,
+5 by default) and **Cast shadows** (off by default). A new light is warm
+orange. Point lights have no rotation or scale, and each player's game shows
+at most 192 lights from the editor and scripts combined. Groups, layers,
+undo, blueprints and exports include them. Scripts use [Lights](../lights/).
 
 ## Draw areas and patrol routes
 
@@ -139,7 +154,7 @@ content. The older **Import an older map** section has been removed.
 4. In this or another project, choose **Open blueprint**, then
    **Place blueprint in front of camera**. Move the copy into position.
 
-Blueprints preserve the arrangement of their props and effects. They exclude
+Blueprints preserve the arrangement of their props, effects and lights. They exclude
 removals and moves of existing level objects, which belong to the original level.
 Selected routes can be included too. If an imported route ID collides with
 an existing one, it gets a numeric suffix; check it before wiring scripts.
@@ -174,8 +189,11 @@ Keep your other server settings and any existing entries in `world_resources`.
 Paths are relative to the server's working directory, normally the server
 folder. If you copy the file into `worlds/`, use `worlds/test1.world.json`.
 Restart the server after adding or replacing an export. The server creates
-the content and sends its world state to joining players. Props and effects
-appear as players come within streaming range; level edits reach every player.
+the content, including doors, interactive objects, items and lights, in the
+global world. Props, effects and lights appear as players come within
+streaming range, and every prop within 250 metres reaches a player however
+densely the map is furnished. A `static` or `none` prop is drawn as far away
+as the level draws the same mesh. Level edits reach every player.
 
 To publish changes, reopen the project, edit, save, export again, copy the
 updated file to the server and restart it. Server scripts can use the
@@ -188,8 +206,10 @@ an exported scene with a script-owned guard.
 
 For a few objects that belong in a script, select them and choose **Copy
 selection as API calls**, then paste the calls into a server resource.
-This copies only the selection. **Areas** has **Copy selected areas as API
-calls**, and **Patrols** has **Copy API call** for its selected route.
+This copies only the selection, as `Prop.spawn`, `Vfx.spawn`, `Light.spawn`,
+`LevelEdit.apply`, `Door.spawn`, `SmartObject.spawn` and `GroundItem.spawn`
+calls. **Areas** has **Copy selected areas as API calls**, and **Patrols**
+has **Copy API call** for its selected route.
 
 ## Allow building in multiplayer
 

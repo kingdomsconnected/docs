@@ -1,6 +1,6 @@
 ---
 title: Manage shared stew pots
-description: Read a pot's remaining portions, refill it or disable eating, with separate supplies for each virtual world.
+description: Read a pot's remaining portions, refill it, disable eating or light its fire, with separate supplies for each virtual world.
 sidebar:
   label: Shared stew pots
   order: 49.2
@@ -33,6 +33,7 @@ the eating trigger or visible cauldron.
 | `enabled` | Whether the server allows eating. |
 | `food`, `nutrition` | Meal type and its base nourishment value. |
 | `poison` | Added ingested buff GUID or null, visible to server scripts. |
+| `fireLit` | `true` or `false` once a script [set the fire](#light-or-put-out-the-fire); `null` while each player's own game runs it. |
 | `virtualWorld` | The world whose supply was read. |
 
 Snapshots are frozen values, not live handles. Read again after changing
@@ -62,6 +63,31 @@ if (pot) {
 
 `refill` replaces the count; it does not add to it. Decide in your game mode
 whether cooks, purchases or a timer should replenish meals.
+
+## Light or put out the fire
+
+Every pot hangs over a fireplace. Until a script sets it, each player's own
+game lights the fire when a villager stokes it and puts it out on its own
+timer, as in single player, so two players can see the same fire burning and
+cold. `CookPot.setFireLit(guid, lit, world = 0)` decides it for every player in
+one virtual world:
+
+```ts
+const pot = CookPot.all()[0];
+if (pot) {
+  CookPot.setFireLit(pot.guid, true);  // burning, with its steam and smoke
+  CookPot.setFireLit(pot.guid, false); // cold
+  CookPot.setFireLit(pot.guid, null);  // back to each player's own game
+}
+```
+
+Once set, villagers and the burn-out timer no longer change the fire, and
+players who arrive later see it as set. It returns false for an unknown pot.
+Refilling, emptying, disabling or changing the meal leaves the fire alone.
+How a player lights or puts out a fire is your game mode's choice: a client
+script can show an [action hint](../../user-interface/action-hints/) at the
+fireplace and send the press, and the server checks the player before it calls
+`setFireLit`.
 
 ## Choose meals and refill from inventory
 
@@ -140,9 +166,9 @@ Stock survives disconnects and resource restarts, but ends when the server stops
 the fields your game mode needs in its database. At startup, restore remaining
 portions with `refill` and eating permission with `setEnabled`. There is no
 independent capacity setter: refilling with the saved remainder also makes that
-remainder the new capacity. Restore the meal with `setFood`. There is no
-administrative setter for poison, so saving a snapshot is not enough to restore a
-poisoned batch. Your game mode must decide how to handle those batches after a
+remainder the new capacity. Restore the meal with `setFood` and a set fire with
+`setFireLit`. There is no administrative setter for poison, so saving a
+snapshot is not enough to restore a poisoned batch. Your game mode must decide how to handle those batches after a
 restart.
 
 The server reserves a portion before the native meal applies. A native

@@ -9,7 +9,10 @@ sidebar:
 Every release publishes a Linux amd64 image,
 `ghcr.io/kingdomsconnected/kcdc-server:<version>`, where `<version>` is the
 release number without the `v`. Replace `<version>` in the examples with the
-latest release's tag. The registry does not provide a `latest` tag.
+latest release's tag. Each final release also moves `latest` to its image; a
+prerelease never does, and there are no `stable` or `testing` tags. Pin an
+exact version so the server changes only when you choose: players and the
+server must update together.
 One command runs it:
 
 ```sh title="Host"
@@ -54,7 +57,9 @@ runs no gamemode until you copy a built one in:
 
 Your own resources go the same way: `docker cp` the built folder into
 `/home/container/resources/`, then restart, or use `refresh` and `start` in
-the [console](#use-the-console).
+the [console](#use-the-console). A resource that uses npm packages needs its
+`node_modules` copied too, installed on Linux x64 when a package has a native
+addon ([npm packages](../../core-concepts/resources/#use-nodejs-and-npm-packages)).
 
 ## Compose
 
@@ -140,12 +145,12 @@ picks up every resource change but disconnects everyone.
 
 ## Fly.io
 
-Deploy with the `fly.toml` from the mod's repository, whose process command
+Deploy with `deploy/fly.toml` from the mod's repository, whose process command
 passes Fly's UDP bind address as `--host`. UDP on Fly needs a dedicated IPv4:
 
 ```sh title="Host"
 fly ips allocate-v4
-fly deploy --image 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
+fly deploy -c deploy/fly.toml --image 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
 ```
 
 That `fly.toml` mounts no volume, so `/home/container` starts empty whenever

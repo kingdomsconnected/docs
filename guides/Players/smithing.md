@@ -13,11 +13,13 @@ nothing. Smithing shares the [`Crafting`](../../reference/server/variables/Craft
 API and events with [alchemy](../alchemy/); every payload says which with
 `kind`.
 
-In **1.6.6**, nearby players see the smith at the station, including players
-who come into view later. Male characters show the forging loop while
-working; female characters stay at the workstation without that animation.
-This presentation is separate from the recipe transaction and its events.
-Update both clients and server for station synchronization.
+Nearby players see the smith at the station, including players who come into
+view later. Male characters show the forging loop while working; female
+characters stay at the workstation without that animation. This presentation
+is separate from the recipe transaction and its events. Smitheries placed
+with [smart objects](../../world/smart-objects/) work like the level's own,
+and [custom recipes](../custom-recipes/) forge by the same rules as the
+game's.
 
 ```ts
 Events.on("craftingStarting", (player, proposal) => {
@@ -58,6 +60,10 @@ for (const recipe of Crafting.recipes(player, "smithing")) {
   }
 }
 ```
+
+A recipe without a `perk` is known to every smith. `recipe.source` says
+where each one comes from: `game`, `mod` for a streamed KCD2 mod, or
+`script` for a [custom recipe](../custom-recipes/).
 
 `minSkill` is the craftsmanship skill the recipe needs. An ingredient with
 `quest: true` is a quest item, which only its quest hands out: it is required
@@ -108,15 +114,18 @@ Events.on("craftingRefunding", (player, proposal, refund) => {
 ## Find smitheries and read sessions
 
 ```ts
-const [smithery] = Crafting.stations("smithing"); // id, layer, position
-if (smithery) Crafting.occupancy(smithery.id, 0);  // who works there in world 0
+const [smithery] = Crafting.stations("smithing", player.virtualWorld); // id, placed, layer, position
+if (smithery) Crafting.occupancy(smithery.id, player.virtualWorld);     // who works there
 const session = Crafting.session(player);          // phase "working", recipe, materials taken
 if (session?.kind === "smithing") Crafting.cancel(player); // fails the piece; they leave the smithery
 ```
 
-`session.materials` lists the units taken for the workpiece. `cancel` returns
-`false` when there was nothing to end, and `craftingEnded` follows on the next
-tick.
+`stations` lists the smitheries players in one world can use, as it does
+[alchemy tables](../alchemy/#find-tables-and-read-sessions): the level's own
+minus any taken out of that world, plus placed ones with `placed: true`.
+Without a world it lists the global world's. `session.materials` lists the
+units taken for the workpiece. `cancel` returns `false` when there was
+nothing to end, and `craftingEnded` follows on the next tick.
 
 :::tip[Try it]
 The default gamemode's `/crafttest smithing` teleports you to a smithery,
@@ -127,6 +136,7 @@ lack.
 ## Related
 
 - [Alchemy](../alchemy/): the same events at alchemy tables, and refund policy
+- [Custom recipes](../custom-recipes/): smithing recipes of your own
 - [Skills, XP and perks](../progression/): recipe perks and craftsmanship XP
 - [Inventories](../inventory/): where materials come from and products go
 - [Crafting reference](../../reference/server/variables/Crafting.md)
