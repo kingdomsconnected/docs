@@ -166,9 +166,8 @@ resources/<resource>/replace/libs/tables/minigame/alchemyrecipe__<id>.xml
 resources/<resource>/replace/libs/tables/minigame/blacksmithrecipes__<id>.xml
 ```
 
-The server reads them when the resource starts and drops them when it stops;
-players' games load them at their next level load. A row with the id of one of
-the game's recipes replaces it, as in single player. When two resources add
+The server reads them when the resource starts and drops them when it stops.
+A row with the id of one of the game's recipes replaces it, as in single player. When two resources add
 the same id, the resource whose name sorts first keeps it. A row the server
 cannot read, or one naming an item it does not know, is left out with a
 warning in the server log. These recipes list with `source: "mod"`, and cannot
