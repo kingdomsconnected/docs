@@ -53,10 +53,6 @@ archive.
 5. Run `refresh`, then `start <name>` in the server console, or restart the
    server.
 
-The Kingdoms Connected source repository has `tools/import_kcd2_mod.py`,
-which does steps 1 to 4 for a mod folder or zip and lists what it left out.
-It is not part of the release download.
-
 ## What each folder carries
 
 | Mod content | Goes in | Takes effect |

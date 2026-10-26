@@ -145,12 +145,59 @@ picks up every resource change but disconnects everyone.
 
 ## Fly.io
 
-Deploy with `deploy/fly.toml` from the mod's repository, whose process command
-passes Fly's UDP bind address as `--host`. UDP on Fly needs a dedicated IPv4:
+Save this as `fly.toml` and change `app` to your own app's name. Its process
+command passes Fly's UDP bind address to the server as `--host`, and its
+services expose the game port (UDP 27015) and the HTTP port (TCP 27016):
+
+```toml title="fly.toml"
+app = 'kcdc-server'
+primary_region = 'ams'
+
+# Resolve the Fly.io UDP bind address and pass it as a native server argument.
+[processes]
+  app = """/bin/sh -c 'exec /usr/local/bin/kcdc-entrypoint --host "$(getent ahostsv4 fly-global-services | head -n 1 | cut -d " " -f 1)"'"""
+
+# Game session: UDP only, no TCP on the game port.
+[[services]]
+  internal_port = 27015
+  protocol = 'udp'
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+  processes = ['app']
+
+  [[services.ports]]
+    port = 27015
+
+# HTTP endpoints on TCP 27016.
+[[services]]
+  internal_port = 27016
+  protocol = 'tcp'
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+  processes = ['app']
+
+  [[services.ports]]
+    port = 27016
+
+  [[services.tcp_checks]]
+    grace_period = '30s'
+    interval = '15s'
+    timeout = '5s'
+
+[[vm]]
+  memory = '4gb'
+  cpu_kind = 'performance'
+  cpus = 2
+  memory_mb = 4096
+```
+
+UDP on Fly needs a dedicated IPv4. From the folder that holds `fly.toml`:
 
 ```sh title="Host"
 fly ips allocate-v4
-fly deploy -c deploy/fly.toml --image 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
+fly deploy --image 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
 ```
 
 That `fly.toml` mounts no volume, so `/home/container` starts empty whenever
