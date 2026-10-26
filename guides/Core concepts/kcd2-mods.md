@@ -82,6 +82,11 @@ game's own text again.
 
 ## What a server refuses
 
+:::note[Subject to change]
+We are still improving KCD2 mod support, so this list can change in a future
+release. Check it again when you update your server.
+:::
+
 A server never runs a mod's code and cannot merge what the game reads only at
 its own start:
 
