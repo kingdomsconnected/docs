@@ -78,9 +78,12 @@ Events.on("playerCommand", (player, command) => {
 });
 ```
 
-You get the real function or object, not a copy, since both resources share a
-runtime. Calls are cheap, but an exported object can be changed by whoever
-holds it: export functions, not mutable state.
+Each server resource runs in a [runtime of its own](../resources/#each-server-resource-has-its-own-runtime),
+so what you get is a copy whose functions call back into the library: `payFrom`
+runs in `my-economy`, with its arguments and return value copied each way. A
+method of an exported object runs on the library's own object, so it acts on
+the library's state. Changing the object you got changes only your copy:
+export functions, not mutable state.
 
 Add the library to the consumer's `resourceDependencies`:
 
@@ -96,8 +99,9 @@ Add the library to the consumer's `resourceDependencies`:
 
 - The library starts first, so its exports exist when your scripts run.
 - `Imports.get` stops warning about an undeclared dependency.
-- When the library restarts, your resource restarts with it. An export you
-  held keeps pointing at the old code, so read exports when you use them.
+- When the library restarts, your resource restarts with it. An export
+  function you held throws once its library has stopped, even after the
+  library starts again, so read exports when you use them.
 
 ## Ask and answer with Messages
 
@@ -159,6 +163,38 @@ export async function logSale(text: string): Promise<void> {
 
 Here `my-discord-log` can be missing entirely (an optional dependency, or none
 at all) and the shop carries on.
+
+## What crosses between resources
+
+On the server, a value passed to another resource is copied out of one runtime
+and rebuilt in the other. That covers event arguments, `Exports` and `Imports`
+values and calls, and `Messages` payloads and replies. Handlers in your own
+resource get your values as they are.
+
+| Value | Arrives as |
+| --- | --- |
+| Strings, numbers, booleans, bigints, `null`, `undefined` | The same value |
+| Arrays, plain objects, errors, `Date`, `Map`, `Set`, binary data | Copies. A change on one side is not seen on the other |
+| `Vector3`, `Quaternion`, `Color` and the other value types | The same type, by value |
+| `Player`, `Npc`, `Horse`, `Dog`, `Prop`, `Cart`, `Vfx`, `Light`, `Marker`, `Blip`, `GroundItem`, `Door`, `Gate`, `SmartObject`, `Stash`, `Quest`, `SiegeEngine`, `SiegeLadder`, `StonePile`, `Area` | The same handle |
+| The `hit` of a `playerHit` handler | A live view of the blow; see [Events](../events/#players) |
+| Functions | A function that runs in the resource that owns it |
+| Instances of your own classes | Plain objects; the prototype and its methods stay behind |
+| Other API objects, such as a `LevelEdit`, `PatrolRoute` or `WorldResource` | Plain objects without their methods or properties. Pass an id or name instead |
+| Symbols, promises, cycles, weak collections, `SharedArrayBuffer` | Refused, with an error naming the value |
+
+An area destroyed on the way still arrives as an `Area`, one that no longer
+exists. `instanceof` against another resource's classes is false, including
+its built-ins such as `Error`. A single copy is refused past
+about a million values or 256 MB of strings and binary data.
+
+An event or message handler in another resource is called for its outcome
+only: a returned `false` still refuses a cancellable event, a returned promise
+is still waited on, and a throw still reaches the emitter, but no other return
+value comes back.
+
+On a client, all resources share one script context, so values pass by
+reference and an export is the library's real function or object.
 
 ## Write a library resource
 

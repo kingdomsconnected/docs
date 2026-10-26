@@ -78,10 +78,10 @@ Events.on("npcDeath", (victim, attacker) => {
 });
 ```
 
-For NPC melee against a player, `playerHit` runs before damage. Returning
-false refuses the hit; setting `hit.damage` changes the amount. NPC melee
-uses the victim's native result with `hit.priced === false`. Damage and
-death events report outcomes after health changes.
+For NPC melee against a player, `playerHit` runs before any health comes
+off. NPC melee uses the victim's native result with `hit.priced === false`,
+so `hit.damage` is the number to change. Damage and death events report
+outcomes after health changes.
 
 ```ts
 const trainingGuards = new Set<number>(); // add only your resource's guards
@@ -92,9 +92,30 @@ Events.on("playerHit", (_victim, attacker, hit) => {
 });
 ```
 
+| In a `playerHit` handler | Effect |
+| --- | --- |
+| Return `false` | Refuses the blow: no health is taken and no `playerDamage` follows. |
+| Set `hit.damage` | The blow takes exactly that; `0` lands it harmlessly. `modifiers` are then ignored. |
+| Scale or replace `hit.modifiers` | Reworks a priced player swing. Ignored for NPC melee and arrows. |
+
+These changes take effect from a handler in any resource, and each handler
+sees what the handlers before it set. Handlers run synchronously: `hit` is
+live only while they run, and one kept for later reads `damage` and
+`modifiers` as `undefined` and changes nothing.
+
+:::note[Servers before 1.7.2]
+On older servers a handler's changes to `hit.damage` and `hit.modifiers` had
+no effect, so a damage rule did nothing; returning `false` still refused the
+blow. Update the server if a rule on this page seems to be ignored.
+:::
+
 Human NPCs support melee and bow combat. Of the [animal NPCs](../animals/),
 wolves and wild dogs support ordinary melee bites. Other animals and animal
 bow attacks are refused. Paired predator takedowns are not supported.
+
+An NPC never uses a killing finisher on a player. Its ordinary blows,
+knockdowns included, land as usual, and a player dies only when the server
+rules a blow lethal, so a player knocked down by an NPC gets back up.
 
 ## Try the sample hunter
 

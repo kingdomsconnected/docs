@@ -36,10 +36,9 @@ Events.on("playerDisconnect", (player) => {
 
 An inventory exists from `playerConnect` until just after `playerDisconnect`,
 so restoring it at `playerConnect` means the player loads in with it.
-`playerInventoryReady` fires later, once their game shows it for the first
-time. This example uses nicknames only to keep the sample short; use an
-authenticated account ID and durable storage in a real server. For quick
-gives and takes by item name, [Items](../items/) is simpler.
+`playerInventoryReady` fires later, once their game shows it for the first time.
+Use an authenticated account ID and durable storage in a real server, not
+nicknames. For quick gives and takes by item name, [Items](../items/) is simpler.
 
 ## Save quickslots with the inventory
 
@@ -106,7 +105,7 @@ Inventory.transfer(player, target, { units: [{ id: "row-id", amount: 1 }] });
 | `add` | Gives 1 to 10000 units of a class, by GUID or table name. `metadata.quality` asks for a higher tier, up to the best the class is made in. They join the row that already holds that class with the same properties. |
 | `remove` | Takes exact units from named rows. |
 | `setProperties` | Replaces one row's properties. It replaces, not merges: carry over what you want to keep. |
-| `set` | Replaces the whole inventory: a restore. Rows keep the `id` you give them and get a new one otherwise. `items: []` empties it. |
+| `set` | Replaces the whole inventory: a restore. Rows name their class by GUID or table name, as for `add`, keep the `id` you give them and get a new one otherwise. `items: []` empties it. |
 | `transfer` | Moves exact units from one player to another, properties included. Whether they may trade is for your script to decide. |
 
 Every call happens completely, or not at all, and returns a result:
@@ -126,6 +125,10 @@ not made in), `questItem` (only its quest hands it out) and, from `set`,
 `invalidEquipment` (a row worn more times than its amount, a worn item that
 cannot be equipped, or too many worn rows). The
 [reference](../../reference/server/interfaces/InventoryResult.md) lists the rest.
+
+Classes a running resource's [KCD2 mod](../../core-concepts/kcd2-mods/) adds work
+in every call and leave with that resource; `Inventory.classes()` lists the
+equippable ones beside the game's.
 
 ### Refuse a change if the inventory moved
 
@@ -155,11 +158,11 @@ if (state && coins && coins.amount >= 50) {
 A new item with no properties is quality 1 at full condition. The game can wear an
 item down (a blade blunted in a fight), which arrives as a `wear` change. A player who
 repairs gear with repair kits gets a `repair` change: the kits' loss and the
-equipment's gain arrive together, or not at all. One repair may use up to 16 kits;
-longer operations are refused. Sharpening a blade at a native grindstone can increase
-its health. The server checks the station, distance and supported weapon class, then
-records one `sharpen` change. Sharpening spends no repair kit. The server reverses
-unapproved improvements.
+equipment's gain arrive together, or not at all, so do not repair the pieces again
+from a script. One repair may cover several selected pieces and use up to 16 kits;
+longer operations are refused. Sharpening a blade at a native grindstone can raise
+its health: the server checks the station, distance and weapon class, records one
+`sharpen` change and spends no kit. It reverses improvements it did not approve.
 
 ### Change condition without losing metadata
 
@@ -177,10 +180,6 @@ if (snapshot && row) {
 }
 ```
 
-Native repair kits also support selecting several pieces of equipment in one
-repair operation. The server receives the repaired items and kit consumption
-together; a script does not need to repair each selected item a second time.
-
 ## Dress a body
 
 `Inventory.set` takes an `equipped` count on each row: how many of those units
@@ -197,6 +196,19 @@ Inventory.set(player, {
 });
 ```
 
+The game's layering rules still apply: when two pieces cannot be worn together
+(hose under plate legs), the first dressing pass, in row order, decides, and what
+the body ends up wearing is what `equipped` reports.
+
+### Take worn gear
+
+`remove` and `transfer` accept worn rows, so a script that loots a downed player
+can take what they wear. A row that leaves the inventory comes off their body as
+it goes, their stats and every other player's view follow, and their game
+reports the equipment that is left. A worn row that only shrinks, such as a
+quiver you took some arrows from, stays worn. When a class has both worn and
+loose units, the loose units go first and the body keeps what it wears.
+
 ## React to changes
 
 | Event | Arguments | When |
@@ -208,10 +220,12 @@ Inventory.set(player, {
 `change.items` lists only the rows that changed, each with `before` and
 `after`: `before: null` is a new row, `after: null` an emptied one.
 `change.reason` says what did it: `add`, `remove`, `properties`, `set` and
-`transfer` for your calls; `use`, `shot`, `wear`, `repair` and `sharpen` for the player's
-game; `deposit` and `withdraw` for moves into and out of a
-[container](../../world/stashes/); `trade`, `pickpocket`, `drop`, and the
-ground and herb-picking reasons for the other systems.
+`transfer` for your calls; `use`, `shot`, `wear`, `repair` and `sharpen` for the
+player's game; `dry`, `smoke` and `cook` for a drying rack, a smokehouse and a
+fire (see [Food and potions](../consumables/#approve-drying-smoking-and-cooking));
+`deposit` and `withdraw` for moves into and out of a [container](../../world/stashes/);
+`trade`, `pickpocket`, `drop`, and the ground and herb-picking reasons for the
+other systems.
 
 Save from here if a server crash must not lose a session:
 
@@ -241,9 +255,11 @@ Events.on("playerDied", (player) => {
 });
 ```
 
-It returns `null` when there was nothing to drop. At most 128 rows go. When
-the container disappears is up to you: the default gamemode's
-`src/server/death-drop.ts` removes it once it is empty or after thirty minutes.
+It returns `null` when there was nothing to drop. At most 128 rows go. Without
+`keepEquipped`, worn gear goes too and comes off the body, as
+[above](#take-worn-gear). When the container disappears is up to you: the default
+gamemode's `src/server/death-drop.ts` removes it once it is empty or after thirty
+minutes.
 
 ## Related
 

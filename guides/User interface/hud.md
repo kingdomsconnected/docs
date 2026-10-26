@@ -1,6 +1,6 @@
 ---
 title: HUD messages, nametags and compass
-description: Show the game's own notifications and toasts, control nametags and labels above heads, and hide the compass, from a client script.
+description: Show the game's own notifications and toasts, control nametags and labels above heads, hide the compass, and let quests play their cutscenes, from a client script.
 sidebar:
   label: HUD and nametags
   order: 82
@@ -155,7 +155,9 @@ Hud.setElementVisible("Stats", true);     // lets the game show it again
 - **Released for you:** the element comes back when your resource stops or
   the session ends. The player's own settings are left alone.
 
-Full-screen tints and blurs are not HUD elements: see
+To draw the hints yourself after hiding `Hints`, read them with
+[`ActionHint.shown()`](../action-hints/#read-the-hints-on-screen). Full-screen
+tints and blurs are not HUD elements: see
 [Screen effects](../../client-scripting/screen-effects/).
 
 ## Hide the compass
@@ -189,6 +191,35 @@ Events.on("monologueSuppressed", (text, textKey) => {
 the session ends. This affects the local character's remarks, not all
 dialogue or voice chat. Use the event if your resource wants to present a
 suppressed line differently.
+
+## Let quests play their story cutscenes
+
+A story cutscene, the one a quest plays when the player walks into its
+trigger, puts the player into the game's cutscene state, can hold the world
+clock and loads the quest's own scenery. Multiplayer keeps them from playing
+and raises `storyCutsceneSuppressed` with the cutscene's name in the game's
+cutscene table instead:
+
+```ts
+Events.on("storyCutsceneSuppressed", (cutscene) => {
+  console.log(`A quest asked for cutscene ${cutscene}`);
+});
+
+Hud.setStoryCutscenesEnabled(true); // let them play on this machine
+console.log(Hud.isStoryCutscenesEnabled()); // true
+```
+
+- **What counts:** everything a quest queues, its fades and time skips
+  included. Fast travel, sleeping and waiting that the player starts are not
+  story cutscenes and always play.
+- **Not replayed:** a cutscene suppressed before you release them does not
+  play later, and the quest step that asked for it is left waiting. While they
+  are released, the event is not raised.
+- **One switch per machine:** any resource can flip it, and it is not given
+  back when your resource stops. It lasts until the session ends, which
+  suppresses them again. A value that is not a boolean throws.
+- **Local:** to let every player's quests play them, the server tells every
+  client.
 
 ## Show your own nametag
 

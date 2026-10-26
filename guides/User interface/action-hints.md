@@ -1,6 +1,6 @@
 ---
 title: "Action hints: \"Press [key] to ...\""
-description: Put the game's own "Press [key] to ..." and hold-to-confirm hints on the HUD from a client script, and run code when the player presses the key.
+description: Put the game's own "Press [key] to ..." and hold-to-confirm hints on the HUD from a client script, run code when the player presses the key, and read every hint on screen.
 sidebar:
   label: Action hints
   order: 85
@@ -28,9 +28,10 @@ create the hint in the client's handler.
 A hint names a game control, never a physical key. The glyph follows the
 player's binding, keyboard or pad, and changes when they rebind it.
 
-The controls are `primary_action` (the interact key), `attack_special`,
-`torch`, `companion_interaction`, `distract` and `jump`. `ActionHint.keys()`
-returns the list this build accepts, and any other `key` throws.
+The controls include `primary_action` (the interact key), `attack_primary`,
+`attack_special`, `block`, `torch`, `companion_interaction`, `distract` and
+`jump`. `ActionHint.keys()` returns the full list this build accepts, and any
+other `key` throws.
 
 ## Press or hold
 
@@ -71,8 +72,47 @@ up on stop.
   it brings back the one under it.
 - **The game's own action still runs.** A hint on `primary_action` does not
   stop the player interacting with whatever they look at. Prefer a control the
-  game is not using at that spot, or a [key bind](../../client-scripting/input/)
-  that takes the input.
+  game is not using at that spot (`isKeyInUse`, below, says whether a hint is
+  already on it), or a
+  [key bind](../../client-scripting/input/) with the game's action
+  [switched off](../../client-scripting/input/#switch-off-a-game-action).
+
+## Read the hints on screen
+
+`ActionHint.shown()` lists every hint the HUD draws right now, in the HUD's
+order: the game's own, interaction prompts such as talking to someone or
+opening a door, and every resource's. With the game's hints hidden, a resource
+can draw them in its own UI, and the keys keep doing what they do:
+
+```ts
+declare const hintView: number; // your own web view
+
+Hud.setElementVisible("Hints", false);
+
+Events.on("actionHintsChanged", () => {
+  const prompts = ActionHint.shown().filter((hint) => hint.map === "player");
+  Web.emit(hintView, "hints:update", prompts);
+});
+```
+
+| Field | Meaning |
+| --- | --- |
+| `key` | The control a resource's hint is on, or the action a game hint triggers (`talk`, `use`) |
+| `map` | The action map it belongs to: `player` for the world's prompts; the game's menu screens have their own (`apse`, `apse_inventory`, `help_dialog`) |
+| `text` | What the HUD writes beside the key, in the player's language. A game label made of several words is translated word by word, as the HUD does; a resource's text comes back as written |
+| `mode` | `"press"` or `"hold"` |
+| `enabled` | `false` for a hint drawn greyed out |
+| `progress` | How far a hold ring has filled, 0 to 1; 0 while nobody holds it |
+| `target` | Who the prompt is about, as the game names them (a server NPC under the name it was given), or empty for anything that is not a person or an animal |
+
+- `ActionHint.shownKeys()` lists each control a drawn hint is on, once.
+- `ActionHint.isKeyInUse(key)` says whether a drawn hint is on that control,
+  any of the game's (`use`, `jump`) and not only `keys()`. It throws unless
+  `key` is a string.
+- All three read the game's last hint refresh, at most a frame old.
+- `actionHintsChanged` fires when a hint appears or goes, changes its text, is
+  greyed out, or a hold ring moves, so it fires again and again while a ring
+  fills. Handler promises are not awaited.
 
 ## Example: a lock toggle
 

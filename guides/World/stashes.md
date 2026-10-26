@@ -1,6 +1,6 @@
 ---
 title: Stashes (containers)
-description: Spawn containers, use the level's own chests or open storage with no chest at all, fill and read them from the server, lock them, decide who may open them, and keep their contents across restarts.
+description: Spawn chests and cabinets, use the level's own containers or open storage with no chest at all, fill and read them from the server, lock them and set how hard they are to pick, decide who may open them, and keep their contents across restarts.
 sidebar:
   label: Stashes
   order: 42
@@ -29,8 +29,16 @@ const chest = Stash.spawn(
   new Vector3(1024, 512, 40), // position
   new Vector3(0, 0, 180),     // rotation: Euler degrees, or a Quaternion
   player.virtualWorld,        // virtual world
+  { model: "objects/manmade/common_furniture/cabinets/cabinet_fancy_d.cgf" }, // omitted: the default chest
 );
 ```
+
+`model` builds it as any `.cgf`, `.cga` or `.cdf` model, and throws for any
+other path. The level's own cabinets, such as
+`objects/manmade/common_furniture/cabinets/cabinet_rustic_a.cgf`, make drawers
+players already know. A model without the game's open and close animations
+stays shut while it is looted. `stash.model` reads the path back: empty for
+the default chest and the level's containers.
 
 A spawned stash starts empty. `stashSpawn` fires for it, and for every level
 container the first time something reaches it in a new virtual world.
@@ -136,6 +144,22 @@ and logged. A container a script locks reads `lockedByServer`, and the game's
 generated home and shop keys do not open it. Unlocking it by any route clears both.
 `startsLocked` says whether the level builds it locked.
 
+### Set how hard it is to pick
+
+```ts
+const drawer = Stash.nearest(player.position);
+if (drawer) drawer.lockDifficulty = 0.7; // "hard"; null gives its own back
+```
+
+| Property | Values |
+| --- | --- |
+| `lockDifficulty` | `0` to `1`, or `null` for the container's own. The game's prompt names it in fifths: below 0.2 very easy, then easy, average, hard, and from 0.8 very hard. Applies from the next pick; anything else throws. |
+| `lockFanciness` | `"common"` or `"fancy"`, the lock the minigame shows, or `null` for the container's own. Anything else throws. |
+
+Both reach every client and read `null` until a script sets them. They change
+only the minigame: `lockpickable` still decides whether the pick is offered,
+and `stashInteract` with `lockpick` still decides who may try.
+
 ## React to use
 
 | Event | Arguments | When |
@@ -197,15 +221,18 @@ Nothing drops to the ground and nothing goes back to whoever put it there.
 Move what matters out first.
 :::
 
-A stopped resource does not remove its stashes, so track yours and decide
-what `resourceStop` does with them (see the pattern on
-[Props](../props/#clean-up-when-your-resource-stops)).
+A chest a script spawns belongs to that resource and goes, with what is in
+it, when the resource stops or restarts (see
+[Props](../props/#clean-up-when-your-resource-stops)). Save its contents in
+`resourceStop` if they should last.
 
 :::tip[Try it]
 The default gamemode's `/stash` puts an empty container ahead of you
-(`src/server/commands/stash.ts`). `/stash virtual` opens a virtual stash of
-your own, kept until you disconnect. `/stash near` reads the level container
-you are at, `/stash lock` and `/stash key` lock it, `/stash goto` stands you
+(`src/server/commands/stash.ts`), and `/stash spawn cabinet` (or
+`fancycabinet`, `smallchest`, `royalchest`) builds another model.
+`/stash virtual` opens a virtual stash of your own, kept until you disconnect. `/stash near` reads the level container
+you are at, `/stash lock` and `/stash key` lock it, `/stash difficulty hard`
+(or a number from 0 to 1, or `clear`) sets its lock, `/stash goto` stands you
 at one, and `/stash clear` removes every spawned and virtual stash in your
 world, contents included.
 :::

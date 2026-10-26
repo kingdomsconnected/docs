@@ -48,16 +48,24 @@ score.
 
 ## Find the tables
 
-[`Dice.tables()`](../../reference/server/variables/Dice.md#tables) lists the
-level's dice tables, in GUID order. The same tables stand in every virtual
-world; who is waiting at one is your script's to track.
+[`Dice.tables(virtualWorld?)`](../../reference/server/variables/Dice.md#tables)
+lists the tables players in one virtual world can play at, the global world's
+when you leave it out, in no particular order. Who is waiting at one is your
+script's to track.
 
 ```ts
-for (const table of Dice.tables()) {
-  // table.id: the level GUID; table.position: between the two seats; table.seats: the two chairs
+for (const table of Dice.tables(player.virtualWorld)) {
+  // table.id: its GUID; table.placed: placed rather than the level's; table.seats: the two chairs
   Area.create({ id: `dice:${table.id}`, type: "sphere", position: table.position, radius: 3, labels: ["dice"] });
 }
 ```
+
+A world's list is the level's own tables, minus any a level edit took out of
+that world, plus every table a script or a World Builder export placed there
+or in the global world, with `placed: true`. A table taken out of a world
+cannot host a match there, and one placed with
+[smart objects](../../world/smart-objects/) plays like the level's own. A
+level table's `id` never changes; a placed one's lasts until the server stops.
 
 `seats` holds the two chairs' GUIDs in the table's own seat order, which is
 the order `Dice.start` takes its players in. Some quest layers place the same
@@ -86,7 +94,7 @@ Both tables close, and `diceMatchEnd` fires with reason `stopped`.
 
 ## Name the scoreboard seats
 
-In **1.6.6**, supply labels when starting a match, or change them afterwards:
+Supply labels when starting a match, or change them afterwards:
 
 ```ts
 const match = Dice.start(player.id, target.id, {
@@ -105,8 +113,8 @@ ends. The default game mode uses player nicknames.
 
 ## Follow turns, rolls and accepted moves
 
-The **1.6.6** server exposes four progress events for match logs and custom
-displays. Each receives one event object:
+Four progress events serve match logs and custom displays. Each receives one
+event object:
 
 ```ts
 Events.on("diceTurnStart", event => {
@@ -149,8 +157,7 @@ retain their order.
 Observers see seated participants, dice throws, cups and table props without
 entering the minigame. This presentation does not decide scores. Props are
 removed when the report expires, the match ends, or the participant leaves
-the observer's streamed world. Update both clients and server for the
-**1.6.6** station and dice synchronization changes.
+the observer's streamed world.
 
 ## Hear how it ended
 
@@ -202,7 +209,7 @@ Money is the game's `money` item, so `takeItem` and `giveItem` move it (see
 `Dice.start`, since `takeItem` removes only what they have.
 
 The default gamemode's `src/server/dice.ts` shows a full lobby: a join hint
-at each table from `Dice.tables()`, then a conversation in which the two
+at each table from `Dice.tables()` in each world, then a conversation in which the two
 players agree a target score before `Dice.start`. `/dice <player> [score]`,
 `/dice accept`, `/dice decline` and `/dice cancel` drive the same flow from
 chat.
@@ -210,5 +217,6 @@ chat.
 ## Related
 
 - [Chat and /commands](../chat/): build a challenge command.
+- [Smart objects](../../world/smart-objects/): place dice tables, or take the level's out of a world.
 - [Give and take items](../items/): moving the money a match is played for.
 - [Events](../../core-concepts/events/): how handlers and their arguments work.

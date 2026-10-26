@@ -82,7 +82,7 @@ export function openArena(players: Player[], centre: Vector3): number {
   for (const player of players) player.setVirtualWorld(world);
   arenas.set(world, players.map((p) => p.id));
 
-  Prop.spawn("objects/manmade/barrels/barrel_a.cgf", centre, undefined, 1, "static", world);
+  Prop.spawn("objects/manmade/common_furniture/barrels/barrel_a.cgf", centre, undefined, 1, "static", world);
   Marker.place("materials/special/collision_proxy_material", centre, { shape: "cylinder", size: 12 }, world);
   return world;
 }
@@ -120,13 +120,15 @@ hint.setVisibleTo(player);
 
 ## What worlds do not split
 
-A world decides which entities a client receives, nothing else.
+A world decides which entities a client receives. Everything else is shared,
+except the level's doors and gates, which each world copies.
 
 | Not split | What to do |
 | --- | --- |
 | Chat | `Chat.sendToAll` reaches everyone. Filter by `player.virtualWorld` and use `Chat.sendToPlayer`. |
 | Events | `playerChat`, `markerEnter` and the rest fire as usual. Check the world in the handler. |
-| The level | Doors, weather and clock are the same in every world. |
+| Weather and clock | They are the same in every world. |
+| Level doors and gates | Each world gets its own copy of a level door or gate the first time something in it asks for one, a player's use or a script's `Door.find`. Players see and work their own world's copy; players in the global world work the global one. See [Doors and gates](../../world/doors-and-gates/). |
 | NPC simulation | Only a client that can see an NPC runs it. One nobody can see stays dormant. |
 
 ## Related

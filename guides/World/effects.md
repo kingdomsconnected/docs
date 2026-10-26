@@ -108,8 +108,8 @@ Vfx.destroyAll(3);       // every placed effect in world 3; returns the count
 Vfx.destroyAll();        // every placed effect on the server
 ```
 
-Bursts are not listed and need no cleanup. Placed effects outlive your
-resource, so destroy yours in `resourceStop` (see
+Bursts are not listed and need no cleanup. A placed effect belongs to the
+resource that placed it and goes when that resource stops or restarts (see
 [Props](../props/#clean-up-when-your-resource-stops)).
 
 | Event | Arguments | When |

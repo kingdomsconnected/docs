@@ -51,6 +51,7 @@ horse.soul;               // the GUID it was spawned against; never changes
 horse.name;               // "" means the name its soul carries stands
 horse.health;             // as its client last reported; 0 before any has
 horse.alive;              // false once dead; the body stays until revive or destroy
+horse.unconscious;        // knocked out: alive, but lying where it fell
 horse.stamina;            // read-only, the game runs it
 horse.inventoryCapacity;  // 0 until a client has reported it
 horse.gear;               // { saddle, head, torso, shoe }, item class names or null
@@ -60,7 +61,8 @@ horse.owner;              // the Player it belongs to, or null
 `health`, `maxHealth`, `stamina`, `maxStamina` and `inventoryCapacity` come from
 the client running the horse, so they read 0 until one has. Assigning `health`
 sets it on that client, clamped to `maxHealth`; 0 kills. `horse.kill()` and
-`horse.revive()` do the same explicitly.
+`horse.revive()` do the same explicitly. A horse a player owns is knocked out
+instead of killed; see [Knocked out, not killed](../horse-owners/#knocked-out-not-killed).
 
 ## Rename a horse
 
@@ -116,6 +118,36 @@ horse.gearLocked = true; // players cannot change it; scripts still can
 `setGear` throws on an item that is not horse gear or sits in the wrong slot.
 Removing the saddle removes the caparison too. [Horse gear](../../resources/horse-gear/)
 lists every item by slot and what each preset puts on.
+
+## Change its speed, stamina and courage
+
+A horse has no speed or stamina fields. They are its soul's stats, and the game
+moves them with buffs, as horseshoes and horse armour do. A script adds a native
+buff or one built with `Buffs.register` from the modifiers `runSpeed`,
+`moveSpeed`, `stamina`, `courage` and `carryCapacity` (see [Buffs](../../players/buffs/)):
+
+```ts
+const racingShoes = Buffs.register("stable:racing_shoes", {
+  name: "Racing shoes", visual: "item_horse_shoe", duration: -1,
+  modifiers: { runSpeed: 0.08, moveSpeed: 0.08, stamina: 40 },
+});
+
+horse.addBuff(racingShoes);    // true once on the list; false at 16, or for a horse that is gone
+horse.hasBuff(racingShoes);    // true at once: it reads the server's own list
+horse.removeBuff(racingShoes); // true when it was on the list
+horse.clearBuffs();            // true when there was something to take off
+```
+
+[`addBuff`](../../reference/server/classes/Horse.md#addbuff), `hasBuff` and
+`removeBuff` take a buff GUID, a table name from the [buff list](../../resources/buffs/)
+or a registered id, and throw for anything else. `horse.buffs` lists them by
+name or registered id, in the order added.
+
+Unlike a player's buffs, these are state on the horse: the client running it,
+every other copy and late joiners all wear them, and a copy that loses one, or
+a body spawned again after a level change, gets it back within a second. A
+listed effect lasts until removed, whatever its `duration`. Effects from its
+gear or the game are not on the list, and these calls never take them off.
 
 ## Move an unridden horse
 
@@ -211,7 +243,8 @@ a stable that keeps the horse for a player who comes back.
 
 ## Related
 
-- [Give a horse an owner](../horse-owners/): ownership, who may ride, and what happens when the owner leaves.
+- [Give a horse an owner](../horse-owners/): ownership, who may ride, knockouts, and what happens when the owner leaves.
+- [Buffs and status effects](../../players/buffs/): `Buffs.register` and the modifiers a horse buff uses.
 - [Dog companions](../dogs/): the other animal a player can own.
 - [Carts and wagons](../../world/carts/): the game's wagons, driven from the bench with the same keys.
 - [Server vs client authority](../../core-concepts/authority/): why a ridden horse belongs to its rider.

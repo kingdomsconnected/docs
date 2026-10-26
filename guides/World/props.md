@@ -26,12 +26,12 @@ then optional positional arguments:
 
 ```ts
 const crate = Prop.spawn(
-  "objects/manmade/barrels/barrel_a.cgf", // model: full path or file stem
-  new Vector3(1024, 512, 40),              // position
-  new Vector3(0, 0, 90),                   // rotation: Euler degrees, or a Quaternion
-  1.5,                                     // scale, 0.01 to 100
-  "rigid",                                 // physics: "static", "rigid" or "none"
-  player.virtualWorld,                     // virtual world
+  "objects/manmade/common_furniture/barrels/barrel_a.cgf", // model: full path or file stem
+  new Vector3(1024, 512, 40), // position
+  new Vector3(0, 0, 90),      // rotation: Euler degrees, or a Quaternion
+  1.5,                        // scale, 0.01 to 100
+  "rigid",                    // physics: "static", "rigid" or "none"
+  player.virtualWorld,        // virtual world
 );
 ```
 
@@ -59,22 +59,26 @@ After spawning, `prop.model` is the full path, `prop.modelName` the stem and
 | Physics | Behaviour |
 | --- | --- |
 | `static` (default) | Collides, never moves. |
-| `rigid` | Falls and can be pushed. |
+| `rigid` | Falls and can be pushed. Every player sees the same motion. |
 | `none` | No collision: decoration you can walk through. |
 
-:::caution[Rigid props are not synchronised]
-Each client simulates a `rigid` prop on its own. A knocked-over barrel can end
-up somewhere different on every screen, while the server's `position` still
-says where it spawned. Use `rigid` for scenery only.
-:::
+A `rigid` prop is simulated by the nearest player's client within 60 m, and
+every other player sees the pose it streams. A script can push it, stop it,
+put it back and hear where it comes to rest; `prop.mass` sets its mass in
+kilograms. See [Push props and react to weapon hits](../prop-physics/).
+
+Each player receives every prop within 250 m of them, up to 4096 at once. A
+`static` or `none` prop is drawn as far away as the game draws the same mesh
+when the level places it, so a table shows from much farther away than a
+cup.
 
 ## Move or change a prop
 
 `position` and `rotation` are writable, and assigning moves the prop on every
-client. `physics` and `scale` are writable too, but assigning either
-**rebuilds** the prop everywhere: fine for an editor, not every tick. `scale`
-is clamped into `0.01` to `100`. `model` is read-only; to change the mesh,
-destroy the prop and spawn another.
+client. `physics`, `scale` and `mass` are writable too, but assigning any of
+them **rebuilds** the prop everywhere: fine for an editor, not every tick.
+`scale` is clamped into `0.01` to `100`. `model` is read-only; to change the
+mesh, destroy the prop and spawn another.
 
 ```ts
 const prop = Prop.getById(42);
@@ -101,11 +105,12 @@ Prop.destroyAll();          // every prop on the server
 
 ### Clean up when your resource stops
 
-Stopping or reloading a resource does not despawn its props, and
-`Prop.destroyAll()` removes other resources' props too. Track your own ids:
+A resource owns the props it spawns: stopping or restarting it destroys them
+for every player. Props a World Builder export creates belong to the server
+and stay. `Prop.destroyAll()` removes other resources' props too, so to clear
+only your own while your resource keeps running, track their ids:
 
 ```ts title="src/server/arena.ts"
-const RESOURCE = "my-mode";
 const mine = new Set<number>();
 
 export function place(model: string, at: Vector3, world: number): Prop {
@@ -114,11 +119,10 @@ export function place(model: string, at: Vector3, world: number): Prop {
   return prop;
 }
 
-Events.on("resourceStop", (name) => {
-  if (name !== RESOURCE) return;
+export function clearMine(): void {
   for (const id of mine) Prop.getById(id)?.destroy();
   mine.clear();
-});
+}
 ```
 
 ## React to events
@@ -127,6 +131,7 @@ Events.on("resourceStop", (name) => {
 | --- | --- | --- |
 | `propSpawn` | `prop` | Right after a prop is created and replicated, by any resource or command. |
 | `propDestroy` | `prop` | While a prop is despawned. The handle still reads `model` and `position`. |
+| `propRest` | `prop`, `position`, `rotation` | A `rigid` prop stopped moving. See [Prop physics](../prop-physics/#know-where-it-stopped). |
 
 `destroyAll` raises `propDestroy` once per prop.
 
@@ -138,8 +143,8 @@ Events.on("resourceStop", (name) => {
 | `Prop.spawn` | The physics word is not one of the three. | Check the word yourself before calling, as the gamemode does. |
 | `Prop.spawn`, `prop.scale` | Scale outside `0.01` to `100`. | Clamped, not refused. |
 
-There is no count limit. Every prop is geometry each nearby client builds, so
-budget them.
+The server sets no count limit, but a player receives at most 4096 props at
+once, and every prop is geometry each nearby client builds, so budget them.
 
 :::tip[Try it]
 The default gamemode's `/prop <model> [scale] [rigid|static|none]` spawns a
@@ -149,6 +154,8 @@ prop five metres ahead (`src/server/commands/prop.ts`). `/prop list`,
 
 ## Related
 
+- [Push props and react to weapon hits](../prop-physics/), moving `rigid` props from a script
+- [Light the world with point lights](../lights/), lighting what you build
 - [Let players place objects](../../client-scripting/placement/), a client preview before the server spawns
 - [Build a placement mode](../../tutorials/build-mode/), the full build-mode tutorial
 - [Virtual worlds](../../core-concepts/virtual-worlds/), how worlds partition what players see

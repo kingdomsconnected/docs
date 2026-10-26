@@ -91,7 +91,8 @@ exact types and every union value.
 
 Guides: [Join and spawn](../../players/join-and-spawn/),
 [Health and stats](../../players/stats/), [Buffs](../../players/buffs/),
-[Chat](../../players/chat/).
+[Custom buffs](../../players/custom-buffs/), [Chat](../../players/chat/),
+[Rigid props and weapon hits](../../world/prop-physics/).
 
 | Event | Arguments | Fires when |
 | --- | --- | --- |
@@ -109,11 +110,17 @@ Guides: [Join and spawn](../../players/join-and-spawn/),
 | `playerBuffAdded` | `player, buff, source` | An effect appears. `source` is `"server"` or `"native"`. |
 | `playerBuffRemoved` | `player, buff, reason` | An effect leaves. `reason` is `"server"` or `"expired"`. |
 | `playerBuffBlocked` | `player, buff` | The game tried a buff kind you `Buffs.claim`ed. |
+| `playerCustomBuffApply`, `playerCustomBuffTick` | `player, buff` | A registered custom buff attached (or stacked, or refreshed), or reached its `tickInterval`. |
+| `playerCustomBuffRemove` | `player, buff, reason` | One custom buff instance left the body. |
+| `playerWeaponHit` | `player, hit` | Their swing met something that is not a body: a tree, a wall, a prop. The client's word. |
 | `playerPickpocketStart` | `thief, victim` | A Rob attempt begins. Return `false` to refuse. |
 | `playerPickpocketed` | `thief, victim, items` | A theft settled; `items` is what really moved. |
 | `playerPickpocketCaught` | `thief, victim` | The victim noticed. Nothing was taken. |
 
-For `playerHit`, the attacker can be a player or NPC. The attacker/killer
+For `playerHit`, the attacker can be a player or NPC. `hit` is live in every
+resource's handler: a change to `hit.damage` or `hit.modifiers` from any
+resource reaches the blow, and later handlers see it. A `hit` kept after the
+handlers return changes nothing. The attacker/killer
 in player damage and death events can also be null. Check the type before
 using player-only properties. Lowering health from a script raises damage
 with a null attacker; see [Set and restore stats](../../players/restoring-stats/).
@@ -175,6 +182,8 @@ Guides: [Time and weather](../../world/clock-and-weather/),
 | `worldWeatherChange` | `preset, previous, seconds` | A weather blend starts. |
 | `doorInteract` | `player, door, action, keySide` | A player works a door. Return `false` to refuse. |
 | `propSpawn`, `propDestroy` | `prop` | A prop is created, or is being despawned. |
+| `propRest` | `prop, position, rotation` | A `rigid` prop stopped moving. See [Rigid props](../../world/prop-physics/). |
+| `areaEnter`, `areaExit` | `area, entity, matchingVirtualWorld` | A player, horse, cart or NPC comes inside an enabled area, or leaves it. |
 | `vfxSpawn`, `vfxDestroy` | `vfx` | An effect is placed, or is being stopped. |
 | `markerPlace`, `markerRemove` | `marker` | A marker is drawn, or is being removed. |
 | `markerEnter`, `markerExit` | `marker, player` | A player walks into or out of a `trigger` marker. |
@@ -219,6 +228,10 @@ Guides: [Quests](../../quests-dialogue-and-shops/quests/),
 | `followStarted` | `target` | A queued native follow entered. | [Following](../../client-scripting/following/) |
 | `followStopped` | `target, reason` | A follow stopped or failed to enter. | [Following](../../client-scripting/following/) |
 | `monologueSuppressed` | `text, textKey` | A local character remark was suppressed. | [HUD](../../user-interface/hud/#control-the-local-characters-monologue) |
+| `storyCutsceneSuppressed` | `cutscene` | A quest's story cutscene was kept from playing. | [HUD](../../user-interface/hud/#let-quests-play-their-story-cutscenes) |
+| `locationDiscovered` | `locationId` | The game's own discovery found a town or district (`reveal_map` off). | [Map and blips](../../user-interface/map/#keep-discovery-and-fog-of-war) |
+| `actionHintsChanged` | none | What the HUD's action hints say changed. | [Action hints](../../user-interface/action-hints/#read-the-hints-on-screen) |
+| `weaponHit` | `hit` | The local player's swing met something that is not a body. | [Rigid props and weapon hits](../../world/prop-physics/) |
 | `noclipChanged` | `active, reason` | Free camera starts or ends. | [Camera and noclip](../../client-scripting/camera/) |
 | `browserCreated`, `browserLoadingStart`, `browserDocumentReady`, `browserLoadingFailed` | `event` | A web view is created, loads, is ready for `Web.emit`, or fails. | [HTML pages](../../user-interface/web-views/) |
 | `browserNavigate`, `browserPopup`, `browserOriginChange`, `browserResourceBlocked` | `event` | A view navigates, blocks a popup, changes origin, or blocks a request. | [HTML pages](../../user-interface/web-views/) |
@@ -238,6 +251,7 @@ the declarations mention but do not type; see
 | Server | `playerConsuming` | `player, consumption`: allow or refuse the serving. |
 | Server | `playerConsumptionEffects` | `player, consumption`: keep or suppress its native effects. |
 | Server | `playerPoisonAbsorbing` | `player, consumption, buff`: allow or block added pot poison. |
+| Server | `playerPreparing` | `player, preparation`: the game dried, smoked or cooked items; return `false` synchronously to refuse the conversion. |
 | Server | `playerConsumed` | `player, consumption`: successful native use was confirmed. |
 | Server | `playerStatsChanged` | `player, changes`: stat changes grouped by tick, with previous and current values. |
 | Client | `bookOpened` | `id`: the requested book reached the player's hands. |
@@ -268,6 +282,13 @@ Events.emit("my-mode:round.end", "Ravens").catch((error) => {
 `Events.emit` returns the promise described in [Async handlers](#async-handlers).
 `await` it or attach a `.catch`: an unhandled rejection triggers your
 [`errorBehavior`](../resources/#handle-errors).
+
+On the server, each resource runs in its own runtime, so a handler in another
+resource gets a copy of your arguments. Plain data is copied, handles such as
+`Player`, `Npc` and `Area` arrive as the same handle, and a function calls
+back into your resource. An argument that cannot be copied, such as a promise,
+fails those handlers. See
+[What crosses between resources](../sharing/#what-crosses-between-resources).
 
 | Call | Reaches |
 | --- | --- |

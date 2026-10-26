@@ -1,6 +1,6 @@
 ---
 title: Decide food, potion and poison effects
-description: Refuse consumption, replace native effects, and observe confirmed meals and stat changes.
+description: Refuse consumption, replace native effects, approve drying, smoking and cooking, and observe confirmed meals and stat changes.
 sidebar:
   label: Food and potions
   order: 35.3
@@ -90,8 +90,61 @@ server does not refund the item: it cannot tell whether it was used. A late appr
 does not run on a replacement body or in another world. Successful inventory uses also
 raise `playerItemUsed`.
 
+## Approve drying, smoking and cooking
+
+A drying rack dries herbs and food, a smokehouse smokes food, and a fire
+cooks food. The player picks items in the game's own screen and, when the
+animation ends, their game converts them at once. The server checks that the
+player can act within 4 metres of a station of that kind and that every row
+converts that way, then raises `playerPreparing(player, preparation)`. This
+handler makes smoking take an hour:
+
+```ts
+Events.on("playerPreparing", (player, preparation) => {
+  if (preparation.kind !== "smoke") return; // drying and cooking go through
+  const units = preparation.items.map(({ id, amount }) => ({ id, amount }));
+  if (!Inventory.remove(player, { units }).ok) return false;
+
+  const id = player.id;
+  setTimeout(() => {
+    const owner = Player.getById(id); // gone? keep the meat for them yourself
+    for (const { product, amount } of preparation.items) {
+      if (owner) Inventory.add(owner, { item: product, amount });
+    }
+  }, 60 * 60 * 1000);
+  return false; // the game's own conversion does not happen
+});
+```
+
+| `Preparation` field | Meaning |
+| --- | --- |
+| `kind` | `dry`, `smoke` or `cook`. |
+| `station` | The rack, smokehouse or fire, as `<level>:<guid>`, the same on every machine and across restarts. A fire's guid is its cook pot's, as `CookPot.get` takes it. |
+| `items` | Each row about to be taken: `amount` units of class `item` from row `id`, which become class `product`. |
+
+- Return `false` synchronously to refuse: the rows stay as they were and the
+  player's game puts the items back. Every handler runs, and an async handler
+  cannot refuse. The payload is frozen: refuse it, do not change it.
+- Accepted, the rows are taken and the products given as one `dry`, `smoke`
+  or `cook` inventory change. A herb comes out at full health; food keeps the
+  health it had.
+- Only an accepted conversion earns the game's survival XP per unit: 0.5
+  dried, 3 smoked, 1 cooked. The server grants it as `player.addXp` does, so
+  the player's own multipliers apply and `playerXpGaining`, XP rates, budgets,
+  level caps and `setNativeXp(false)` do not. Grant it yourself for a
+  conversion you refused and finished later.
+- Racks and smokehouses are the level's own, unless a level edit took one out
+  of the player's world, and any placed with
+  [smart objects](../../world/smart-objects/). Fires are the level's cook pot
+  fireplaces. A rack on a quest layer the player's game has not loaded cannot
+  be used.
+- The game lights a fire a player cooks at. Whether a fire a script put out
+  with `CookPot.setFireLit` may still cook is yours to decide: read
+  `CookPot.get(guid, player.virtualWorld)?.fireLit` and refuse.
+
 ## Related
 
 - [Stew pots and recipes](../../world/cook-pots/)
+- [Inventories](../inventory/): the `dry`, `smoke` and `cook` changes
 - [Set and restore stats](../restoring-stats/)
 - [Consumption reference](../../reference/server/interfaces/Consumption.md)

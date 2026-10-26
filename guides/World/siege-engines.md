@@ -132,9 +132,9 @@ SiegeEngine.getById(12);   // one engine, or null
 SiegeEngine.destroyAll(3); // remove them; returns the count
 ```
 
-`engine.destroy()` removes one; a projectile already in the air still lands. A
-stopped resource does not remove its engines, so track yours as on
-[Props](../props/#clean-up-when-your-resource-stops).
+`engine.destroy()` removes one; a projectile already in the air still lands.
+An engine belongs to the resource that built it and goes when that resource
+stops or restarts, as on [Props](../props/#clean-up-when-your-resource-stops).
 
 ## When a call fails
 

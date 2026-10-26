@@ -31,7 +31,9 @@ player.giveItem("3858560f-cf48-436f-8815-4426003288fb");  // the same sword by G
 
 Names are case-sensitive; GUIDs are not. There is no fuzzy lookup, so check
 the result when a name comes from a player. [Item classes](../../resources/items/)
-lists every name and GUID.
+lists every name and GUID. Classes that a running resource's
+[KCD2 mod](../../core-concepts/kcd2-mods/) adds work the same way, by name or
+GUID, while that resource runs.
 
 ## Give an item
 
@@ -123,7 +125,7 @@ const stack = GroundItem.spawn(
   new Vector3(0, 0, 45),         // rotation: Euler degrees, or a Quaternion
   20,                            // amount, 1 to 10000
   player.virtualWorld,           // virtual world
-  { quality: 1, health: 1 },     // optional condition of the item
+  { quality: 1, health: 1, name: "armoury-arrows" }, // optional
 );
 ```
 
@@ -135,12 +137,22 @@ const stack = GroundItem.spawn(
 - `properties`: `quality` as the game grades it, `health` and `condition` from
   0 to 1. Each defaults to the class's own; missiles default to quality 1 and
   full health.
+- `properties.name` labels the stack so a script finds it again, as
+  `stack.name`. Up to 64 bytes of UTF-8; a longer one throws and a value that
+  is not a string is ignored. It stays on the server: players never see it.
+  A World Builder world resource can lay named stacks too; see
+  [Place items in the world](../../tutorials/place-items/).
+
+```ts
+const arrows = GroundItem.all().find((stack) => stack.name === "armoury-arrows");
+```
 
 ## Read a stack
 
 | Property | What it is |
 | --- | --- |
 | `itemClass` | 32-hex-digit class, comparable with `player.equipment`. |
+| `name` | The label it was spawned with, or `""`. Player drops have none. |
 | `amount` | Units in the stack. |
 | `quality`, `health`, `condition` | As spawned, or `0` / `-1` / `-1` when left to the class. |
 | `resting` | Settled. A thrown stack is `false` and its `position` moves until it lands; a spawned one is always `true`. |
@@ -180,9 +192,12 @@ GroundItem.destroyAll(3);         // every stack in virtual world 3; returns the
 GroundItem.destroyAll();          // every stack on the server, player drops included
 ```
 
-`all()` takes no world; filter on `virtualWorld`. Stacks outlive your resource:
-track the ids you spawned and destroy them in `resourceStop`, as
-[Props](../../world/props/) shows.
+`all()` takes no world; filter on `virtualWorld`. A resource owns the stacks
+it spawns: stopping or restarting it destroys those still on the ground, for
+every player. Stacks a World Builder export lays belong to the server and
+stay. `destroyAll` removes other resources' stacks too, so to clear only your
+own while your resource keeps running, track the ids you spawned, as
+[Props](../../world/props/#clean-up-when-your-resource-stops) shows.
 
 ## When a call fails
 
@@ -190,17 +205,18 @@ track the ids you spawned and destroy them in `resourceStop`, as
 | --- | --- | --- |
 | `giveItem` | Unknown item, amount outside 1 to 10000, no connection | `false` |
 | `takeItem` | Not enough items, unknown item, bad amount, no connection | Resolves with `ok: false` and `reason` set |
-| `GroundItem.spawn` | Unknown item, or a stack no client could build (an arrow with an impossible quality) | **Throws**: catch it for player input |
+| `GroundItem.spawn` | Unknown item, a stack no client could build (an arrow with an impossible quality), or a `name` over 64 bytes | **Throws**: catch it for player input |
 
 The default gamemode's `/drop <item> [amount]` (with `list`, `remove <id>` and
 `clear`) is a working example; quote names with spaces.
 
 ## Custom types and crossbow ammunition
 
-For items with your own name, weight, price and private per-instance data,
-use [Custom items](../custom-items/). Register the type on the server before
-giving or restoring it. A copied appearance alone does not add native use
-behavior.
+For items with your own name, weight, price, look and private per-instance
+data, use [Custom items](../custom-items/). Register the type on the server
+before giving or restoring it. A copied appearance alone does not add native
+use behavior. To change what every copy of a weapon or armour class does in a
+fight, see [Change weapon and armour stats](../item-stats/).
 
 Players can keep bolts equipped alongside arrows. Each accepted crossbow shot spends
 one bolt, and recoverable bolts can be picked up from the ground. Do not subtract

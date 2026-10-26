@@ -14,8 +14,9 @@ server does without touching its code.
 Every KCDC release publishes a public, ready-to-run Linux server image:
 `ghcr.io/kingdomsconnected/kcdc-server:<version>`. Use the latest release's
 tag in place of `<version>`. No login is needed to pull it,
-and the Pterodactyl egg ships inside it. Tags are exact versions only, with no
-`latest`, so a host always runs the version it chose. See [Docker and
+and the Pterodactyl egg ships inside it. Each final release also moves the
+`latest` tag to its image (a prerelease never does), but an exact version
+keeps a host on the version it chose. See [Docker and
 panels](../containers/).
 :::
 
@@ -69,6 +70,8 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |
+| `mod.reveal_map` | `true` | none | [Map discovery](../server-json/#modreveal_map) |
+| `mod.name` | `""` | none | Server name in players' Discord presence |
 | `mod.world_resources` | `[]` | none | [World exports](../server-json/#modworld_resources) |
 | `mod.navmesh` | `""` | none | [Navigation mesh](../server-json/#modnavmesh) |
 | `map` | `""` | none | Not used by KCDC |
@@ -88,6 +91,7 @@ has the full rules.
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
 | Turn off the Tab player list | `mod.scoreboard`: `false` |
+| Let players discover the map themselves | `mod.reveal_map`: `false` |
 | Load a World Builder export | Add its `.world.json` path to [`mod.world_resources`](../server-json/#modworld_resources) and restart |
 | Let players use World Builder in multiplayer | Grant access from a server script with `player.setWorldBuilderEnabled(true)`, see [World Builder](../../world/world-builder/#allow-building-in-multiplayer) |
 | Let NPCs walk around walls and through buildings | Copy the game's `recast.pak` into `files/<level>/`, see [`mod.navmesh`](../server-json/#modnavmesh) |
@@ -143,13 +147,13 @@ for health checks and server lists:
 
 ```json title="GET http://127.0.0.1:27016/"
 {
-  "framework_version": "32.0.0",
+  "framework_version": "40.0.0",
   "host": "0.0.0.0",
   "max_players": 512,
-  "mod_config": { "level": "kutnohorsko", "required_dlc": [], "scoreboard": true },
+  "mod_config": { "level": "kutnohorsko", "name": "", "required_dlc": [], "reveal_map": true, "scoreboard": true },
   "mod_name": "KCDC",
   "mod_slug": "kcdc",
-  "mod_version": "1.6.4",
+  "mod_version": "1.7.2",
   "password_required": false,
   "port": 27015
 }
@@ -165,6 +169,7 @@ for health checks and server lists:
 | `Failed to ping masterlist server: 401` | The token is wrong or its listing was deleted |
 | `Failed to start resources: N of M resources failed to start` | A resource is missing its built files or threw at start; the lines above name it |
 | `Could not package client resource` | A resource's client script is missing, usually an unbuilt gamemode |
+| `Build mismatch from <id>, dropping peer` | A player's KCDC build cannot join this server's; see [matching versions](../players-connecting/#for-players) |
 
 ## Files the server writes
 

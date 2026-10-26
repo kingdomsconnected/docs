@@ -276,7 +276,7 @@ Events.on("npcInteract", (npc, player) => {
   startTalk(player, stall);
 });
 
-// Vendors, conversations and NPCs outlive the resource that made them.
+// Vendors and conversations outlive the resource that made them; its NPCs go with it.
 Events.on("resourceStop", (name) => {
   if (name !== RESOURCE) return;
   endAllTalks();

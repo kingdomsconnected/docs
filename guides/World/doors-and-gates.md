@@ -1,14 +1,15 @@
 ---
 title: Lock doors, open gates
-description: Lock and unlock the level's own doors, open and close its drawbridges and portcullises, and store them by GUID.
+description: Lock, open and remove the level's own doors, open and close its castle gates, and store them by GUID.
 sidebar:
   label: Doors and gates
   order: 43
 ---
 
-Doors and gates are the level's own, not spawned: every house door in
-Bohemia, plus the castle drawbridge and portcullis. The server can lock a door
-or drive a gate, and the state holds for every player.
+The level places every house door in Bohemia and the castles' drawbridges,
+portcullises and gates. The server can lock a door, open it, take it out of
+the world or drive a gate, and the state holds for every player. To add a door
+where the level has none, see [Hang new doors](../hang-doors/).
 
 ```ts
 // Lock whatever door the player is standing at.
@@ -21,9 +22,10 @@ async function lockDoorAt(player: Player): Promise<boolean> {
 ```
 
 :::note[Why doors need a client]
-The server does not load the level, so it learns about a door only when a
-client reports it. [`Door.all()`](../../reference/server/classes/Door.md#all)
-grows over a session. To reach an unreported door,
+Every door the level places exists on the server from the moment it starts,
+and [`Door.all()`](../../reference/server/classes/Door.md#all) lists them.
+The server has no world to measure distances in, though, so it cannot tell
+which door a player stands at.
 [`Door.queryNearest(player)`](../../reference/server/classes/Door.md#querynearest)
 asks that player's client, which is a round trip and returns a promise. See
 [Server vs client authority](../../core-concepts/authority/).
@@ -58,10 +60,12 @@ A [`Door`](../../reference/server/classes/Door.md) handle has:
 
 | Property | What it is |
 | --- | --- |
-| `guid` | The level's EntityGuid, sixteen lowercase hex digits. Same on every machine and across restarts. |
+| `guid` | The EntityGuid, sixteen lowercase hex digits, the same on every machine. A level door's never changes; a hung door's lasts until the server stops. |
 | `locked` | Writable. Reaches every client that has the door, including one standing at it. |
-| `open` | Read-only, as the last client to touch it reported. Bodies push doors open; the server cannot. |
+| `open` | Read-only. `door.setOpen(open, fromFront?)` opens or closes it on every client, playing the game's own swing, and returns `false` when it is already that way. Opening a locked door unlocks it. |
 | `stateToken` | Bumped on every durable change, to tell one change from the next. |
+| `spawned` | `true` for a door a script or a World Builder export hung, `false` for a level door. |
+| `model` | The leaf mesh, `objects/characters/assets/doors/...cdf`. |
 
 ## Save doors by GUID
 
@@ -69,34 +73,75 @@ Store `guid`, not `id`: the id is a replication handle, the GUID is the level's
 identity. `Door.find(guid, world?)` takes one back, with or without an `0x`
 prefix.
 
-`Door.find` returns `null` for a door not reported yet, and after a restart
-none are. There is no "door reported" event, so to restore saved locks, retry
-the missing GUIDs on a timer or when a player spawns:
+A level door's GUID never changes, and every level door exists from the
+moment the server starts, so saved locks can be put back as soon as your
+resource starts:
 
 ```ts
 const saved = ["00a1b2c3d4e5f607"]; // loaded from your own storage
-const pending = new Set(saved);
 
-setInterval(() => {
-  for (const guid of pending) {
-    const door = Door.find(guid);
-    if (door) {
-      door.locked = true;
-      pending.delete(guid);
-    }
-  }
-}, 5000);
+for (const guid of saved) {
+  const door = Door.find(guid);
+  if (door) door.locked = true;
+}
 ```
 
-`Door.find` and `Gate.find` search the global virtual world unless you pass
-another. Each virtual world has its own copy of a door's state.
+`Door.find` returns `null` for a GUID the level does not place, or for a door
+taken out of that world. `Door.find` and `Gate.find` search the global virtual
+world unless you pass another. Each virtual world has its own copy of a level
+door's state, built the first time anything there reaches it. A hung door's
+GUID changes every run; save its `toJSON()` instead (see
+[Hang new doors](../hang-doors/)).
+
+## Take a level door out
+
+[`Door.remove(guid, virtualWorld?)`](../../reference/server/classes/Door.md#remove)
+takes one of the level's doors out of a virtual world, collision included.
+Without a world it is taken out of the global one, and so out of every world.
+`door.destroy()` on a level door does the same in that handle's world; on a
+hung door it takes the door down for good.
+
+```ts
+// Take the door a player stands at out of every world.
+async function removeDoorAt(player: Player): Promise<void> {
+  const answer = await Door.queryNearest(player);
+  if (answer.found && answer.door && !answer.door.spawned) Door.remove(answer.door.guid);
+}
+```
+
+While a door is out of a world, players there and players in the global
+world stop seeing it, `Door.all()` and `Door.find` leave it out, the server
+refuses anyone working it, `Door.queryNearest` does not find it, and
+server-spawned NPCs and navigation queries in that world treat the doorway as
+open.
+
+A removal is a [level edit](../level-edits/): it shows in `LevelEdit.all()`,
+`LevelEdit.restoreAll()` puts the door back, and a level edit that swaps the
+door for another mesh counts as removing it. Removing a door already out does
+nothing; removing one that has a move or a swap in that world replaces that
+edit. Like every level edit it is kept in memory only, and undone when the
+resource that made it stops.
+
+[`Door.removed(virtualWorld?)`](../../reference/server/classes/Door.md#removed)
+lists the level doors that are out, whether a script or a World Builder
+export took them out: every world when omitted, or only removals made in that
+world. Each row has `guid`, `name`, `position` and `virtualWorld`.
+`Door.restore(guid, virtualWorld?)` puts one back, closed and locked as the
+level builds it, and returns its handle, or `null` when that world has no
+such removal. A door taken out of the global world is put back only from
+there.
+
+```ts
+for (const row of Door.removed()) Door.restore(row.guid, row.virtualWorld);
+```
 
 ## Open and close a gate
 
-There are two gates, one of each
-[`kind`](../../reference/server/classes/Gate.md#kind): `drawbridge` and
-`portcullis`. Clients report gates as players near the castles, so
-`Gate.all()` fills in over a session. Because they report the position,
+A gate's [`kind`](../../reference/server/classes/Gate.md#kind) is
+`drawbridge` or `portcullis`, which animate, or `gate`, a pair of leaves that
+opens and closes at once (the Ratborsch and Nebakov fortress gates and the
+Ruthard palace gate). Every gate exists from the moment the server starts, and
+its position comes from the level's data, so
 [`Gate.nearest`](../../reference/server/classes/Gate.md#nearest) answers on the
 server with no round trip. Use a radius of tens of metres.
 
@@ -121,28 +166,34 @@ works like `Door.find`.
 | `cycle` | `closed`, `opening`, `open` or `closing`. (Not `state`, which is the entity's state bag.) |
 | `openness` | `0` shut to `1` fully open, moving during a cycle. |
 | `moving` | Whether a cycle is running. |
-| `openDuration`, `closeDuration` | Clip lengths in seconds. `0` means no clip that way. |
+| `openDuration`, `closeDuration` | Clip lengths in seconds. `0` means no clip that way, and always for a `gate`. |
 
 ## When a call fails
 
 | Call | Fails when | Result |
 | --- | --- | --- |
 | `Door.queryNearest` | No door in sight, other level, 5 s timeout, player left. | Resolves `found: false` with a `reason`. Never rejects. |
-| `Door.find`, `Gate.find`, `Gate.nearest`, `getById` | The server has not learned it. | `null`. |
+| `Door.find`, `Gate.find`, `Gate.nearest`, `getById` | No such door or gate there, or the door is taken out of that world. | `null`. |
+| `door.setOpen` | Already that way. | Returns `false`. |
+| `Door.remove` | The GUID is not one of the level's doors, or names a hung door. | **Throws.** Take a hung door down with `destroy()`. |
+| `Door.restore` | That world has no such removal. | `null`. |
 | `gate.toggle()` | Already at that end, or no clip that way. | A [`GateToggle`](../../reference/server/interfaces/GateToggle.md) with `accepted: false`, a `reason` that reads after the gate's name (`is already open`) and `seconds: 0`. Never throws. |
 
-Nothing is spawned, so nothing needs cleanup. A lock stays until you change it
-or the server restarts.
+Locking and opening level doors spawns nothing, so nothing needs cleanup. A
+lock stays until you change it or the server restarts.
 
 :::tip[Try it]
 The default gamemode's `/door` (`src/server/commands/door.ts`) prints the door
-you stand at; `/door lock`, `/door unlock` and `/door lock <guid>` change one.
+you stand at; `/door lock`, `/door unlock`, `/door open` and `/door close`,
+each with an optional GUID, change one.
 `/gate` (`src/server/commands/gate.ts`) toggles the nearest gate within 60 m,
 and `/gate list` prints the known ones.
 :::
 
 ## Related
 
+- [Hang new doors](../hang-doors/), doors where the level has none
+- [Remove or move the level's own objects](../level-edits/), the edits behind a removed door
 - [Server vs client authority](../../core-concepts/authority/), why the server asks a client
 - [Raycasts and nearby entities](../raycasts/), to find doors by ray or radius
 - [Virtual worlds](../../core-concepts/virtual-worlds/), per-world door state

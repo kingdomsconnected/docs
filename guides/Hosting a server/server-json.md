@@ -19,8 +19,10 @@ file is missing, the server writes one with every key and its default:
     "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
+        "name": "",
         "navmesh": "",
         "required_dlc": [],
+        "reveal_map": true,
         "scoreboard": true,
         "world_resources": []
     },
@@ -100,10 +102,11 @@ The server refuses to start on invalid JSON, a key of the wrong type, or a
 server.json: 'mod.something' is not a key this build understands; keeping it
 ```
 
-`level`, `required_dlc` and `scoreboard` are replicated: a client receives
-them in the connection handshake, before it downloads or runs anything. The
-status document at `http://<host>:<apiport>/` also lists them under
-`mod_config`. `navmesh` and `world_resources` stay on the server.
+`level`, `name`, `required_dlc`, `reveal_map` and `scoreboard` are
+replicated: a client receives them in the connection handshake, before it
+downloads or runs anything. The status document at `http://<host>:<apiport>/`
+also lists them under `mod_config`. `navmesh` and `world_resources` stay on
+the server. `name` is the server name shown in players' Discord presence.
 
 ## `mod.level`
 
@@ -204,6 +207,27 @@ player for the whole session and is handed to someone else after they leave.
 
 With it off, no client asks for the list and **Tab** goes back to the game's
 own use. It needs KCDC 1.5.6 or later; a client treats an older server as on.
+
+## `mod.reveal_map`
+
+Whether players' maps start fully revealed. `true`, the default, shows every
+location and point of interest with no fog of war. Set it to `false` to keep
+the game's own discovery: a place appears once that player finds it, with the
+game's notification and XP.
+
+```json title="server.json"
+{
+    "mod": {
+        "level": "kutnohorsko",
+        "reveal_map": false
+    }
+}
+```
+
+Every session starts on a fresh map: with it off, what a character found is
+gone on their next join unless a client script puts it back; see
+[Map and blips](../../user-interface/map/#keep-discovery-and-fog-of-war).
+It needs KCDC 1.6.10 or later.
 
 ## `mod.world_resources`
 

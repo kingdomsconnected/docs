@@ -36,6 +36,7 @@ and a returning player downloads only what changed.
 | --- | --- | --- |
 | `stream/` | New assets, each under a folder named after your resource | Adds files the game never had. Nothing in it can shadow a game file. |
 | `replace/` | Files at the game's own paths | Your copy wins over the game's, everywhere, including the level's own files. |
+| `localization/` | A KCD2 mod's string patches | Merged into the game's text. See [Ship a KCD2 mod](../kcd2-mods/). |
 
 The `my-assets` inside `objects/kcdc/my-assets/` is the resource's **name**,
 the `name` in its `package.json`, not its folder name. For a resource to ship
@@ -56,7 +57,7 @@ touches your game logic:
 ```
 
 Do not list asset files in `mafiahub.files`, which is for what your web views
-load. The two folders travel on their own, as archives the game reads in place.
+load. These folders travel on their own, as archives the game reads in place.
 
 ## Add new assets
 
@@ -82,7 +83,8 @@ texture and sound extensions from the table above, with three exceptions:
 
 - nothing under `scripts/`, `libs/`, `engine/`, `shaders/`, `levels/`,
   `localization/` or `editor/`. Those folders hold the game's logic and data,
-  not its look.
+  not its look. The one exception is a KCD2 mod's table patches under
+  `libs/tables/` ([KCD2 mods](../kcd2-mods/)).
 - no `.caf`. The game keeps every stock clip's length and joints in an index
   built at startup, so a replaced clip would play against the wrong ones. Ship
   a new clip in `stream/` instead.
@@ -97,7 +99,7 @@ A new asset is named by its path inside `stream/`, in lowercase.
 
 | Asset | Where it goes | Side |
 | --- | --- | --- |
-| A `.cgf` model | `Prop.spawn`, `player.setDisguise`, `props` in `playAnimation`, `PropPlacer` models | server, and client for placement |
+| A `.cgf` model | `Prop.spawn`, `player.setDisguise`, `props` in `playAnimation`, `PropPlacer` models, and `Items.register`'s `model` without the leading `objects/` | server, and client for placement |
 | A `.caf` clip | `playAnimation("", { clip })` on a player or an NPC | server |
 | A particle effect | `Vfx.spawn`, `Vfx.burst`, `Vfx.burstOn` | server, and the client's `Vfx` |
 | An `.ogg` file | `Audio.playFile(path, entityId)`, without the extension | client |
@@ -198,7 +200,7 @@ The game, not the mod, decides what it can load. These are its rules.
 
 | Limit | Value |
 | --- | --- |
-| One archive (each of `stream/` and `replace/`, per resource) | under 2 GB |
+| One archive (each of `stream/`, `replace/` and `localization/`, per resource) | under 2 GB |
 | Files in one archive | 65,535 |
 | One file | 512 MB |
 | A path inside the folder | 240 characters, `A-Z a-z 0-9 _ . / -` only |
@@ -244,6 +246,7 @@ points at your workstation, or a bank built for a newer FMOD.
 ## Related
 
 - [Resource manifest and lifecycle](../resources/): `start`, `restart` and the manifest
+- [Ship a KCD2 mod](../kcd2-mods/): a single-player mod's files, table patches and text
 - [Spawn props and objects](../../world/props/): placing a streamed model
 - [Particle effects](../../world/effects/): placed effects and bursts
 - [Sounds and voice chat](../../client-scripting/sound-and-voice/): triggers and sound files

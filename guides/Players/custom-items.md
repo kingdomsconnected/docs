@@ -1,6 +1,6 @@
 ---
 title: Create custom inventory items
-description: Register your own item types, personalize individual rows, and decide what happens when players use them.
+description: Register your own item types with a borrowed look or their own model and icon, personalize individual rows, and decide what happens when players use them.
 sidebar:
   label: Custom items
   order: 35.1
@@ -39,7 +39,10 @@ before the server restarts throws.
 | --- | --- |
 | `name` | Required display name, up to 256 bytes. |
 | `description` | Inventory description, up to 4096 bytes; empty by default. |
-| `visual` | Required existing item GUID or exact table name. |
+| `visual` | Existing item GUID or exact table name whose model, material and icon the type borrows. Required unless you give `model` and `icon`. |
+| `model` | Your own model, a path relative to `Objects/`. See [below](#bring-your-own-model-and-icon). |
+| `material` | A material path in the same form. Only with `model`. |
+| `icon` | Your own inventory icon, a PNG as base64 text. |
 | `weight` | Required finite weight from 0 to 1,000,000. |
 | `price` | Whole-number base price, 0 to 2,147,483,583; defaults to 0. |
 | `stackable` | Defaults to `true`. `false` creates a separate row per unit. |
@@ -49,14 +52,58 @@ before the server restarts throws.
 IDs use letters, digits and `:_-.`, up to 128 bytes. Display strings cannot
 contain control characters. A server can register up to 4096 types.
 
-Choose an appearance from the game's MiscItem, Misc, CraftingMaterial or
-Document categories. The custom type borrows its model, material and icon.
-It is a miscellaneous item: choosing a letter does not give it vanilla
-reading behavior, and choosing a crafting material does not add a recipe.
+Choose a `visual` from the game's MiscItem, Misc, CraftingMaterial or
+Document categories. The custom type borrows its model, material and icon,
+and any of `model`, `material` or `icon` you also give replaces that part.
+Either way it is a miscellaneous item: choosing a letter does not give it
+vanilla reading behavior, and choosing a crafting material does not add a
+recipe. [Custom recipes](../custom-recipes/) cannot use custom items either.
 This API does not define new weapons, armor or native consumables.
 
 Registration also works after players join. You can call `Inventory.add` immediately
 afterward; clients receive the definitions before displaying the items.
+
+## Bring your own model and icon
+
+```ts
+declare function readPng(file: string): string; // the file as base64 text; see below
+
+const crate = Items.register("village:crate", {
+  name: "Supply crate",
+  model: "kcdc/village-items/crate.cgf",
+  icon: readPng("icons/crate.png"),
+  weight: 8,
+  price: 30,
+});
+
+GroundItem.spawn(crate, player.position); // drawn with your model
+```
+
+Without `visual`, both `model` and `icon` are required.
+
+- **`model`** draws the item on the ground, in the hand and in the inventory
+  preview. Write the path relative to `Objects/`, as the game's item tables
+  do: the game adds `Objects/` itself, and `.cgf` when there is no extension,
+  so a path starting with `objects/` throws. A model the resource streams as
+  `stream/objects/kcdc/village-items/crate.cgf` is
+  `kcdc/village-items/crate.cgf`; see [Custom assets](../../core-concepts/custom-assets/).
+- **The model needs a physics proxy**, as the game's own item models have.
+  Without one the item shows on the ground but nobody can pick it up.
+- **`material`** is a material path in the same form, allowed only with
+  `model`. Without it the model's own material is used.
+- **`icon`** is a PNG of at most 256 KiB and 4096x4096 pixels, as base64
+  text. Each player's game scales it to the stock 64x64 icon, keeping its
+  proportions, so make it square with the item reaching the edges.
+
+Server scripts read the file with Node's `fs` module, for example
+`fs.readFileSync(path.join(__dirname, file)).toString("base64")`. An `icon`
+that is not a PNG, is cut short or breaks the limits throws when you register. The
+server does not decode the pixels, so a picture a player's game cannot read
+still registers; that player sees the `visual`'s icon, or a stock one, and
+their game logs a warning. Registering a new icon under an existing id
+throws like any other change: use a new id, or restart the server.
+The [custom item icons tutorial](../../tutorials/custom-item-icons/) walks
+through a borrowed look, a borrowed model with your icon, and both your own.
 
 ## Give each item its own text and data
 

@@ -126,6 +126,8 @@ if (hair) npc.setAppearance({ gender: "male", hair: hair.name }); // only what y
   `outfit` and `wearing` options.
 - `setAppearance` is a write, not a request. The soul fixes the gender, so an
   appearance from the other gender's catalog is refused.
+- A frozen NPC still flinches when hit, but on its spot: the hit reaction
+  does not carry the body away, so a frozen stallholder stays behind its stall.
 - `soul` is read-only. For a different soul, remove the NPC and create another.
 - `npc.teleport(position, rotation?)` moves it outright; a pose the simulator
   sent just before cannot put it back.

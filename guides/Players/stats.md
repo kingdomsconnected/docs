@@ -142,6 +142,7 @@ function isFacing(player: Player, target: Player, minDot = 0.7): boolean {
 | --- | --- |
 | `rightHandItem`, `leftHandItem` | Item class drawn in each hand as 32 hex digits, or `""`. See [Items](../items/#read-what-they-wear-and-hold). |
 | `equipment` | Item classes being worn, as 32-hex-digit strings. |
+| `visorClosed` | Whether they have a helmet visor down. `false` with the visor up, with no helmet or one without a visor, and once the body is gone. |
 | `mounted` | Whether they are in a saddle. |
 | `horse` | The [`Horse`](../../reference/server/classes/Horse.md) they ride, or `null`. |
 | `dog` | Their dog companion, or `null`. |
@@ -152,6 +153,18 @@ function isFacing(player: Player, target: Player, minDot = 0.7): boolean {
 ```ts
 const horse = player.horse;
 if (horse) console.log(`${player.nickname} is riding horse ${horse.id}`);
+```
+
+The player raises and lowers the visor in their own game, which reports it,
+so the server and other players see a change shortly after it happens. No
+event fires when it moves and no script can move it, so read `visorClosed`
+when you need it. A closed visor also muffles that player's voice for
+everyone else. Client scripts read the same property on any `Player`,
+including `LocalPlayer`:
+
+```ts
+// client
+const visorDown = LocalPlayer !== null && LocalPlayer.visorClosed;
 ```
 
 ## Connection
@@ -165,6 +178,7 @@ From [`BasePlayer`](../../reference/server/classes/BasePlayer.md):
 | `ping` | Round-trip latency in milliseconds, or -1. |
 | `ip` | Remote address, or `""`. |
 | `steamId`, `discordId`, `hardwareId` | Identifiers, each `""` when unavailable. |
+| `epicId` | The Epic Games account id their client reported, not verified by the server, or `""`. |
 
 ## Observe changes
 

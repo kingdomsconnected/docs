@@ -1,14 +1,15 @@
 ---
 title: Give a horse an owner
-description: Make a horse a player's own, decide who may ride it, and choose whether it leaves with its owner or waits for them to come back.
+description: Make a horse a player's own, decide who may ride it, wake it from a knockout, and choose whether it leaves with its owner or waits for them to come back.
 sidebar:
   label: Horse owners
   order: 54
 ---
 
 A horse can belong to a player. Every client then treats it as that player's
-horse in the game's own terms, so riding it is never horse theft, and by
-default it is removed when its owner disconnects.
+horse in the game's own terms, so riding it is never horse theft and a blow
+knocks it out rather than killing it. By default it is removed when its owner
+disconnects.
 
 ```ts
 const horse = Horse.spawn(player.position, player.rotation, "pebbles", `${player.nickname}'s horse`);
@@ -46,6 +47,31 @@ Events.on("horseMounting", (horse, rider) => {
 
 The player's game has already started climbing on, so a refusal plays the
 get-off. Ownerless horses stay free for anyone here.
+
+## Knocked out, not killed
+
+As in single player, a player's own horse cannot die: once `giveTo` makes a
+horse someone's, every client keeps it alive. A blow that would kill it leaves
+it at 1 health and knocks it out instead: it lies where it fell on every
+client, `alive` stays `true` and no `horseDeath` follows. It gets up by itself
+when the knockout wears off, some minutes later, or at once with `wake`:
+
+```ts
+if (horse.unconscious) {
+  horse.wake();                    // up on every client a moment later
+  horse.health = horse.maxHealth;  // wake leaves its health as it is
+}
+```
+
+| Member | What it does |
+| --- | --- |
+| [`unconscious`](../../reference/server/classes/Horse.md#unconscious) | `true` while the client running the horse reports it knocked out. `false` for a dead horse, and before any client has run it. |
+| [`wake()`](../../reference/server/classes/Horse.md#wake) | Ends the knockout on that client. Returns `false` when the horse is not knocked out, is dead, or no client runs it. |
+
+`unconscious` stays `true` until the client reports the horse up, so check it
+again later rather than straight after `wake`. No event fires when a horse goes
+down or gets up; read `unconscious` when you need to know, for example when a
+player asks to tend it.
 
 ## When the owner leaves
 
@@ -123,6 +149,6 @@ to someone, or to you with no id, and `/horse info` shows its owner.
 
 ## Related
 
-- [Spawn and manage horses](../horses/): spawning, gear, riders and the other horse events
+- [Spawn and manage horses](../horses/): spawning, gear, buffs, riders and the other horse events
 - [Dog companions](../dogs/): the other animal a player can own, with the same `giveTo`
 - [Chat and /commands](../../players/chat/): the `playerCommand` event used above

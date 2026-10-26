@@ -19,8 +19,8 @@ standing in it. It takes about ten minutes the first time.
 | An editor | [Visual Studio Code](https://code.visualstudio.com/) autocompletes the whole API in a TypeScript resource | Writing code |
 
 :::note
-The server does **not** need Node.js to run: it carries its own JavaScript runtime. Node only compiles
-TypeScript, so you can build on your own machine and upload the result.
+The server does **not** need Node.js to run: it carries its own JavaScript runtime (Node.js 26.12.1 in
+1.7.2). Node only compiles TypeScript, so you can build on your own machine and upload the result.
 :::
 
 ## 1. Get a release
@@ -39,8 +39,11 @@ KCDC/
 Each server folder reads resources from the `resources/` folder next to its binary. The top-level
 `resources/` is a spare copy for hosting elsewhere; the guides use the one inside `server/`.
 
+Players and the server must run the same release. A 1.7.2 client and server do not connect to earlier
+versions, so update both together.
+
 :::caution
-Unpack the complete archive so the launcher has its dependencies. In **1.6.6**,
+Unpack the complete archive so the launcher has its dependencies. Since **1.6.6**,
 it resolves updates from the installed build through the update service;
 the archive's channel file is only an initial hint for a fresh installation.
 :::
@@ -51,7 +54,7 @@ the archive's channel file is only an initial hint for a fresh installation.
 2. Open a new terminal. `node --version` should print `v22` or later, and
    `npm --version` should print a version number.
 
-The **1.6.6** default game mode and optional playground use npm and include a
+The default game mode and the optional playground use npm and include a
 `package-lock.json`, so `npm ci` is all they need. Your own resources can use the
 package manager you prefer.
 
