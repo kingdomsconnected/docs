@@ -98,7 +98,7 @@ lines in the log (the command count varies):
 [kcdc-gamemode] ready with 20 commands
 ```
 
-The server uses UDP 27015 and TCP 27016; a server on your own machine needs nothing opened. See
+The server uses port 27015 over both UDP and TCP; a server on your own machine needs nothing opened. See
 [Ports](../../hosting-a-server/run-a-server/#ports).
 
 ## 5. Join it

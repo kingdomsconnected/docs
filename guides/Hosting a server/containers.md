@@ -17,7 +17,7 @@ One command runs it:
 
 ```sh title="Host"
 docker run -d --name kcdc --init --restart unless-stopped \
-  -p 27015:27015/udp -p 27016:27016/tcp \
+  -p 27015:27015/udp -p 27015:27015/tcp \
   -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
 docker logs -f kcdc
 ```
@@ -75,7 +75,7 @@ services:
     init: true
     ports:
       - "27015:27015/udp"
-      - "27016:27016/tcp"
+      - "27015:27015/tcp"
     volumes:
       - server-data:/home/container
     stop_grace_period: 30s
@@ -107,22 +107,22 @@ built `kcdc-gamemode` in first:
 
 Anything after the image name goes to the server, so the
 [command-line arguments](../run-a-server/#command-line-arguments) work
-unchanged. Change a port and its mapping together:
+unchanged. Change the port and its UDP and TCP mappings together:
 
 ```sh title="Host"
 docker run -d --name kcdc --init --restart unless-stopped \
-  -p 28015:28015/udp -p 28016:28016/tcp \
+  -p 28015:28015/udp -p 28015:28015/tcp \
   -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:<version>' \
-  --port 28015 --apiport 28016
+  --port 28015
 ```
 
 In Compose, set the service's `command` and `ports`:
 
 ```yaml title="compose.yaml (service excerpt)"
-    command: ["--port", "28015", "--apiport", "28016"]
+    command: ["--port", "28015"]
     ports:
       - "28015:28015/udp"
-      - "28016:28016/tcp"
+      - "28015:28015/tcp"
 ```
 
 ## Use the console
@@ -133,7 +133,7 @@ commands](../run-a-server/#console-commands) go nowhere. Start it with
 
 ```sh title="Host"
 docker run -dit --name kcdc --init --restart unless-stopped \
-  -p 27015:27015/udp -p 27016:27016/tcp \
+  -p 27015:27015/udp -p 27015:27015/tcp \
   -v kcdc-data:/home/container 'ghcr.io/kingdomsconnected/kcdc-server:<version>'
 docker attach kcdc
 ```
@@ -147,7 +147,7 @@ picks up every resource change but disconnects everyone.
 
 Save this as `fly.toml` and change `app` to your own app's name. Its process
 command passes Fly's UDP bind address to the server as `--host`, and its
-services expose the game port (UDP 27015) and the HTTP port (TCP 27016):
+services expose the game port over UDP and TCP (27015):
 
 ```toml title="fly.toml"
 app = 'kcdc-server'
@@ -157,7 +157,7 @@ primary_region = 'ams'
 [processes]
   app = """/bin/sh -c 'exec /usr/local/bin/kcdc-entrypoint --host "$(getent ahostsv4 fly-global-services | head -n 1 | cut -d " " -f 1)"'"""
 
-# Game session: UDP only, no TCP on the game port.
+# Game session over UDP.
 [[services]]
   internal_port = 27015
   protocol = 'udp'
@@ -169,9 +169,9 @@ primary_region = 'ams'
   [[services.ports]]
     port = 27015
 
-# HTTP endpoints on TCP 27016.
+# HTTP endpoints over TCP on the game port.
 [[services]]
-  internal_port = 27016
+  internal_port = 27015
   protocol = 'tcp'
   auto_stop_machines = false
   auto_start_machines = false
@@ -179,7 +179,7 @@ primary_region = 'ams'
   processes = ['app']
 
   [[services.ports]]
-    port = 27016
+    port = 27015
 
   [[services.tcp_checks]]
     grace_period = '30s'
@@ -229,17 +229,15 @@ docker rm -v "$CONTAINER"
 
 1. In the Panel's admin area, create a **KCDC** nest and **Import Egg**
    `egg-kcdc.json` into it.
-2. On the node, add two free ports, for example 27015 (game) and 27016 (HTTP).
-3. Create a server from the egg, with the game port as primary allocation
-   and the HTTP port as an additional one.
-4. Set the egg's **HTTP port** variable to the additional allocation. The two
-   must differ; the variable alone does not allocate a port.
-5. Start the server and wait for `KCDC Server successfully started`.
-6. Upload your built `dist/` and `ui/` into `resources/kcdc-gamemode/` with
+2. On the node, add one free port, for example 27015. This one allocation
+   serves the game session over UDP and the HTTP endpoints over TCP.
+3. Create a server from the egg, with that port as the primary allocation.
+4. Start the server and wait for `KCDC Server successfully started`.
+5. Upload your built `dist/` and `ui/` into `resources/kcdc-gamemode/` with
    the file manager or SFTP ([Add the built gamemode](#add-the-built-gamemode)),
    then restart.
 
-The egg's startup command sets bind addresses and ports, overriding those
+The egg's startup command sets the bind address and port, overriding those
 keys in `server.json`. Everything else, including `maxplayers` (up to 512),
 `password`, `server-token` and the `mod` keys, is yours to edit in the file
 manager; keep the token and password in the file, not the egg, since eggs

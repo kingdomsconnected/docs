@@ -95,12 +95,10 @@ eggs. If it leaks, delete the listing and register a new one.
 
 Set `server-token` in `server.json` and leave every other key alone:
 
-```json title="server.json" ins={7}
+```json title="server.json" ins={5}
 {
   "host": "0.0.0.0",
   "port": 27015,
-  "apihost": "0.0.0.0",
-  "apiport": 27016,
   "maxplayers": 512,
   "server-token": "paste-your-push-key-here",
   "mod": {

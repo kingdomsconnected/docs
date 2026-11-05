@@ -12,11 +12,10 @@ file is missing, the server writes one with every key and its default:
 
 ```json title="server.json"
 {
-    "apihost": "0.0.0.0",
-    "apiport": 27016,
     "download-url": "",
     "host": "0.0.0.0",
     "map": "",
+    "max-downloading": 0,
     "maxplayers": 512,
     "mod": {
         "level": "kutnohorsko",
@@ -27,6 +26,7 @@ file is missing, the server writes one with every key and its default:
         "scoreboard": true,
         "world_resources": []
     },
+    "package-secret": "",
     "password": "",
     "port": 27015,
     "server-token": ""
@@ -37,14 +37,14 @@ file is missing, the server writes one with every key and its default:
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `host` | `"0.0.0.0"` | Address the game session binds to |
-| `port` | `27015` | Game session port, UDP |
-| `apihost` | `"0.0.0.0"` | Address the HTTP endpoints bind to |
-| `apiport` | `27016` | HTTP port, TCP |
+| `host` | `"0.0.0.0"` | Address the server binds to |
+| `port` | `27015` | Game port: the game session over UDP and the HTTP endpoints over TCP |
 | `maxplayers` | `512` | Player slots. Values above 512 are clamped to 512 with a warning |
 | `password` | `""` | Password players must give to join. Empty lets anyone in. See [Password](#password) |
 | `server-token` | `""` | Masterlist push key. Empty means the server is not listed in the server browser |
 | `download-url` | `""` | Web addresses players download resources from before your server, such as a CDN. See [Serve downloads from a CDN](../../core-concepts/custom-assets/#serve-downloads-from-a-cdn) |
+| `max-downloading` | `0` | Connections admitted beyond `maxplayers` while they download and start resources. At `0`, each one takes a player slot. A player takes a slot on entering the world and is turned away if the server is full by then |
+| `package-secret` | `""` | Secret the resource package key is derived from. Empty uses `server-token`. With both empty, the server warns that anyone can recompute the key |
 | `map` | `""` | Unused by KCDC. The level is `mod.level` |
 
 Get a token and check the listing with [Server browser listing](../server-browser/).
@@ -81,7 +81,7 @@ Players enter it under **Connect directly** in the launcher menu, or pass it
 in a [join link](../players-connecting/#join-with-a-link)
 (`kcdc://host:port?password=...`). The server browser shows a padlock next to
 a server with a password and asks for it before joining. The status document
-at `http://<host>:<apiport>/` shows `"password_required": true`, but never the
+at `http://<host>:<port>/` shows `"password_required": true`, but never the
 password itself.
 
 - **Keep it to 63 bytes.** The server accepts up to 255 bytes and refuses to
@@ -106,7 +106,7 @@ server.json: 'mod.something' is not a key this build understands; keeping it
 
 `level`, `name`, `required_dlc`, `reveal_map` and `scoreboard` are
 replicated: a client receives them in the connection handshake, before it
-downloads or runs anything. The status document at `http://<host>:<apiport>/`
+downloads or runs anything. The status document at `http://<host>:<port>/`
 also lists them under `mod_config`. `navmesh` and `world_resources` stay on
 the server. `name` is the server name shown in players' Discord presence.
 

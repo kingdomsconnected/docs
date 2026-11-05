@@ -31,12 +31,12 @@ Each setting is resolved in this order, first match wins:
 3. **The built-in default.**
 
 ```sh title="server.json says port 27015; this run uses 28015"
-./KCDCServer --port 28015 --apiport 28016
+./KCDCServer --port 28015
 ```
 
-On Pterodactyl, the egg's startup command always passes `--host`, `--port`,
-`--apihost`, `--apiport` and `--config`, so those keys in `server.json` have no
-effect there. Everything else in the file is still yours.
+On Pterodactyl, the egg's startup command always passes `--host`, `--port` and
+`--config`, so `host` and `port` in `server.json` have no effect there.
+Everything else in the file is still yours.
 
 ## Command-line options
 
@@ -44,14 +44,14 @@ This is the complete list, as `KCDCServer --help` prints it:
 
 | Option | Short | Default | What it sets |
 | --- | --- | --- | --- |
-| `--port` | `-p` | `27015` | Game session port (UDP) |
-| `--host` | `-h` | `0.0.0.0` | Address the game session binds to |
-| `--apiport` | `-P` | `27016` | HTTP port (TCP) |
-| `--apihost` | `-H` | `0.0.0.0` | Address the HTTP endpoints bind to |
+| `--port` | `-p` | `27015` | Game port: the game session over UDP and the HTTP endpoints over TCP |
+| `--host` | `-h` | `0.0.0.0` | Address the server binds to |
 | `--config` | `-c` | `server.json` | Configuration file, relative to the working directory |
 | `--server-token` | `-t` | none | Masterlist push token; the server is listed only when it is set |
 | `--password` | | none | Password players must give to join; empty lets anyone in |
 | `--download-url` | | none | Web addresses players download resources from before the game port, separated by spaces or commas |
+| `--max-downloading` | | none | Connections admitted beyond `maxplayers` while they download; 0 keeps downloads on player slots |
+| `--package-secret` | | none | Secret the resource package key is derived from; defaults to the server token |
 | `--help` | | | Print the list and exit |
 
 There is no option for `maxplayers` or anything under `mod`: set those in
@@ -63,12 +63,12 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | --- | --- | --- | --- |
 | `host` | `"0.0.0.0"` | `--host` | |
 | `port` | `27015` | `--port` | |
-| `apihost` | `"0.0.0.0"` | `--apihost` | |
-| `apiport` | `27016` | `--apiport` | |
 | `maxplayers` | `512` | none | Can only lower the cap; above 512 is clamped with a warning |
 | `server-token` | `""` | `--server-token` | [Server browser listing](../server-browser/) |
 | `password` | `""` | `--password` | [Join password](../server-json/#password), 63 bytes at most |
 | `download-url` | `""` | `--download-url` | [Serve downloads from a CDN](../../core-concepts/custom-assets/#serve-downloads-from-a-cdn) |
+| `max-downloading` | `0` | `--max-downloading` | [Top-level keys](../server-json/#top-level-keys) |
+| `package-secret` | `""` | `--package-secret` | [Top-level keys](../server-json/#top-level-keys) |
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |
@@ -86,9 +86,9 @@ has the full rules.
 
 | I want to... | Do this |
 | --- | --- |
-| Use other ports | `--port` and `--apiport`, or `port` and `apiport`. In a container, change the published ports to match |
-| Listen on one interface only | `--host` and `--apihost` with that address |
-| Run several servers on one machine | Give each its own folder, or its own `--config` file and ports: `--port 28015 --apiport 28016 --config second.json` |
+| Use another port | `--port`, or `port`. In a container, change the published UDP and TCP ports to match |
+| Listen on one interface only | `--host` with that address |
+| Run several servers on one machine | Give each its own folder, or its own `--config` file and ports: `--port 28015 --config second.json` |
 | Hold fewer players | `maxplayers` below 512 |
 | Load another level | `mod.level`: `kutnohorsko`, `trosecko` or `klaster` |
 | Keep out players missing a DLC | `mod.required_dlc` |
@@ -126,7 +126,7 @@ server with your arguments.
 | `/usr/share/kcdc/egg-kcdc.json` | The Pterodactyl egg for this exact version |
 
 The server runs as UID and GID `10001`, stops cleanly on `SIGTERM` (allow it
-about 30 seconds), and the image declares `27015/udp` and `27016/tcp`.
+about 30 seconds), and the image declares `27015/udp` and `27015/tcp`.
 
 **Seeding.** On every start, each folder of `/opt/kcdc/default-resources/` is
 copied into `resources/` only if no folder of that name exists. An edited or
@@ -144,18 +144,18 @@ emptied `resources/kcdc-gamemode` is never overwritten. So:
 **Ready.** The log line `KCDC Server successfully started` means players can
 join. The Pterodactyl egg uses it as its "started" signal.
 
-**Status endpoint.** `GET http://<host>:<apiport>/` answers with JSON, handy
+**Status endpoint.** `GET http://<host>:<port>/` answers with JSON, handy
 for health checks and server lists:
 
-```json title="GET http://127.0.0.1:27016/"
+```json title="GET http://127.0.0.1:27015/"
 {
-  "framework_version": "40.0.0",
+  "framework_version": "41.0.0",
   "host": "0.0.0.0",
   "max_players": 512,
   "mod_config": { "level": "kutnohorsko", "name": "", "required_dlc": [], "reveal_map": true, "scoreboard": true },
   "mod_name": "KCDC",
   "mod_slug": "kcdc",
-  "mod_version": "1.7.2",
+  "mod_version": "1.8.1",
   "password_required": false,
   "port": 27015
 }
@@ -182,7 +182,7 @@ All in the working directory. Back up the whole folder, hidden files included.
 | `server.json` | Configuration, written with defaults on first start |
 | `resources/` | Your resources |
 | `logs/` | The server log |
-| `.packages/` | Encrypted client packages and their key, and the archives of each resource's custom assets. Keep it, or players re-download everything after a restart |
+| `.packages/` | Encrypted client packages and the archives of each resource's custom assets. Keep it, or players re-download everything after a restart |
 | `cache/sentry/` | Crash-reporting data. Crashes are reported to the KCDC developers |
 
 ## Related

@@ -99,22 +99,21 @@ away.
 
 ## Make your server reachable
 
-Players need the game port (UDP) and should reach the HTTP port (TCP); the
-numbers are in [Ports](../run-a-server/#ports). Forwarding TCP for the game
-port does nothing, and a forward for the wrong protocol is the most common
-reason nobody can join.
+Players need the game port over both protocols: UDP for the game session, and
+TCP for downloads and the status document. See [Ports](../run-a-server/#ports).
+A forward for only one protocol is a likely reason nobody can join.
 
-- **At home, behind a router:** forward both ports to the server machine and
+- **At home, behind a router:** forward UDP and TCP to the server machine and
   allow `KCDCServer.exe` through Windows Defender Firewall on private and
   public networks. Outside players use your public IP; you and your LAN use
   the machine's local address, since many routers do not loop the public
   one back.
-- **On a VPS or rented server:** open both ports in the provider's firewall
+- **On a VPS or rented server:** open UDP and TCP in the provider's firewall
   or security group and in the OS firewall (`ufw`, `firewalld`).
-- **In a container:** publish both ports and open them on the host
+- **In a container:** publish UDP and TCP and open them on the host
   ([Docker and panels](../containers/#change-the-ports)).
 
-To test from outside, have a friend open `http://your.public.address:27016/`.
+To test from outside, have a friend open `http://your.public.address:27015/`.
 A JSON page means the TCP forward works; if they still cannot join, check the
 UDP forward.
 
@@ -123,8 +122,8 @@ UDP forward.
 - With a Steam copy, is Steam running on the player's machine?
 - Do the player and the server run the same KCDC version? A mismatch often shows as a
   join that hangs on the loading screen for 10 seconds, then fails.
-- Is the address right, and the port the game port, not the HTTP one?
-- Is the game port forwarded as UDP, not TCP?
+- Is the address right, with the game port?
+- Is the game port forwarded over both UDP and TCP?
 - Does the player have every DLC in `mod.required_dlc` installed?
 - Is the server full?
 

@@ -64,17 +64,23 @@ system ([npm packages](../../core-concepts/resources/#use-nodejs-and-npm-package
 
 | Port | Protocol | What it carries |
 | --- | --- | --- |
-| 27015 | UDP | The game session: connection, replication, resource and [custom asset](../../core-concepts/custom-assets/) downloads, voice |
-| 27016 | TCP | HTTP endpoints, including a status document at `/` |
+| 27015 | UDP | The game session: connection, replication, voice |
+| 27015 | TCP | HTTP endpoints: resource and [custom asset](../../core-concepts/custom-assets/) downloads, and a status document at `/` |
 
-Nothing listens on TCP 27015. Change the ports with `--port` and `--apiport`,
-or `port` and `apiport` in [server.json](../server-json/). To let players in
-from outside, see [Let players connect](../players-connecting/).
+Both protocols use the same port number. Change it with `--port`, or `port` in
+[server.json](../server-json/). To let players in from outside, see
+[Let players connect](../players-connecting/).
+
+:::note[Upgrading from before 1.8.0]
+The separate HTTP port is gone. The server ignores `apiport`, `apihost`,
+`--apiport` and `--apihost`, so open TCP on the game port. You can close the
+old HTTP port.
+:::
 
 Check that a server is up without starting the game:
 
 ```sh title="Any terminal"
-curl http://your.server.address:27016/
+curl http://your.server.address:27015/
 ```
 
 It answers with JSON: mod name and version, game port, `max_players` and the
@@ -91,7 +97,7 @@ Options override the matching `server.json` key for one run and are never
 written back:
 
 ```sh title="Linux, a second server on the same machine"
-./KCDCServer --port 28015 --apiport 28016 --config second.json
+./KCDCServer --port 28015 --config second.json
 ```
 
 [Options and overrides](../options-and-overrides/#command-line-options) lists
