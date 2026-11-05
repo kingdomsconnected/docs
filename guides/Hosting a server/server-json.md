@@ -14,6 +14,7 @@ file is missing, the server writes one with every key and its default:
 {
     "apihost": "0.0.0.0",
     "apiport": 27016,
+    "download-url": "",
     "host": "0.0.0.0",
     "map": "",
     "maxplayers": 512,
@@ -43,6 +44,7 @@ file is missing, the server writes one with every key and its default:
 | `maxplayers` | `512` | Player slots. Values above 512 are clamped to 512 with a warning |
 | `password` | `""` | Password players must give to join. Empty lets anyone in. See [Password](#password) |
 | `server-token` | `""` | Masterlist push key. Empty means the server is not listed in the server browser |
+| `download-url` | `""` | Web addresses players download resources from before your server, such as a CDN. See [Serve downloads from a CDN](../../core-concepts/custom-assets/#serve-downloads-from-a-cdn) |
 | `map` | `""` | Unused by KCDC. The level is `mod.level` |
 
 Get a token and check the listing with [Server browser listing](../server-browser/).

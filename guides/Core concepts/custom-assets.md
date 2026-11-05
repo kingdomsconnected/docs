@@ -27,8 +27,10 @@ resources/my-assets/
 Prop.spawn("objects/kcdc/my-assets/chair.cgf", player.position);
 ```
 
-Nothing needs a CDN or a web server. Files travel over the game connection,
-and a returning player downloads only what changed.
+You do not need a CDN or a separate web server. Players download the files from
+your server on its game port, and a returning player downloads only what
+changed. If your server's upload speed holds joins back, you can
+[serve the downloads from a CDN](#serve-downloads-from-a-cdn) instead.
 
 ## Lay out the folders
 
@@ -223,6 +225,47 @@ Like everything in `clientScripts` and `files`, these files end up on every
 player's disk, readable by anyone. Ship only what you have the right to
 distribute.
 :::
+
+## Serve downloads from a CDN
+
+The `download-url` setting makes players try other web addresses, such as a CDN
+or your own web server, before your game server. It covers everything players
+download when they join: your assets and your resources' client packages.
+
+```json title="server.json"
+{
+    "download-url": "https://cdn.example.com/my-server"
+}
+```
+
+1. Set `download-url` in `server.json`, or pass `--download-url` when you start
+   the server. Each address must start with `http://` or `https://`. Separate
+   several addresses with spaces or commas. Players try them in the order listed.
+2. Start the server. The log names the files to upload and the folder they are
+   in, normally `.packages/`:
+
+   ```text
+   Clients download from https://cdn.example.com/my-server first; mirror these files and their .chunks lists from '<folder>' there: <file names>
+   ```
+
+3. Upload each named file and its `<file name>.chunks` list directly under the
+   address, for example `https://cdn.example.com/my-server/<file name>`. Upload
+   only these files, not the whole `.packages/` folder.
+4. After you change a resource, upload its new files as well. Players get
+   anything you have not uploaded yet from your server.
+
+The host must meet two requirements:
+
+- **Public access.** Players send no login or token, so anyone with a file's
+  address can download it, even if your server has a join password.
+- **Range requests.** Players fetch files in parts. Without range support, they
+  cannot download only the parts that changed.
+
+The game checks each file's SHA-256 hash before using it. If an address fails or
+serves the wrong file, the game falls back to the next source for that file, so
+keep the game port reachable over TCP. Without a `.chunks` list, a player
+downloads the whole file from the CDN and cannot reuse parts of the copy they
+already have.
 
 ## When an asset does not show up
 

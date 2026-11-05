@@ -51,6 +51,7 @@ This is the complete list, as `KCDCServer --help` prints it:
 | `--config` | `-c` | `server.json` | Configuration file, relative to the working directory |
 | `--server-token` | `-t` | none | Masterlist push token; the server is listed only when it is set |
 | `--password` | | none | Password players must give to join; empty lets anyone in |
+| `--download-url` | | none | Web addresses players download resources from before the game port, separated by spaces or commas |
 | `--help` | | | Print the list and exit |
 
 There is no option for `maxplayers` or anything under `mod`: set those in
@@ -67,6 +68,7 @@ There is no option for `maxplayers` or anything under `mod`: set those in
 | `maxplayers` | `512` | none | Can only lower the cap; above 512 is clamped with a warning |
 | `server-token` | `""` | `--server-token` | [Server browser listing](../server-browser/) |
 | `password` | `""` | `--password` | [Join password](../server-json/#password), 63 bytes at most |
+| `download-url` | `""` | `--download-url` | [Serve downloads from a CDN](../../core-concepts/custom-assets/#serve-downloads-from-a-cdn) |
 | `mod.level` | `"kutnohorsko"` | none | [Levels](../server-json/#modlevel) |
 | `mod.required_dlc` | `[]` | none | [Required DLCs](../server-json/#modrequired_dlc) |
 | `mod.scoreboard` | `true` | none | [Player list](../server-json/#modscoreboard) |

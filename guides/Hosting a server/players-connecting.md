@@ -137,6 +137,8 @@ asking the player to check their connection and try again.
 
 If this happens repeatedly, check the server's resource delivery and the
 connection between it and the player. A large download alone is not a stall.
+If your server's upload speed is the limit, you can
+[serve the downloads from a CDN](../../core-concepts/custom-assets/#serve-downloads-from-a-cdn).
 
 ## Related
 
